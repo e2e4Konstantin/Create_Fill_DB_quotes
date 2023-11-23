@@ -1,0 +1,1 @@
+from tools.fill_directory_items import fill_directory_catalog_items

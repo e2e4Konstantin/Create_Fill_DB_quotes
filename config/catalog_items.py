@@ -2,7 +2,10 @@
 # from dataclasses import dataclass
 from icecream import ic
 
-src_catalog_items = [
+# Иерархические типы объектов каталога.
+# Иерархия задается родительским объектом для текущего.
+# Корневой элемент не имеет родителя.
+src_catalog_items = (
         ('NULL', 'Directory', 'Справочник значений'),
         ('Directory', 'Chapter',	'Глава'),
         ('Chapter', 'Collection', 'Сборник'),
@@ -10,7 +13,10 @@ src_catalog_items = [
         ('Section', 'Subsection', 'Раздел'),
         ('Subsection', 'Table', 'Таблица'),
         ('Table', 'Quote', 'Расценка'),
-    ]
+)
+
+
+
 
 #
 # _item_patterns: dict[str:str] = {
@@ -87,3 +93,4 @@ src_catalog_items = [
 
 if __name__ == "__main__":
     ic(src_catalog_items)
+    ic(src_catalog_items.__doc__)

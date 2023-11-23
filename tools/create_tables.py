@@ -1,9 +1,4 @@
-import os
-import sqlite3
-from icecream import ic
-
 from sql_queries import sql_catalog
-from config import dbTolls
 
 
 def create_tables_indexes(db_file_name: str):
@@ -34,15 +29,24 @@ def create_tables_indexes(db_file_name: str):
 
 
 if __name__ == '__main__':
+    import os
+    import sqlite3
+    from icecream import ic
+
+    from config import dbTolls, src_catalog_items
+    from tools import fill_directory_catalog_items
+
     version = f"{sqlite3.version} {sqlite3.sqlite_version}"
-    db_name = os.path.join(r"F:\Kazak\GoogleDrive\Python_projects\DB", "quotes_test.sqlite3")
+    # db_name = os.path.join(r"F:\Kazak\GoogleDrive\Python_projects\DB", "quotes_test.sqlite3")
+    db_name = os.path.join(r"C:\Users\kazak.ke\Documents\PythonProjects\DB", "quotes_test.sqlite3")
     ic(version)
     ic(db_name)
+    # удаляем файл БД если такой есть
+    # if os.path.isfile(db_name):
+    #     os.unlink(db_name)
+
+    # создать таблицы БД
     create_tables_indexes(db_name)
+    # заполнить данными справочник элементов каталога
+    fill_directory_catalog_items(db_name)
 
-    with dbTolls(db_name) as db:
-
-        conn.execute(query_root_ins, src_catalog_items[0])
-        for data in src_catalog_items[1:]:
-            ic(data)
-            conn.execute(query_ins, data)
