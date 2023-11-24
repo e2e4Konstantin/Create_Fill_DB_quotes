@@ -1,96 +1,51 @@
-# import re
-# from dataclasses import dataclass
+import re
+from dataclasses import dataclass
 from icecream import ic
 
 # Иерархические типы объектов каталога.
 # Иерархия задается родительским объектом для текущего.
 # Корневой элемент не имеет родителя.
 src_catalog_items = (
-        ('NULL', 'Directory', 'Справочник значений'),
-        ('Directory', 'Chapter',	'Глава'),
-        ('Chapter', 'Collection', 'Сборник'),
-        ('Collection', 'Section', 'Отдел'),
-        ('Section', 'Subsection', 'Раздел'),
-        ('Subsection', 'Table', 'Таблица'),
-        ('Table', 'Quote', 'Расценка'),
+    (None, 'Directory', 'Справочник', None, None),
+    ('Directory', 'Catalog', 'Каталог', r"^\s*0000\s*$", None),
+    ('Catalog', 'Chapter', 'Глава', r"^\s*(\d+)\s*$", re.compile(r"^\s*Глава\s*((\d+)\.)*")),
+    ('Chapter', 'Collection', 'Сборник', r"^\s*((\d+)\.(\d+))\s*$", re.compile(r"^\s*Сборник\s*((\d+)\.)*")),
+    ('Collection', 'Section', 'Отдел', r"^\s*((\d+)\.(\d+)-(\d+))\s*$", re.compile(r"^\s*Раздел\s*((\d+)\.)*")),
+    ('Section', 'Subsection', 'Раздел', r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", re.compile(r"^\s*Раздел\s*((\d+)\.)*")),
+    ('Subsection', 'Table', 'Таблица', r"^\s*((\d+)\.(\d+)(-(\d+)){4})\s*$",
+     re.compile(r"^\s*Таблица\s*((\d+)\.(\d+)-(\d+)\.)*")),
+    ('Table', 'Quote', 'Расценка', r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None)
 )
 
 
+@dataclass
+class ItemCatalogDirectory:
+    name: str | None
+    parent: str | None
+    pattern: str | None
+    compiled: re.Pattern | None
+    prefix: re.Pattern | None
 
 
-#
-# _item_patterns: dict[str:str] = {
-#     'directory': r"^\s*0000\s*$",
-#     'chapter': r"^\s*(\d+)\s*$",
-#     'collection': r"^\s*((\d+)\.(\d+))\s*$",
-#     'section': r"^\s*((\d+)\.(\d+)-(\d+))\s*$",
-#     'subsection': r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$",
-#     'table': r"^\s*((\d+)\.(\d+)(-(\d+)){4})\s*$",
-#     'quote': r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$",
-# }
-#
-# _compiled_item_patterns = {
-#     'directory': re.compile(_item_patterns['directory']),
-#     'chapter': re.compile(_item_patterns['chapter']),
-#     'collection': re.compile(_item_patterns['collection']),
-#     'section': re.compile(_item_patterns['section']),
-#     'subsection': re.compile(_item_patterns['subsection']),
-#     'table': re.compile(_item_patterns['table']),
-#     'quote': re.compile(_item_patterns['quote']),
-#
-#     'subsection_groups': re.compile(r"(^\d+\.\d+-\d+-)(\d+)\s*"),
-#     'wildcard': re.compile(r"[\t\n\r\f\v\s+]+"),
-#     'code_valid_chars': re.compile(r"[^\d+.-]+"),
-#     'digits': re.compile(r"[^\d+]+"),
-#     'digits_dots': re.compile(r"[^\d+.]+"),
-#
-#     'table_prefix': re.compile(r"^\s*Таблица\s*((\d+)\.(\d+)-(\d+)\.)*"),  # Таблица 3.1-4.
-#     'subsection_prefix': re.compile(r"^\s*Раздел\s*((\d+)\.)*"),  # Раздел 7.
-#     'section_prefix': re.compile(r"^\s*Отдел\s*((\d+)\.)*"),  # Отдел 7.
-#     'collection_prefix': re.compile(r"^\s*Сборник\s*((\d+)\.)*"),  # Сборник 7.
-#     'chapter_prefix': re.compile(r"^\s*Глава\s*((\d+)\.)*"),  # Глава 7.
-# }
-#
-#
-# @dataclass
-# class ItemCatalog:
-#     rank: int
-#     parent: int
-#     name: str
-#     pattern: str | None
-#     compiled: re.Pattern | None
-#     prefix: re.Pattern | None
-#
-#
-# items_data: dict[str: ItemCatalog] = {
-#     'directory': ItemCatalog(
-#         100, 1, 'справочник', _item_patterns['directory'], _compiled_item_patterns['directory'], None
-#     ),
-#     'chapter': ItemCatalog(
-#         90, 1, 'глава', _item_patterns['chapter'], _compiled_item_patterns['chapter'],
-#         _compiled_item_patterns['chapter_prefix']
-#     ),
-#     'collection': ItemCatalog(
-#         80, 2, 'сборник', _item_patterns['collection'], _compiled_item_patterns['collection'],
-#         _compiled_item_patterns['collection_prefix']
-#     ),
-#     'section': ItemCatalog(
-#         70, 3, 'отдел', _item_patterns['section'], _compiled_item_patterns['section'],
-#         _compiled_item_patterns['section_prefix']
-#     ),
-#     'subsection': ItemCatalog(
-#         60, 4, 'раздел', _item_patterns['subsection'], _compiled_item_patterns['subsection'],
-#         _compiled_item_patterns['subsection_prefix']
-#     ),
-#     'table': ItemCatalog(
-#         50, 5, 'таблица', _item_patterns['table'], _compiled_item_patterns['table'],
-#         _compiled_item_patterns['table_prefix']
-#     ),
-#     'quote': ItemCatalog(
-#         40, 6, 'расценка', _item_patterns['quote'], _compiled_item_patterns['quote'], None
-#     ),
-# }
+items_catalog: dict[str: ItemCatalogDirectory] = {x[1]: ItemCatalogDirectory(x[2], x[0], x[3], None, x[4])
+                                                  for x in src_catalog_items}
+
+for item in items_catalog:
+    items_catalog[item].compiled = re.compile(str(items_catalog[item].pattern))
+
+Physical_Property = (
+    ('Directory', 'Measures', 'Измерения'),
+    ('Measures', 'Square', 'площадь',),
+    ('Square', 'MeterSquare', 'метр квадратный'),
+    ('Measures', 'Mass', 'масса'),
+    ('Measures', 'Quantity', 'Количество'),
+    ('Quantity', 'Unit', 'штука'),
+    ('Measures', 'Time', 'Время'),
+    ('Measures', 'Length', 'Длинна'),
+    ('Measures', 'Volume', 'Объем'),
+    ('Volume', 'CubicMeter', 'метр кубический'),
+)
 
 if __name__ == "__main__":
     ic(src_catalog_items)
-    ic(src_catalog_items.__doc__)
+    ic(items_catalog)

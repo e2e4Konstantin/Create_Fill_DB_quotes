@@ -67,7 +67,7 @@ class dbTolls(dbControl):
                            f"получить id записи {args}")
         return None
 
-    def try_insert(self, query: str, src_data: tuple, message: str) -> int | None:
+    def go_insert(self, query: str, src_data: tuple, message: str) -> int | None:
         """ Пытается выполнить запрос на вставку записи в БД. Возвращает rowid """
         try:
             result = self.connection.execute(query, src_data)

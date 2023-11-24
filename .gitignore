@@ -7,3 +7,4 @@
 **/*.gzip
 **/*.sqlite
 **/*.sqlite3
+**/*.zip
