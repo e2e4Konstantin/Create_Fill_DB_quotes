@@ -155,8 +155,8 @@ sql_catalog_creates = {
                 WHERE p.ID_tblCatalog = m.ID_parent) AS 'описание родителя'
                 
             FROM tblCatalogs m 
-            LEFT JOIN tblDirectoryItems AS i ON i.ID_tblDirectoryItem = m.FK_tblCatalogs_tblDirectoryItems
-            ORDER BY m.code
+            LEFT JOIN tblDirectoryItems AS i ON i.ID_tblDirectoryItem = m.FK_tblCatalogs_tblDirectoryItems;
+            --ORDER BY m.code
     """,
 
 }

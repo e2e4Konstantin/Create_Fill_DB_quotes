@@ -32,7 +32,7 @@ def _transfer_raw_data_to_catalog(item: tuple[int, str], db_filename: str):
             success = []
 
             for row in raw_items:
-                ic(tuple(row))
+                # ic(tuple(row))
                 code = clear_code(row["PRESSMARK"])
                 raw_parent_code = row["PARENT_PRESSMARK"]
                 period = int(row["PERIOD"])
@@ -47,7 +47,7 @@ def _transfer_raw_data_to_catalog(item: tuple[int, str], db_filename: str):
                     description = title_extraction(row["TITLE"], item[1])
                     # ID_parent, period, code, description, FK_tblCatalogs_tblDirectoryItems
                     data = (id_parent, period, code, description, int(item[0]))
-                    ic(data)
+                    # ic(data)
                     message = f"INSERT tblCatalog {item[1]!r} шифр {code!r} период: {period}"
                     inserted_id = db.go_insert(sql_catalog_insert["insert_catalog"], data, message)
                     if inserted_id:
@@ -83,8 +83,11 @@ def transfer_raw_table_data_to_catalog(operating_db: str):
     dir_catalog = _get_sorted_directory_items(operating_db, directory_name='Catalog')
     ic(dir_catalog)
 
-    for item in dir_catalog:
+    for item in dir_catalog[:-1]:                           # расценки убираем
         _transfer_raw_data_to_catalog(item, operating_db)
+
+    # table_name = f"tblRawData"
+    # operating_db.go_execute(f"DROP TABLE IF EXISTS {table_name};")
 
 
 if __name__ == '__main__':

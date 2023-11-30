@@ -10,7 +10,7 @@ src_catalog_items = (
     ('Directory', 'Catalog', 'Каталог', r"^\s*0000\s*$", None),
     ('Catalog', 'Chapter', 'Глава', r"^\s*(\d+)\s*$", re.compile(r"^\s*Глава\s*((\d+)\.)*")),
     ('Chapter', 'Collection', 'Сборник', r"^\s*((\d+)\.(\d+))\s*$", re.compile(r"^\s*Сборник\s*((\d+)\.)*")),
-    ('Collection', 'Section', 'Отдел', r"^\s*((\d+)\.(\d+)-(\d+))\s*$", re.compile(r"^\s*Раздел\s*((\d+)\.)*")),
+    ('Collection', 'Section', 'Отдел', r"^\s*((\d+)\.(\d+)-(\d+))\s*$", re.compile(r"^\s*Отдел\s*((\d+)\.)*")),
     ('Section', 'Subsection', 'Раздел', r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", re.compile(r"^\s*Раздел\s*((\d+)\.)*")),
     ('Subsection', 'Table', 'Таблица', r"^\s*((\d+)\.(\d+)(-(\d+)){4})\s*$",
      re.compile(r"^\s*Таблица\s*((\d+)\.(\d+)-(\d+)\.)*")),

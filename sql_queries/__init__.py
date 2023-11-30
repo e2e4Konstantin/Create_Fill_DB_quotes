@@ -1,5 +1,8 @@
 from sql_queries.sql_directory_queries import sql_directory_creates, sql_directory_selects
 from sql_queries.sql_catalog_queries import sql_catalog_creates, sql_catalog_insert, sql_catalog_select
+
+from sql_queries.sql_quotes_queries import sql_quotes_creates
+
 from sql_queries.sql_raw_data import sql_raw_data
 
 

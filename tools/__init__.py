@@ -1,6 +1,6 @@
 from tools.insert_root_row_catalog import insert_root_record_to_catalog
 from tools.fill_directory_items import fill_directory_catalog_items
-from tools.data_filling import fill_catalog
+from tools.data_filling import fill_catalog, fill_quotes
 
 from tools.create_tables import create_tables_indexes
 from tools.code_tolls import clear_code

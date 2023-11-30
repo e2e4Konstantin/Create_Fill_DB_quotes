@@ -1,5 +1,5 @@
 from config import dbTolls
-from sql_queries import sql_directory_creates, sql_catalog_creates
+from sql_queries import sql_directory_creates, sql_catalog_creates, sql_quotes_creates
 
 
 def create_tables_indexes(db_file_name: str):
@@ -37,6 +37,23 @@ def create_tables_indexes(db_file_name: str):
         db.go_execute(sql_catalog_creates["create_trigger_history_catalog_insert"])
         db.go_execute(sql_catalog_creates["create_trigger_history_catalog_delete"])
         db.go_execute(sql_catalog_creates["create_trigger_history_catalog_update"])
+
+        # ---> Views -- Каталог ------------------------------------------------------------
+        db.go_execute(sql_catalog_creates["create_view_catalog_main"])
+
+        # --- > Расценки -- tblQuotes ---
+        db.go_execute(sql_quotes_creates["delete_table_quotes"])
+        db.go_execute(sql_quotes_creates["delete_index_quotes"])
+
+        db.go_execute(sql_quotes_creates["create_table_quotes"])
+        db.go_execute(sql_quotes_creates["create_index_quotes"])
+
+        db.go_execute(sql_quotes_creates["create_table_history_quotes"])
+        db.go_execute(sql_quotes_creates["create_index_history_quotes"])
+
+        db.go_execute(sql_quotes_creates["create_trigger_history_quotes_insert"])
+        db.go_execute(sql_quotes_creates["create_trigger_history_quotes_delete"])
+        db.go_execute(sql_quotes_creates["create_trigger_history_quotes_update"])
 
 
 if __name__ == '__main__':
