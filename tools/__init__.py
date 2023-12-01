@@ -3,4 +3,4 @@ from tools.fill_directory_items import fill_directory_catalog_items
 from tools.data_filling import fill_catalog, fill_quotes
 
 from tools.create_tables import create_tables_indexes
-from tools.code_tolls import clear_code
+from tools.code_tolls import clear_code, get_float_value, get_integer_value

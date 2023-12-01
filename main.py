@@ -7,11 +7,11 @@ from tools import create_tables_indexes, insert_root_record_to_catalog, fill_dir
 if __name__ == '__main__':
     version = f"{sqlite3.version} {sqlite3.sqlite_version}"
 
-    # data_path = r"F:\Kazak\GoogleDrive\NIAC\АИС_Выгрузка\csv"
-    # db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
+    data_path = r"F:\Kazak\GoogleDrive\NIAC\АИС_Выгрузка\csv"
+    db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
 
-    data_path = r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\csv"
-    db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
+    # data_path = r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\csv"
+    # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
 
     db_name = os.path.join(db_path, "quotes_test.sqlite3")
     catalog_data = os.path.join(data_path, "TABLES_67.csv")

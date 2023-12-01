@@ -1,9 +1,10 @@
+import sqlite3
 import pandas as pd
 from icecream import ic
 from config import dbTolls, items_catalog
 from sql_queries import sql_directory_selects, sql_catalog_insert, sql_raw_data, sql_catalog_select, sql_catalog_insert
 from files_features import output_message
-from tools.code_tolls import clear_code, title_extraction
+from tools.code_tolls import clear_code, title_catalog_extraction,
 
 
 def _get_item_id(period: int, code: str, db: dbTolls) -> int | None:
@@ -20,6 +21,12 @@ def _get_type_id(item_code: str, db: dbTolls) -> int | None:
     if id_catalog_items is None:
         output_message(f"В таблице типов не найден:",f"название: {item_code!r}")
     return id_catalog_items
+
+
+
+def _make_data_from_raw_quote(db: dbTolls, raw_quote: sqlite3.Row) -> tuple:
+    pass
+
 
 
 def _transfer_raw_data_to_catalog(item: tuple[int, str], db_filename: str):
@@ -44,7 +51,7 @@ def _transfer_raw_data_to_catalog(item: tuple[int, str], db_filename: str):
                 # id типа записи
                 id_items = str(item[0])
                 if id_parent and id_items:
-                    description = title_extraction(row["TITLE"], item[1])
+                    description = title_catalog_extraction(row["TITLE"], item[1])
                     # ID_parent, period, code, description, FK_tblCatalogs_tblDirectoryItems
                     data = (id_parent, period, code, description, int(item[0]))
                     # ic(data)

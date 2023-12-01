@@ -1,15 +1,25 @@
 sql_quotes_select = {
-    "select_catalog_period_code":   """
-        # SELECT ID_tblCatalog FROM tblCatalogs WHERE period = ? and code = ?;
+    "select_quotes_period_code":   """
+        SELECT ID_tblQuote FROM tblQuotes WHERE period = ? and code = ?;
         """,
 }
 
-
-
-sql_quotes_insert = {
-    "insert_catalog": """
-        # INSERT INTO tblCatalogs (ID_parent, period, code, description, FK_tblCatalogs_tblDirectoryItems) 
-        # VALUES ( ?, ?, ?, ?, ?);
+sql_quotes_insert_update = {
+    "insert_quote": """
+        INSERT INTO tblQuotes (
+                                    FK_tblQuotes_tblCatalogs, period, code, description, measurer, 
+                                    salary, operation_of_machines, cost_of_material
+                                 ) 
+        VALUES ( ?, ?, ?, ?, ?, ?, ?, ?);
+    """,
+    "update_quote": """
+        UPDATE tblQuotes 
+        SET 
+            FK_tblQuotes_tblCatalogs = ?, 
+            period = ?, code = ?, description = ?, measurer = ?, 
+            salary = ?, operation_of_machines = ?, cost_of_material = ? 
+        WHERE ID_tblQuote = ?
+        VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?);
     """,
 }
 
@@ -43,7 +53,7 @@ sql_quotes_creates = {
         """,
 
     "create_index_quotes": """
-        CREATE UNIQUE INDEX IF NOT EXISTS idxQuotesCode ON tblQuotes (code);
+        CREATE UNIQUE INDEX IF NOT EXISTS idxQuotesCode ON tblQuotes (code, period);
     """,
 
     "delete_table_quotes": """DROP TABLE IF EXISTS tblQuotes;""",

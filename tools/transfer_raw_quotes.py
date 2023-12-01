@@ -1,16 +1,68 @@
 import sqlite3
-import pandas as pd
 from icecream import ic
-from config import dbTolls, items_catalog
-from sql_queries import sql_directory_selects, sql_catalog_insert, sql_raw_data, sql_catalog_select, sql_catalog_insert
-from files_features import output_message
-from tools.code_tolls import clear_code, title_extraction
+
+from config import dbTolls
+from sql_queries import sql_quotes_insert_update, sql_raw_data, sql_catalog_select, sql_quotes_select
+from files_features import output_message, output_message_exit
+from tools.code_tolls import clear_code, text_cleaning, get_integer_value, get_float_value
 
 
-def _write_raw_quote(connections: sqlite3.Connection, raw_quotes: sqlite3.Row):
-    ic(tuple(raw_quotes))
+def _get_catalog_id(period: int, code: str, db: dbTolls) -> int | None:
+    """ Ищем в таблице Каталога запись по шифру и периоду """
+    row_id = db.get_row_id(sql_catalog_select["select_catalog_period_code"], period, code)
+    if row_id is None:
+        output_message(f"В каталоге не найдена запись:", f"шифр: {code!r} и период: {period}")
+    return row_id
+
+def _get_quote_id(period: int, code: str, db: dbTolls) -> int | None:
+    """ Ищем в таблице Расценок запись по шифру и периоду. """
+    row_id = db.get_row_id(sql_quotes_select["select_quotes_period_code"], period, code)
+    if row_id is None:
+        output_message(f"В каталоге не найдена запись:", f"шифр: {code!r} и период: {period}")
+    return row_id
 
 
+def _make_data_from_raw_quote(db: dbTolls, raw_quote: sqlite3.Row) -> tuple:
+    period = get_integer_value(raw_quote["PERIOD"])
+    catalog_code = raw_quote['GROUP_WORK_PROCESS']
+    if catalog_code is None:
+        # указатель на корневую запись каталога
+        holder_id = _get_catalog_id(period=0, code='0', db=db)
+    else:
+        catalog_code = clear_code(catalog_code)
+        holder_id = _get_catalog_id(period=period, code=catalog_code, db=db)
+        if not holder_id:
+            output_message_exit(f"Ошибка поиска в каталоге, записи для расценки {raw_quote["PRESSMARK"]}",
+                                f"В каталоге не найдена запись {catalog_code!r} период {period!r}")
+
+    code = clear_code(raw_quote["PRESSMARK"])
+    description = text_cleaning(raw_quote["TITLE"]).capitalize()
+    measurer = text_cleaning(raw_quote["UNIT_OF_MEASURE"])
+    salary = get_float_value(raw_quote["SALARY"])
+    operation_of_machines = get_float_value(raw_quote["OPERATION_OF_MACHINES"])
+    cost_of_material = get_float_value(raw_quote["COST_OF_MATERIAL"])
+    data = (holder_id, period, code, description, measurer, salary, operation_of_machines, cost_of_material)
+    return data
+
+
+
+
+
+def _update_quote(db, quote_id, quote: sqlite3.Row) -> int | None:
+    data = _make_data_from_raw_quote(db, quote) + (quote_id, )
+    db.go_execute(sql_quotes_insert_update["update_quote"], data)
+    return db.go_execute("""SELECT CHANGES();""")
+
+
+def _insert_raw_quote(db: dbTolls, raw_quote: sqlite3.Row) -> int | None:
+    data = _make_data_from_raw_quote(db, raw_quote)
+    # ic(data)
+    message = f"INSERT tblQuotes шифр {data[2]!r} период: {data[1]}"
+    inserted_id = db.go_insert(sql_quotes_insert_update["insert_quote"], data, message)
+    if not inserted_id:
+        output_message(f"расценка {tuple(raw_quote)}", f"не добавлена в tblQuotes")
+        return None
+    return inserted_id
 
 
 def transfer_raw_table_data_to_quotes(db_filename: str):
@@ -19,37 +71,24 @@ def transfer_raw_table_data_to_quotes(db_filename: str):
         result = db.go_execute(sql_raw_data["select_rwd_all"])
         if result:
             raw_quotes = result.fetchall()
-            success = []
+            inserted_success = []
+            updated_success = []
             for row in raw_quotes:
-                _write_raw_quote(db, row)
+                code = row["PRESSMARK"]
+                period = row["PERIOD"]
+                row_id = db.get_row_id(sql_quotes_select["select_quotes_period_code"], period, code)
+                if row_id:
+                    id = _update_quote(db, row_id, row)
+                    if id:
+                        updated_success.append((id, code))
+                else:
+                    id = _insert_raw_quote(db, row)
+                    if id:
+                        inserted_success.append((id, code, period))
 
-
-
-                # ic(type(row))
-
-                # code = clear_code(row["PRESSMARK"])
-                # raw_parent_code = row["PARENT_PRESSMARK"]
-                # period = int(row["PERIOD"])
-                # if raw_parent_code is None:
-                #     id_parent = _get_item_id(period=0, code='0', db=db)
-                # else:
-                #     parent_code = clear_code(raw_parent_code)
-                #     id_parent = _get_item_id(period=period, code=parent_code, db=db)
-                # # id типа записи
-                # id_items = str(item[0])
-                # if id_parent and id_items:
-                #     description = title_extraction(row["TITLE"], item[1])
-                #     # ID_parent, period, code, description, FK_tblCatalogs_tblDirectoryItems
-                #     data = (id_parent, period, code, description, int(item[0]))
-                #     # ic(data)
-                #     message = f"INSERT tblCatalog {item[1]!r} шифр {code!r} период: {period}"
-                #     inserted_id = db.go_insert(sql_catalog_insert["insert_catalog"], data, message)
-                #     if inserted_id:
-                #         success.append(inserted_id)
-                # else:
-                #     output_message(f"запись {tuple(row)}", f"не добавлена в БД")
-            log = f"добавлено {len(success)} записей."
-            ic(log)
+            ilog = f"Добавлено {len(inserted_success)} расценок."
+            ulog = f"Обновлено {len(updated_success)} расценок."
+            ic(ilog, ulog)
         else:
             output_message(f"в RAW таблице с данными для каталога не найдено ни одной записи:",
                            f"")
@@ -58,8 +97,8 @@ def transfer_raw_table_data_to_quotes(db_filename: str):
 if __name__ == '__main__':
     import os
 
-    # db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
-    db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
+    db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
+    # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
 
     db_name = os.path.join(db_path, "quotes_test.sqlite3")
     ic(db_name)

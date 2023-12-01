@@ -32,7 +32,7 @@ sql_catalog_creates = {
         """,
 
     "create_index_catalog_code": """
-        CREATE UNIQUE INDEX IF NOT EXISTS idxCatalogsCode ON tblCatalogs (code);
+        CREATE UNIQUE INDEX IF NOT EXISTS idxCatalogsCode ON tblCatalogs (code, period);
     """,
 
     "delete_table_catalog": """DROP TABLE IF EXISTS tblCatalogs;""",

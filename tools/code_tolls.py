@@ -1,4 +1,6 @@
 import re
+from fastnumbers import isfloat, isint
+
 from config import items_catalog
 
 _re_compiled_patterns = {
@@ -33,6 +35,7 @@ def keep_just_numbers_dots(source: str = None) -> str | None:
         return re.sub(_re_compiled_patterns['digits_dots'], r"", source)
     return ""
 
+
 #
 # def extract_code(source: str, item_name: str) -> str:
 #     """ Выделяет из входной строки шифр объекта в соответствии с названием объекта"""
@@ -40,14 +43,19 @@ def keep_just_numbers_dots(source: str = None) -> str | None:
 #     return bid_quote.group(0) if bid_quote else ""
 
 
-def title_extraction(title: str, item_name: str) -> str | None:
+def title_catalog_extraction(title: str, item_name: str) -> str | None:
     """ Удаляет из заголовка префикс. В первом слове делает первую букву заглавной. Удаляет лишние пробелы. """
-    title = remove_wildcard(title)
+    title = text_cleaning(title)
     if title:
-        clean_title = items_catalog[item_name].prefix.sub('', title).strip()
-        by_word = clean_title.split(" ")
-        by_word[0] = by_word[0].strip().capitalize()
-        return " ".join(by_word)
+        return items_catalog[item_name].prefix.sub('', title).strip().capitalize()
+    return None
+
+
+def text_cleaning(text: str) -> str | None:
+    """ Удаляет из заголовка служебные символы и лишние пробелы. """
+    text = remove_wildcard(text)
+    if text:
+        return " ".join(text.split())
     return None
 
 
@@ -96,8 +104,28 @@ def check_code_item(src_code: str, item_name) -> bool:
     return False
 
 
+# def _get_float_value(value: str) -> float:
+#     try:
+#         return float(str)
+#     except ValueError:
+#         return 0.0
+
+def get_float_value(value: str) -> float:
+    """ Конвертирует строку в число с плавающей точкой. """
+    if value:
+        value = value.replace(',', '.', 1)
+        return float(value) if isfloat(value) else 0.0
+    return 0.0
+
+
+def get_integer_value(value: str) -> int:
+    """ Конвертирует строку в целое число. """
+    return int(value) if isint(value) else 0
+
+
 if __name__ == "__main__":
     from icecream import ic
+
     c = '5.1-2-8'
     s = '5  . 1-1 .**-1-0-   1   '
     ic(keep_just_numbers(s))
