@@ -4,13 +4,24 @@ sql_catalog_select = {
         """,
 }
 
+# UPDATE tblCatalogs
+#         SET
+#             ID_parent = ?, period = ?, code = ?, description = ?, FK_tblCatalogs_tblDirectoryItems = ?
+#         WHERE ID_tblCatalog = ?
+#         VALUES ( ?, ?, ?, ?, ?, ?);
 
-
-sql_catalog_insert = {
+sql_catalog_insert_update = {
     "insert_catalog": """
         INSERT INTO tblCatalogs (ID_parent, period, code, description, FK_tblCatalogs_tblDirectoryItems) 
         VALUES ( ?, ?, ?, ?, ?);
     """,
+
+    "update_catalog_id": """
+        UPDATE tblCatalogs 
+        SET 
+            (ID_parent, period, code, description, FK_tblCatalogs_tblDirectoryItems) = (?, ?, ?, ?, ?) 
+        WHERE ID_tblCatalog = ?;
+    """
 }
 
 sql_catalog_creates = {

@@ -23,6 +23,10 @@ def _get_quote_id(period: int, code: str, db: dbTolls) -> int | None:
 
 
 def _make_data_from_raw_quote(db: dbTolls, raw_quote: sqlite3.Row) -> tuple:
+    """ Получает строку из таблицы tblRawData с импортированными расценками.
+        Выбирает нужные данные, проверяет их, находит в каталоге запись владельца расценки.
+        Возвращает кортеж с данными для вставки в Рабочую Таблицу Расценок.
+    """
     period = get_integer_value(raw_quote["PERIOD"])
     catalog_code = raw_quote['GROUP_WORK_PROCESS']
     if catalog_code is None:
@@ -46,9 +50,8 @@ def _make_data_from_raw_quote(db: dbTolls, raw_quote: sqlite3.Row) -> tuple:
 
 
 
-
-
-def _update_quote(db, quote_id, quote: sqlite3.Row) -> int | None:
+def _update_quote(db: dbTolls, quote_id: int, quote: sqlite3.Row) -> int | None:
+    """ Получает строку из Сырой таблице с расценками. Вставляет в рабочую таблицу. """
     data = _make_data_from_raw_quote(db, quote) + (quote_id, )
     db.go_execute(sql_quotes_insert_update["update_quote"], data)
     return db.go_execute("""SELECT CHANGES();""")
@@ -70,13 +73,12 @@ def transfer_raw_table_data_to_quotes(db_filename: str):
     with dbTolls(db_filename) as db:
         result = db.go_execute(sql_raw_data["select_rwd_all"])
         if result:
-            raw_quotes = result.fetchall()
             inserted_success = []
             updated_success = []
-            for row in raw_quotes:
+            for row in result.fetchall():
                 code = row["PRESSMARK"]
                 period = row["PERIOD"]
-                row_id = db.get_row_id(sql_quotes_select["select_quotes_period_code"], period, code)
+                row_id = db.get_row_id(sql_quotes_select["select_quotes_period_code"], (period, code))
                 if row_id:
                     id = _update_quote(db, row_id, row)
                     if id:

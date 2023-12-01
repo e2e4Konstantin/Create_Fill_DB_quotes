@@ -36,7 +36,7 @@ if __name__ == '__main__':
     fill_catalog(db_name, catalog_data, period=67)
 
     # заполнить данными расценки
-    fill_quotes(db_name, quotes_data, period=67)
+    # fill_quotes(db_name, quotes_data, period=67)
 
 
 

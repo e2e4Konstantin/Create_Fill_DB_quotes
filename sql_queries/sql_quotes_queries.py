@@ -4,6 +4,8 @@ sql_quotes_select = {
         """,
 }
 
+
+
 sql_quotes_insert_update = {
     "insert_quote": """
         INSERT INTO tblQuotes (
@@ -12,7 +14,7 @@ sql_quotes_insert_update = {
                                  ) 
         VALUES ( ?, ?, ?, ?, ?, ?, ?, ?);
     """,
-    "update_quote": """
+    "update_quote_id": """
         UPDATE tblQuotes 
         SET 
             FK_tblQuotes_tblCatalogs = ?, 
@@ -20,6 +22,7 @@ sql_quotes_insert_update = {
             salary = ?, operation_of_machines = ?, cost_of_material = ? 
         WHERE ID_tblQuote = ?
         VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        
     """,
 }
 

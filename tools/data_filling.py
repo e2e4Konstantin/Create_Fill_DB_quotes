@@ -31,7 +31,7 @@ def fill_catalog(db_file_name: str, csv_file_name: str, period: int):
     Занести данные из файла в таблицу tblCatalogs Каталог.
      """
     read_csv_to_raw_table(db_file_name, csv_file_name, period)
-    transfer_raw_table_data_to_catalog(db_file_name)
+    # transfer_raw_table_data_to_catalog(db_file_name)
 
 
 def fill_quotes(db_file_name: str, csv_file_name: str, period: int):
