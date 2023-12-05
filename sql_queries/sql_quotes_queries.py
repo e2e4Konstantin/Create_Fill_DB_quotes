@@ -1,6 +1,9 @@
 sql_quotes_select = {
-    "select_quotes_period_code":   """
-        SELECT ID_tblQuote FROM tblQuotes WHERE period = ? and code = ?;
+    "select_quotes_code":   """
+        SELECT ID_tblQuote FROM tblQuotes WHERE code = ?;
+        """,
+    "select_quotes_row_code":   """
+        SELECT * FROM tblQuotes WHERE code = ?;
         """,
 }
 
@@ -14,15 +17,14 @@ sql_quotes_insert_update = {
                                  ) 
         VALUES ( ?, ?, ?, ?, ?, ?, ?, ?);
     """,
+
     "update_quote_id": """
         UPDATE tblQuotes 
         SET 
             FK_tblQuotes_tblCatalogs = ?, 
             period = ?, code = ?, description = ?, measurer = ?, 
             salary = ?, operation_of_machines = ?, cost_of_material = ? 
-        WHERE ID_tblQuote = ?
-        VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?);
-        
+        WHERE ID_tblQuote = ?;
     """,
 }
 

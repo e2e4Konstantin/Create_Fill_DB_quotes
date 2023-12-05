@@ -8,7 +8,7 @@ from tools.transfer_raw_catalog import transfer_raw_table_data_to_catalog
 
 def read_csv_to_raw_table(db_file_name: str, csv_file_name: str, period: int):
     """ Читает данные из csv файла в df. Добавляет столбец 'период'.
-     Записывает df в таблицу БД. """
+     Записывает df в таблицу tblRawDat БД. """
     try:
         df = pd.read_csv(csv_file_name, delimiter=";", index_col=False, encoding="utf8", dtype=pd.StringDtype())
         df['PERIOD'] = period
@@ -26,17 +26,22 @@ def read_csv_to_raw_table(db_file_name: str, csv_file_name: str, period: int):
         print(err, csv_file_name)
 
 
-def fill_catalog(db_file_name: str, csv_file_name: str, period: int):
-    """
-    Занести данные из файла в таблицу tblCatalogs Каталог.
-     """
-    read_csv_to_raw_table(db_file_name, csv_file_name, period)
-    # transfer_raw_table_data_to_catalog(db_file_name)
+if __name__ == '__main__':
+    import os
 
+    db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
+    # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
+    data_path = r"F:\Kazak\GoogleDrive\NIAC\АИС_Выгрузка\csv"
 
-def fill_quotes(db_file_name: str, csv_file_name: str, period: int):
-    """
-    Занести данные из файла в таблицу Расценок.
-     """
-    read_csv_to_raw_table(db_file_name, csv_file_name, period)
-    # transfer_raw_table_data_to_catalog(db_file_name)
+    catalog_data = os.path.join(data_path, "TABLES_67.csv")
+    quotes_data = os.path.join(data_path, "WORK_PROCESS_67.csv")
+    db_name = os.path.join(db_path, "quotes_test.sqlite3")
+
+    ic(db_name)
+    period = 67
+
+    # ic(catalog_data)
+    # read_csv_to_raw_table(db_name, catalog_data, period)
+
+    ic(quotes_data)
+    read_csv_to_raw_table(db_name, quotes_data, period)

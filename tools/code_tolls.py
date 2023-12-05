@@ -136,6 +136,7 @@ if __name__ == "__main__":
     ic(split_code(c))
 
     ic(clear_code(s))
+    ic(clear_code(""))
 
     # print(items_data.keys())
     # print([x for x in items_data.keys()])

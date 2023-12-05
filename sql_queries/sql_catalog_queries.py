@@ -1,7 +1,16 @@
 sql_catalog_select = {
-    "select_catalog_period_code":   """
-        SELECT ID_tblCatalog FROM tblCatalogs WHERE period = ? and code = ?;
+    "select_catalog_id_code":   """
+        SELECT ID_tblCatalog FROM tblCatalogs WHERE code = ?;
         """,
+
+    "select_catalog_row_id":   """
+        SELECT * FROM tblCatalogs WHERE ID_tblCatalog = ?;
+        """,
+
+    "select_catalog_row_code": """
+        SELECT * FROM tblCatalogs WHERE code = ?;
+        """,
+
 }
 
 # UPDATE tblCatalogs
