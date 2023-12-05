@@ -2,7 +2,7 @@ import sqlite3
 from icecream import ic
 
 from config import dbTolls
-from sql_queries import sql_quotes_insert_update, sql_raw_data, sql_catalog_select, sql_quotes_select
+from sql_queries import sql_quotes_insert_update, sql_raw_data, sql_catalog_select, sql_quotes_select, sql_quotes_delete
 from files_features import output_message, output_message_exit
 from tools.code_tolls import clear_code, text_cleaning, get_integer_value, get_float_value
 
@@ -116,6 +116,27 @@ def transfer_raw_table_data_to_quotes(db_filename: str):
             output_message(f"в RAW таблице с данными для каталога не найдено ни одной записи:",
                            f"")
 
+    # удалить из Расценок записи период которых меньше чем максимальный период
+    _delete_last_period_quotes_row(db_filename)
+
+
+def _delete_last_period_quotes_row(db_filename: str):
+    with (dbTolls(db_filename) as db):
+        work_cursor = db.go_execute(sql_quotes_select["select_quotes_max_period"])
+        max_period = work_cursor.fetchone() if work_cursor else None
+        if max_period:
+            current_period = max_period['max_period']
+            ic(current_period)
+            deleted_cursor = db.go_execute(sql_quotes_select["select_quotes_count_period_less"], (current_period,))
+            mess = f"Из Расценок будут удалены {deleted_cursor.fetchone()[0]} записей у которых период меньше текущего: {current_period}"
+            ic(mess)
+            deleted_cursor = db.go_execute(sql_quotes_delete["delete_quotes_last_periods"], (current_period, ))
+            mess = f"Из Расценок удалено {deleted_cursor.rowcount} записей с period < {current_period}"
+            ic(mess)
+        else:
+            output_message_exit(f"Что то пошло не так при получении максимального периода Расценок",
+                                f"{sql_catalog_select['select_max_period']!r}")
+
 
 if __name__ == '__main__':
     import os
@@ -125,4 +146,5 @@ if __name__ == '__main__':
 
     db_name = os.path.join(db_path, "quotes_test.sqlite3")
     ic(db_name)
-    transfer_raw_table_data_to_quotes(db_name)
+    # transfer_raw_table_data_to_quotes(db_name)
+    _delete_last_period_quotes_row(db_name)

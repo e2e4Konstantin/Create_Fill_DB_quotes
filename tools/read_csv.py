@@ -1,9 +1,8 @@
 import pandas as pd
 from icecream import ic
 
-from config import dbTolls, src_catalog_items
-from sql_queries import sql_directory_creates
-from tools.transfer_raw_catalog import transfer_raw_table_data_to_catalog
+from config import dbTolls
+
 
 
 def read_csv_to_raw_table(db_file_name: str, csv_file_name: str, period: int):

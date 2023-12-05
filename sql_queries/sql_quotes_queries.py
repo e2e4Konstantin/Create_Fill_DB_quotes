@@ -1,3 +1,15 @@
+sql_quotes_delete = {
+    "delete_quotes_last_periods": """
+        DELETE FROM tblQuotes 
+        WHERE ID_tblQuote IN (
+                SELECT ID_tblQuote 
+                FROM tblQuotes 
+                WHERE period > 0 AND period < ?);
+        """,
+}
+
+
+
 sql_quotes_select = {
     "select_quotes_code":   """
         SELECT ID_tblQuote FROM tblQuotes WHERE code = ?;
@@ -5,6 +17,13 @@ sql_quotes_select = {
     "select_quotes_row_code":   """
         SELECT * FROM tblQuotes WHERE code = ?;
         """,
+    "select_quotes_max_period": """
+        SELECT MAX(period) AS max_period FROM tblQuotes;         
+    """,
+
+    "select_quotes_count_period_less": """
+        SELECT COUNT(*) FROM tblQuotes WHERE period > 0 AND period < ?;
+    """,
 }
 
 
@@ -68,7 +87,7 @@ sql_quotes_creates = {
     "create_table_history_quotes": """
         CREATE TABLE IF NOT EXISTS _tblHistoryQuotes (
             _rowid        INTEGER,
-            --
+            
             ID_tblQuote   INTEGER,
             FK_tblQuotes_tblCatalogs INTEGER,
             ID_parent     INTEGER,
@@ -81,7 +100,7 @@ sql_quotes_creates = {
             cost_of_material        REAL,
             direct_costs 	        REAL,                         
             last_update             INTEGER,          
-            --
+            
             _version      INTEGER NOT NULL,
             _updated      INTEGER NOT NULL,
             _mask         INTEGER NOT NULL
@@ -125,7 +144,7 @@ sql_quotes_creates = {
                 old.rowid, old.ID_tblQuote, old.FK_tblQuotes_tblCatalogs, old.ID_parent, 
                 old.period, old.code, old.description, old.measurer, 
                 old.salary, old.operation_of_machines, old.cost_of_material, old.direct_costs, old.last_update, 
-                (SELECT COALESCE(MAX(_version), 0) FROM _tblHistoryCatalogs WHERE _rowid = old.rowid) + 1,
+                (SELECT COALESCE(MAX(_version), 0) FROM _tblHistoryQuotes WHERE _rowid = old.rowid) + 1,
                 unixepoch('now'), -1
             );
         END;
@@ -158,7 +177,7 @@ sql_quotes_creates = {
                 CASE WHEN old.direct_costs != new.direct_costs THEN new.direct_costs ELSE null END,
                 CASE WHEN old.last_update != new.last_update THEN new.last_update ELSE null END,
                 
-                (SELECT MAX(_version) FROM _tblHistoryCatalogs WHERE _rowid = old.rowid) + 1,
+                (SELECT MAX(_version) FROM _tblHistoryQuotes WHERE _rowid = old.rowid) + 1,
                 unixepoch('now'),
                 
                 (CASE WHEN old.ID_tblQuote != new.ID_tblQuote then 1 else 0 END) +

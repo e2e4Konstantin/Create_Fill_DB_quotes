@@ -2,7 +2,9 @@ import sqlite3
 import pandas as pd
 from icecream import ic
 from config import dbTolls, items_catalog
-from sql_queries import sql_directory_selects, sql_catalog_insert_update, sql_raw_data, sql_catalog_select
+from sql_queries import (
+    sql_directory_selects, sql_catalog_insert_update, sql_raw_data, sql_catalog_select, sql_catalog_delete
+)
 from files_features import output_message, output_message_exit
 from tools.code_tolls import clear_code, title_catalog_extraction, get_integer_value
 
@@ -80,7 +82,7 @@ def _transfer_raw_data_to_catalog(item: tuple[int, str], db_filename: str):
             for raw_count, row in enumerate(raw_cursor.fetchall()):
                 raw_code = clear_code(row["PRESSMARK"])
                 raw_period = get_integer_value(row["PERIOD"])
-                work_cursor = db.go_execute(sql_catalog_select["select_catalog_row_code"], (raw_code, ))
+                work_cursor = db.go_execute(sql_catalog_select["select_catalog_row_code"], (raw_code,))
                 work_row = work_cursor.fetchone() if work_cursor else None
                 if work_row:
                     work_period = work_row['period']
@@ -97,7 +99,7 @@ def _transfer_raw_data_to_catalog(item: tuple[int, str], db_filename: str):
                     work_id = _insert_raw_catalog(db, row, item)
                     if work_id:
                         inserted_success.append((id, raw_code))
-            alog = f"Всего пройдено записей в raw таблице: {raw_count+1}."
+            alog = f"Всего пройдено записей в raw таблице: {raw_count + 1}."
             ilog = f"Добавлено {len(inserted_success)} записей {item[1]!r}."
             ulog = f"Обновлено {len(updated_success)} записей {item[1]!r}."
             none_log = f"Непонятных записей: {raw_count + 1 - (len(updated_success) + len(inserted_success))}."
@@ -123,8 +125,29 @@ def _get_sorted_directory_items(db_filename: str, directory_name: str):
     return tuple(dir_tree[1:])
 
 
+def _delete_last_period_catalog_row(db_filename: str):
+    with (dbTolls(db_filename) as db):
+        work_cursor = db.go_execute(sql_catalog_select["select_catalog_max_period"])
+        max_period = work_cursor.fetchone() if work_cursor else None
+        if max_period:
+            current_period = max_period['max_period']
+            ic(current_period)
+            deleted_cursor = db.go_execute("SELECT COUNT(*) FROM tblCatalogs WHERE period > 0 AND period < ?", (current_period,))
+            mess = f"Из Каталога будут удалены {deleted_cursor.fetchone()[0]} записей у которых период меньше текущего: {current_period}"
+            ic(mess)
+            deleted_cursor = db.go_execute(sql_catalog_delete["delete_catalog_last_periods"], (current_period, ))
+            mess = f"Из Каталога удалено {deleted_cursor.rowcount} записей с period < {current_period}"
+            ic(mess)
+        else:
+            output_message_exit(f"Что то пошло не так при получении максимального периода Каталога:",
+                                f"{sql_catalog_select['select_max_period']!r}")
+
+
 def transfer_raw_table_data_to_catalog(operating_db: str):
-    """ Заполняет каталог данными из таблицы с сырыми данными в рабочую таблицу. """
+    """ Заполняет каталог данными из таблицы с сырыми данными в рабочую таблицу.
+        Каталог заполняется по иерархии названий элементов каталога.
+        Иерархия задается родителями в классе ItemCatalogDirectory.
+    """
     ic()
     dir_catalog = _get_sorted_directory_items(operating_db, directory_name='Catalog')
     ic(dir_catalog)
@@ -132,8 +155,8 @@ def transfer_raw_table_data_to_catalog(operating_db: str):
     for item in dir_catalog[:-1]:  # расценки убираем
         _transfer_raw_data_to_catalog(item, operating_db)
 
-    # table_name = f"tblRawData"
-    # operating_db.go_execute(f"DROP TABLE IF EXISTS {table_name};")
+    # удалить из Каталога записи период которых меньше чем текущий период
+    _delete_last_period_catalog_row(operating_db)
 
 
 if __name__ == '__main__':
@@ -147,4 +170,7 @@ if __name__ == '__main__':
     # ic(catalog_items)
     # (1, 67, '3', 'Строительные работы', 3, 2))
 
-    transfer_raw_table_data_to_catalog(db_name)
+    # transfer_raw_table_data_to_catalog(db_name)
+
+    _delete_last_period_catalog_row(db_name)
+

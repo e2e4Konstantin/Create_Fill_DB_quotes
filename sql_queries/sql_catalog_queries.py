@@ -1,3 +1,14 @@
+sql_catalog_delete = {
+    "delete_catalog_last_periods": """
+        DELETE FROM tblCatalogs 
+        WHERE ID_tblCatalog IN (
+                SELECT ID_tblCatalog 
+                FROM tblCatalogs 
+                WHERE period > 0 AND period < ?);
+        """,
+
+}
+
 sql_catalog_select = {
     "select_catalog_id_code":   """
         SELECT ID_tblCatalog FROM tblCatalogs WHERE code = ?;
@@ -10,6 +21,9 @@ sql_catalog_select = {
     "select_catalog_row_code": """
         SELECT * FROM tblCatalogs WHERE code = ?;
         """,
+    "select_catalog_max_period": """
+        SELECT MAX(period) AS max_period FROM tblCatalogs;         
+    """,
 
 }
 

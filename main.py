@@ -2,7 +2,10 @@ import os
 import sqlite3
 from icecream import ic
 
-from tools import create_tables_indexes, insert_root_record_to_catalog, fill_directory_catalog_items, fill_catalog, fill_quotes
+from tools import (
+    create_tables_indexes, insert_root_record_to_catalog, fill_directory_catalog_items,
+    read_csv_to_raw_table, transfer_raw_table_data_to_catalog, transfer_raw_table_data_to_quotes
+)
 
 if __name__ == '__main__':
     version = f"{sqlite3.version} {sqlite3.sqlite_version}"
@@ -14,29 +17,44 @@ if __name__ == '__main__':
     # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
 
     db_name = os.path.join(db_path, "quotes_test.sqlite3")
-    catalog_data = os.path.join(data_path, "TABLES_67.csv")
-    quotes_data = os.path.join(data_path, "WORK_PROCESS_67.csv")
 
-    ic(db_name)
-    ic(catalog_data)
+    # period = 67
+    # catalog_data = os.path.join(data_path, "TABLES_67.csv")
+    # quotes_data = os.path.join(data_path, "WORK_PROCESS_67.csv")
+
+    period = 68
+    catalog_data = os.path.join(data_path, "TABLES_68.csv")
+    quotes_data = os.path.join(data_path, "WORK_PROCESS_68.csv")
+
     ic(version)
+    ic(db_name)
 
-    # удаляем файл БД если такой есть
-    if os.path.isfile(db_name):
-        os.unlink(db_name)
+    # # удаляем файл БД если такой есть
+    # if os.path.isfile(db_name):
+    #     os.unlink(db_name)
+    #
+    # # создать таблицы, индексы, триггеры
+    # create_tables_indexes(db_name)
+    # # заполнить данными справочник элементов каталога
+    # fill_directory_catalog_items(db_name)
+    # # вставить корневую запись в каталог
+    # insert_root_record_to_catalog(db_name)
 
-    # создать таблицы, индексы, триггеры
-    create_tables_indexes(db_name)
-    # заполнить данными справочник элементов каталога
-    fill_directory_catalog_items(db_name)
-    # вставить корневую запись в каталог
-    insert_root_record_to_catalog(db_name)
+    # ----------------------------------------------
 
-    # заполнить данными каталог
-    fill_catalog(db_name, catalog_data, period=67)
+    # 1
+    # прочитать из csv файла данные для Каталога в таблицу tblRawData для периода period
+    ic(catalog_data)
+    read_csv_to_raw_table(db_name, catalog_data, period)
+    # заполнить Каталог данными из таблицы tblRawData
+    transfer_raw_table_data_to_catalog(db_name)
 
-    # заполнить данными расценки
-    # fill_quotes(db_name, quotes_data, period=67)
+    # 2
+    # прочитать из csv файла данные для Расценок в таблицу tblRawData для периода period
+    ic(quotes_data)
+    read_csv_to_raw_table(db_name, quotes_data, period)
+    # заполнить Каталог данными из таблицы tblRawData
+    transfer_raw_table_data_to_quotes(db_name)
 
-
-
+    # raw_table_name = sql_raw_data["table_name_raw_data"]
+    # operating_db.go_execute(f"DROP TABLE IF EXISTS {table_name};")
