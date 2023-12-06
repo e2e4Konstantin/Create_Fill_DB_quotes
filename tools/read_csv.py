@@ -1,8 +1,7 @@
 import pandas as pd
 from icecream import ic
-
+from pathlib import Path
 from config import dbTolls
-
 
 
 def read_csv_to_raw_table(db_file_name: str, csv_file_name: str, period: int):
@@ -19,7 +18,8 @@ def read_csv_to_raw_table(db_file_name: str, csv_file_name: str, period: int):
             df.to_sql(table_name, db.connection, if_exists='append', index=False)
             db.connection.commit()
             x = pd.read_sql_query(sql=f"SELECT COUNT(rowid) AS count FROM {table_name};", con=db.connection)
-            count = f"вставлено записей {int(x.iloc[0]['count'])} в таблицу {table_name}"
+
+            count = f"{int(x.iloc[0]['count'])} записей вставлено в таблицу {table_name} из файла {Path(csv_file_name).name}"
             ic(count)
     except IOError as err:
         print(err, csv_file_name)
