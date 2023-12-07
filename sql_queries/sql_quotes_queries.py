@@ -82,6 +82,7 @@ sql_quotes_creates = {
 
     "delete_table_quotes": """DROP TABLE IF EXISTS tblQuotes;""",
     "delete_index_quotes": """DROP INDEX IF EXISTS idxQuotesCode;""",
+    "delete_quotes_view_main": """DROP VIEW IF EXISTS viewQuotesMain;""",
 
     # --- > История Расценок ----------------------------------------------------------------------
     "create_table_history_quotes": """
@@ -211,30 +212,17 @@ sql_quotes_creates = {
         END;
     """,
 
-    "create_view_catalog_main": """
-        CREATE VIEW viewCatalog AS
+    "create_view_quotes_main": """
+        CREATE VIEW viewQuotesMain AS
             SELECT 
-                m.period AS 'период',
-                i.name AS 'тип', 
-                m.code AS 'шифр', 
-                m.description AS 'описание',
-            
-                (SELECT i.name
-                FROM tblCatalogs p
-                LEFT JOIN tblDirectoryItems i ON i.ID_tblDirectoryItem = p.FK_tblCatalogs_tblDirectoryItems
-                WHERE p.ID_tblCatalog = m.ID_parent) AS 'тип родителя',
-                
-                (SELECT p.code
-                FROM tblCatalogs p
-                WHERE p.ID_tblCatalog = m.ID_parent) AS 'шифр родителя',
-                
-               (SELECT p.description
-                FROM tblCatalogs p
-                WHERE p.ID_tblCatalog = m.ID_parent) AS 'описание родителя'
-                
-            FROM tblCatalogs m 
-            LEFT JOIN tblDirectoryItems AS i ON i.ID_tblDirectoryItem = m.FK_tblCatalogs_tblDirectoryItems;
-            --ORDER BY m.code
+                i.name AS parent,
+                c.code AS parent_code,
+                q.code AS quotes_code,
+                q.description AS title
+            FROM tblQuotes q 
+            LEFT JOIN tblCatalogs AS c ON c.ID_tblCatalog = q.FK_tblQuotes_tblCatalogs
+            LEFT JOIN tblDirectoryItems AS i ON i.ID_tblDirectoryItem = c.FK_tblCatalogs_tblDirectoryItems
+            ORDER BY quotes_code;
     """,
 
 }

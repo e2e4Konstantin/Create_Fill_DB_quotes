@@ -44,9 +44,11 @@ def create_tables_indexes(db_file_name: str):
         # --- > Расценки -- tblQuotes ---
         db.go_execute(sql_quotes_creates["delete_table_quotes"])
         db.go_execute(sql_quotes_creates["delete_index_quotes"])
+        db.go_execute(sql_quotes_creates["delete_quotes_view_main"])
 
         db.go_execute(sql_quotes_creates["create_table_quotes"])
         db.go_execute(sql_quotes_creates["create_index_quotes"])
+        db.go_execute(sql_quotes_creates["create_view_quotes_main"])
 
         db.go_execute(sql_quotes_creates["create_table_history_quotes"])
         db.go_execute(sql_quotes_creates["create_index_history_quotes"])
