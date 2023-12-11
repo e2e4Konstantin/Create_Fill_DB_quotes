@@ -225,6 +225,8 @@ sql_quotes_creates = {
             ORDER BY quotes_code;
     """,
 
+
+
 }
 
 # SELECT code, description, substr(code, 1, 2), cast(code as cast), length(code), ABS(code)  FROM tblCatalogs;

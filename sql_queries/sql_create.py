@@ -189,5 +189,54 @@ sql_creates = {
         CREATE UNIQUE INDEX IF NOT EXISTS idxCatalogCode ON tblCatalogs (code);
     """,
 
+    "create_view_catalog_main": """
+        CREATE VIEW viewCatalog AS
+            SELECT 
+                m.period AS 'период',
+                i.name AS 'тип', 
+                m.code AS 'шифр', 
+                m.description AS 'описание',
+
+                (SELECT i.name
+                FROM tblCatalogs p
+                LEFT JOIN tblDirectoryItems i ON i.ID_tblDirectoryItem = p.FK_tblCatalogs_tblDirectoryItems
+                WHERE p.ID_tblCatalog = m.ID_parent) AS 'тип родителя',
+
+                (SELECT p.code
+                FROM tblCatalogs p
+                WHERE p.ID_tblCatalog = m.ID_parent) AS 'шифр родителя',
+
+               (SELECT p.description
+                FROM tblCatalogs p
+                WHERE p.ID_tblCatalog = m.ID_parent) AS 'описание родителя'
+
+            FROM tblCatalogs m 
+            LEFT JOIN tblDirectoryItems AS i ON i.ID_tblDirectoryItem = m.FK_tblCatalogs_tblDirectoryItems;
+            --ORDER BY m.code
+        """,
+
+    # --- > для Хранения подчиненности расценок Основная/Дополнительная расценка ---------
+
+    "create_table_quotes_chains": """
+       CREATE TABLE IF NOT EXISTS tblQuotesChains (
+            ID_tblQuotesChain   INTEGER PRIMARY KEY NOT NULL,
+            last_update         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            period              INTEGER NOT NULL,
+            FK_tblQuotes_child  INTEGER DEFAULT NULL,                   -- подчиненная расценка
+            FK_tblQuotes_parent INTEGER DEFAULT NULL,                   -- родительская расценка
+            
+            FOREIGN KEY (FK_tblQuotes_child) REFERENCES tblQuotes (ID_tblQuote),
+            FOREIGN KEY (FK_tblQuotes_parent) REFERENCES tblQuotes (ID_tblQuote),
+            
+            UNIQUE (FK_tblQuotes_child, FK_tblQuotes_parent)
+        );
+        """,
+
+    "create_index_quotes_chain": """
+        CREATE INDEX IF NOT EXISTS idxChild_tblQuotesChain ON tblQuotesChains (FK_tblQuotes_child);
+        """,
+
+
+
 }
 
