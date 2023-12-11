@@ -40,7 +40,22 @@ sql_quotes_chain_create = {
         CREATE INDEX IF NOT EXISTS idxHistoryQuotesChains ON _tblHistoryQuotesChains (_rowid);
     """,
 
-
+    "create_trigger_history_quotes_chain_insert": """
+        CREATE TRIGGER IF NOT EXISTS tgrHistoryQuotesChainInsert
+        AFTER INSERT ON tblQuotesChains
+        BEGIN
+            INSERT INTO _tblHistoryQuotesChains (
+                _rowid, 
+                ID_tblQuotesChain, last_update, period, FK_tblQuotes_child, FK_tblQuotes_parent,
+                _version, _updated, _mask 
+            )
+            VALUES (
+                new.rowid, 
+                new.ID_tblQuotesChain, new.last_update, new.period, new.FK_tblQuotes_child, new.FK_tblQuotes_parent,  
+                1, unixepoch('now'), 0
+            );
+        END;
+    """,
 
 
 }
