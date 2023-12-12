@@ -4,10 +4,10 @@ from sql_queries.sql_catalog_queries import (
         sql_catalog_insert_update,
         sql_catalog_select,
         sql_catalog_delete,
-
 )
 
 from sql_queries.sql_quotes_chains import sql_quotes_chain_create
+from sql_queries.sql_resources import sql_resources_create
 
 
 from sql_queries.sql_quotes_queries import (

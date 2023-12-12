@@ -1,5 +1,6 @@
 from config import dbTolls
-from sql_queries import sql_directory_creates, sql_catalog_creates, sql_quotes_creates, sql_quotes_chain_create
+from sql_queries import (sql_directory_creates,
+                         sql_catalog_creates, sql_quotes_creates, sql_quotes_chain_create, sql_resources_create)
 
 
 def _create_directory_environment(db: dbTolls):
@@ -67,6 +68,34 @@ def _create_quotes_chains_environment(db: dbTolls):
     db.go_execute(sql_quotes_chain_create["delete_quotes_history_quotes_chains"])
     db.go_execute(sql_quotes_chain_create["delete_index_history_quotes_chains"])
 
+    db.go_execute(sql_quotes_chain_create["create_table_quotes_chains"])
+    db.go_execute(sql_quotes_chain_create["create_index_quotes_chain"])
+    db.go_execute(sql_quotes_chain_create["create_table_history_quotes_chains"])
+    db.go_execute(sql_quotes_chain_create["create_index_history_quotes_chain"])
+
+    db.go_execute(sql_quotes_chain_create["create_trigger_history_quotes_chain_insert"])
+    db.go_execute(sql_quotes_chain_create["create_trigger_history_quotes_chain_delete"])
+    db.go_execute(sql_quotes_chain_create["create_trigger_history_quotes_chain_update"])
+
+
+def _create_resources_environment(db: dbTolls):
+    """ Создать инфраструктуру для Ресурсов. Главы 1, 2, 13. Таблицы, индексы и триггеры. """
+    db.go_execute(sql_resources_create["delete_table_quotes_chains"])
+    db.go_execute(sql_resources_create["delete_index_quotes_chains"])
+    db.go_execute(sql_resources_create["delete_quotes_history_quotes_chains"])
+    db.go_execute(sql_resources_create["delete_index_history_quotes_chains"])
+
+    db.go_execute(sql_resources_create["create_table_resources"])
+    db.go_execute(sql_resources_create["create_index_resources"])
+    db.go_execute(sql_resources_create["create_table_history_resource"])
+    db.go_execute(sql_resources_create["create_index_history_resources"])
+
+    db.go_execute(sql_resources_create["create_trigger_history_resources_insert"])
+    db.go_execute(sql_resources_create["create_trigger_history_resources_delete"])
+    db.go_execute(sql_resources_create["create_trigger_history_resources_update"])
+
+
+
 
 def create_tables_indexes(db_file_name: str):
 
@@ -79,6 +108,9 @@ def create_tables_indexes(db_file_name: str):
         _create_quotes_environment(db)
         # --- > Иерархия расценок -- tblQuotesChains ---
         _create_quotes_chains_environment(db)
+        # --- > Ресурсы -- tblResources ---
+        _create_resources_environment(db)
+
 
 
 if __name__ == '__main__':
