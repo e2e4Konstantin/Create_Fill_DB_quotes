@@ -95,8 +95,6 @@ def _create_resources_environment(db: dbTolls):
     db.go_execute(sql_resources_create["create_trigger_history_resources_update"])
 
 
-
-
 def create_tables_indexes(db_file_name: str):
 
     with dbTolls(db_file_name) as db:

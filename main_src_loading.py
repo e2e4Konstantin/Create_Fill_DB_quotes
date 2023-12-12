@@ -25,6 +25,7 @@ if __name__ == '__main__':
     period = 68
     catalog_data = os.path.join(data_path, "TABLES_68.csv")
     quotes_data = os.path.join(data_path, "WORK_PROCESS_68.csv")
+    resources_data =
 
     ic(version)
     ic(db_name)
@@ -42,19 +43,26 @@ if __name__ == '__main__':
 
     # ----------------------------------------------
 
-    # 1
+    # 1 Каталог
     # прочитать из csv файла данные для Каталога в таблицу tblRawData для периода period
     ic(catalog_data)
     read_csv_to_raw_table(db_name, catalog_data, period)
     # заполнить Каталог данными из таблицы tblRawData
     transfer_raw_table_data_to_catalog(db_name)
 
-    # 2
+    # 2 Расценки
     # прочитать из csv файла данные для Расценок в таблицу tblRawData для периода period
     ic(quotes_data)
     read_csv_to_raw_table(db_name, quotes_data, period)
-    # заполнить Каталог данными из таблицы tblRawData
+    # заполнить Расценки данными из таблицы tblRawData
     transfer_raw_table_data_to_quotes(db_name)
+
+    # 3 Ресурсы
+    ic(resources_data)
+    read_csv_to_raw_table(db_name, resources_data, period)
+
+
+
 
     # raw_table_name = sql_raw_data["table_name_raw_data"]
     # operating_db.go_execute(f"DROP TABLE IF EXISTS {table_name};")
