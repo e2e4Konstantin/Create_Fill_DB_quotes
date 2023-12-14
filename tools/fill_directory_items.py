@@ -1,22 +1,18 @@
 from icecream import ic
 
-from config import dbTolls, src_catalog_items, items_catalog
-from sql_queries import sql_directory_creates
+from config import dbTolls, items_catalog
+from sql_queries import sql_items_creates
 
 
 def fill_directory_catalog_items(db_file_name: str):
-    """ Создает корневую запись всех справочников.
-        Заполняет справочник данными из списка объектов каталога.
-        Создается иерархия в соответствии с этим списком.
-     """
+    """ Заполняет справочник элементов каталога. """
     with dbTolls(db_file_name) as db:
         # (code, name)
-        root_data = src_catalog_items[0][1:3]
-        message_root = "вставка корневой записи в справочник объектов каталога."
         message_item = "вставка записи в справочник объектов каталога."
-        id_inserted_row = db.go_insert(sql_directory_creates["insert_root_item_directory"], root_data, message_root)
-        ic(id_inserted_row, root_data)
-        # (ID_parent, code, name)
-        for item in src_catalog_items[1:]:
-            id_inserted_row = db.go_insert(sql_directory_creates["insert_item_directory"], item[:3], message_item)
-            ic(id_inserted_row, item[:3])
+        for item, data in items_catalog.items():
+            inserted_id = db.go_insert(
+                query=sql_items_creates["insert_item"],
+                src_data=(data.team, item, data.name),
+                message=message_item
+            )
+            # ic(inserted_id, data.team, item, data.name)

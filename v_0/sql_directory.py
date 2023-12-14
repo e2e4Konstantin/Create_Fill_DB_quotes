@@ -1,14 +1,16 @@
 
-sql_directory_selects = {
+sql_directory_queries = {
     "select_directory_all":         """SELECT * FROM tblDirectoryItems;""",
-    "select_directory_name":        """SELECT ID_tblDirectoryItem FROM tblDirectoryItems WHERE code IS ?;""",
-    "select_directory_all_short":   """SELECT ID_tblDirectoryItem, ID_parent, code, name FROM tblDirectoryItems;""",
-
-
+    "select_directory_code":        """SELECT ID_tblDirectoryItem FROM tblDirectoryItems WHERE code IS ?;""",
+    "select_directory_all_norm":   """SELECT ID_tblDirectoryItem, ID_parent, code, name FROM tblDirectoryItems;""",
 }
 
-
 sql_directory_creates = {
+    "delete_table_directory": """DROP TABLE IF EXISTS tblDirectoryItems;""",
+    "delete_index_directory": """DROP INDEX IF EXISTS idxDirectoryCodes;""",
+
+    "delete_table_directory_history": """DROP TABLE IF EXISTS _tblHistoryDirectoryItems;""",
+    "delete_index_directory_history": """DROP INDEX IF EXISTS idxHistoryDirectory;""",
 
     # --- > Таблица для хранения иерархических справочников значений ---------------------
     #
@@ -26,7 +28,7 @@ sql_directory_creates = {
     # 7	    6	    Table   	    Таблица
     # 8	    7	    Quote	        Расценка
 
-    "create_table_directory_items": """
+    "create_table_directory": """
         CREATE TABLE IF NOT EXISTS tblDirectoryItems (
                 ID_tblDirectoryItem INTEGER PRIMARY KEY NOT NULL,
                 ID_parent           INTEGER REFERENCES tblDirectoryItems (ID_tblDirectoryItem) DEFAULT NULL,
@@ -36,7 +38,7 @@ sql_directory_creates = {
                 UNIQUE (code));
     """,
 
-    "create_index_director_items": """
+    "create_index_directory": """
         CREATE UNIQUE INDEX IF NOT EXISTS idxDirectoryCode ON tblDirectoryItems (code);
     """,
 
@@ -51,8 +53,7 @@ sql_directory_creates = {
         );
     """,
 
-    "delete_table_directory": """DROP TABLE IF EXISTS tblDirectoryItems;""",
-    "delete_index_directory": """DROP INDEX IF EXISTS idxDirectoryCodes;""",
+
 
     # --- > таблица для хранения истории изменений Справочников ---------------------------
     # _mask битовая маска указывает в каком поле были изменения. Вычисляется как сложение вместе следующих значений:
@@ -62,7 +63,7 @@ sql_directory_creates = {
     # 8:  name
     # 16: last_update
     # _mask равная -1 показывает что запись была удалена.
-    "create_table_history_directory_items": """
+    "create_table_history_directory": """
         CREATE TABLE IF NOT EXISTS _tblHistoryDirectoryItems (
             _rowid              INTEGER,
             ID_tblDirectoryItem INTEGER,
@@ -77,11 +78,11 @@ sql_directory_creates = {
         """,
 
 
-    "create_index_history_directory_items": """
-        CREATE INDEX IF NOT EXISTS idxHistoryDirectoryItemsRowId ON _tblHistoryDirectoryItems (_rowid);
+    "create_index_history_directory": """
+        CREATE INDEX IF NOT EXISTS idxHistoryDirectory ON _tblHistoryDirectoryItems (_rowid);
     """,
 
-    "create_trigger_history_directory_items_insert": """
+    "create_trigger_history_directory_insert": """
         CREATE TRIGGER IF NOT EXISTS tgrHistoryDirectoryItemsInsert
         AFTER INSERT ON tblDirectoryItems
         BEGIN
@@ -96,7 +97,7 @@ sql_directory_creates = {
         END;
     """,
 
-    "create_trigger_history_directory_items_delete": """
+    "create_trigger_history_directory_delete": """
         CREATE TRIGGER tgrHistoryDirectoryItemsDelete
         AFTER DELETE ON tblDirectoryItems
         BEGIN
@@ -114,7 +115,7 @@ sql_directory_creates = {
         END;
     """,
 
-    "create_trigger_history_directory_items_update": """
+    "create_trigger_history_directory_update": """
         CREATE TRIGGER IF NOT EXISTS tgrHistoryDirectoryItemsUpdate
         AFTER UPDATE ON tblDirectoryItems
         FOR EACH ROW
@@ -145,13 +146,6 @@ sql_directory_creates = {
                 old.last_update != new.last_update;
         END;
     """,
-
-    "delete_table_history_directory": """DROP TABLE IF EXISTS _tblHistoryDirectoryItems;""",
-    "delete_index_history_directory": """DROP INDEX IF EXISTS idxHistoryDirectoryItemsRowId;""",
-
-    "delete_trigger_history_directory_items_insert": """DROP TRIGGER IF EXISTS tgrHistoryDirectoryItemsInsert;""",
-    "delete_trigger_history_directory_items_delete": """DROP TRIGGER IF EXISTS tgrHistoryDirectoryItemsDelete;""",
-    "delete_trigger_history_directory_items_update": """DROP TRIGGER IF EXISTS tgrHistoryDirectoryItemsUpdate;""",
 
 }
 
