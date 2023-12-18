@@ -4,12 +4,16 @@ sql_catalog_queries = {
         WHERE ID_tblCatalog IN (
                 SELECT ID_tblCatalog 
                 FROM tblCatalogs 
-                WHERE period > 0 AND period < ?);
+                WHERE period < ?);
     """,
 
     # -- >  SELECT ----------------------------------------------------------------------
     "select_catalog_id_code": """
-        SELECT ID_tblCatalog FROM tblCatalogs WHERE code = ?;
+        SELECT ID_tblCatalog, period FROM tblCatalogs WHERE code = ?;
+    """,
+
+    "select_catalog_id_period_code": """
+        SELECT ID_tblCatalog FROM tblCatalogs WHERE period = ? AND code = ?;
     """,
 
     "select_catalog_id":   """
@@ -23,6 +27,16 @@ sql_catalog_queries = {
         SELECT MAX(period) AS max_period FROM tblCatalogs;         
     """,
 
+    "select_count_last_period": """
+        SELECT COUNT(*) FROM tblCatalogs WHERE period < ?;         
+    """,
+
+    "select_changes": """
+        SELECT CHANGES() AS changes;         
+    """,
+
+
+
     # -- >  INSERT ----------------------------------------------------------------------
     "insert_catalog": """
         INSERT INTO tblCatalogs (ID_parent, period, code, description, FK_tblCatalogs_tblItems) 
@@ -30,12 +44,17 @@ sql_catalog_queries = {
     """,
 
     # -- >  UPDATE ----------------------------------------------------------------------
-    "update_catalog_id": """
+    "update_catalog_id_period": """
         UPDATE tblCatalogs 
         SET 
-            (ID_parent, period, code, description, FK_tblCatalogs_tblDirectoryItems) = (?, ?, ?, ?, ?) 
-        WHERE ID_tblCatalog = ?;
+            (ID_parent, period, code, description, FK_tblCatalogs_tblItems) = (?, ?, ?, ?, ?) 
+        WHERE ID_tblCatalog = ? AND period <= ?;
+    """,
+
+    "update_catalog_period_main_row": """
+        UPDATE tblCatalogs SET (period) = (?) WHERE code = '0000';
     """
+
 }
 
 sql_catalog_creates = {
@@ -53,8 +72,7 @@ sql_catalog_creates = {
         CREATE TABLE IF NOT EXISTS tblCatalogs
             (
                 ID_tblCatalog INTEGER PRIMARY KEY NOT NULL,
-                ID_parent     INTEGER REFERENCES tblCatalogs (ID_tblCatalog) 
-                                DEFAULT NULL,               -- ссылка на вышестоящий уровень каталога
+                ID_parent     INTEGER REFERENCES tblCatalogs (ID_tblCatalog) NOT NULL,  -- ссылка родителя
                 period        INTEGER NOT NULL,             -- период на который загружен каталог
                 code	 	  TEXT NOT NULL,                -- шифр элемента каталога    								
                 description	  TEXT NOT NULL,                -- описание
@@ -94,8 +112,7 @@ sql_catalog_creates = {
         AFTER INSERT ON tblCatalogs
         BEGIN
             INSERT INTO _tblHistoryCatalogs (
-                _rowid, ID_tblCatalog, ID_parent, period, code, description, 
-                FK_tblCatalogs_tblItems, last_update, 
+                _rowid, ID_tblCatalog, ID_parent, period, code, description, FK_tblCatalogs_tblItems, last_update, 
                 _version, _updated, _mask 
             )
             VALUES (
@@ -111,14 +128,11 @@ sql_catalog_creates = {
         AFTER DELETE ON tblCatalogs
         BEGIN
             INSERT INTO _tblHistoryCatalogs (
-                _rowid, ID_tblCatalog, ID_parent, period, code, description, 
-                FK_tblCatalogs_tblItems, last_update, 
-                _version, 
-                _updated, _mask 
+                _rowid, ID_tblCatalog, ID_parent, period, code, description, FK_tblCatalogs_tblItems, last_update, 
+                _version, _updated, _mask 
             )
             VALUES (
-                old.rowid, 
-                old.ID_tblCatalog, old.ID_parent, old.period, old.code, old.description,
+                old.rowid, old.ID_tblCatalog, old.ID_parent, old.period, old.code, old.description,
                 old.FK_tblCatalogs_tblItems, old.last_update,
                 (SELECT COALESCE(MAX(_version), 0) FROM _tblHistoryCatalogs WHERE _rowid = old.rowid) + 1,
                 unixepoch('now'), -1

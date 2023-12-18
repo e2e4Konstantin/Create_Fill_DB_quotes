@@ -1,6 +1,7 @@
 import sqlite3
 import re
 import os
+from itertools import chain
 from icecream import ic
 
 from files_features import output_message_exit, output_message
@@ -55,16 +56,16 @@ class dbTolls(dbControl):
     def __del__(self):
         self.connection.close() if self.connection is not None else self.connection
 
-    def get_row_id(self, query: str, *args) -> int | None:
+    def get_row_id(self, query: str, src_data: tuple) -> int | None:
         """ Выбрать id записи по запросу """
         try:
-            result = self.connection.execute(query, args)
+            result = self.connection.execute(query, src_data)
             if result:
                 row = result.fetchone()
                 return row[0] if row else None
         except sqlite3.Error as error:
-            output_message(f"ошибка запроса к БД Sqlite3: {' '.join(error.args)}",
-                           f"получить id записи {args}")
+            output_message_exit(f"ошибка запроса к БД Sqlite3: {' '.join(error.args)}",
+                           f"получить id записи {src_data}")
         return None
 
     def go_insert(self, query: str, src_data: tuple, message: str) -> int | None:
@@ -76,6 +77,21 @@ class dbTolls(dbControl):
         except sqlite3.Error as error:
             output_message(f"ошибка INSERT запроса БД Sqlite3: {' '.join(error.args)}", f"{message}")
         return None
+
+
+    def go_select(self, query: str, src_data: tuple) -> list[sqlite3.Row] | None:
+        """ Пытается выполнить запрос на выборку записей шз БД. Возвращает  """
+        try:
+            results = self.connection.execute(query, src_data)
+            try:
+                first_row = next(results)
+                return list(chain((first_row,), results))
+            except StopIteration as e:
+                return None
+        except sqlite3.Error as error:
+            output_message(f"ошибка SELECT запроса БД Sqlite3: {' '.join(error.args)}", f"{src_data}")
+        return None
+
 
     def go_execute(self, *args, **kwargs) -> sqlite3.Cursor | None:
         try:

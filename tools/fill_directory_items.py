@@ -1,18 +1,36 @@
 from icecream import ic
 
 from config import dbTolls, items_catalog
-from sql_queries import sql_items_creates
+from sql_queries import sql_items_creates, sql_items_queries
 
 
 def fill_directory_catalog_items(db_file_name: str):
     """ Заполняет справочник элементов каталога. """
     with dbTolls(db_file_name) as db:
-        # (code, name)
         message_item = "вставка записи в справочник объектов каталога."
-        for item, data in items_catalog.items():
+        item = items_catalog[0]
+        main_data = (item.team, item.name, item.title, None, item.re_pattern)
+        main_id = db.go_insert(
+            query=sql_items_creates["insert_item"], src_data=main_data, message=message_item
+        )
+        for item in items_catalog[1:]:
+            if item.parent is None:
+                parent_id = main_id if item.team != 'units' else None
+            else:
+                parent_id = db.get_row_id(sql_items_queries['select_items_team_code'], (item.team, item.parent))
+
+            query_params = (item.team, item.name, item.title, parent_id, item.re_pattern)
             inserted_id = db.go_insert(
-                query=sql_items_creates["insert_item"],
-                src_data=(data.team, item, data.name),
-                message=message_item
+                query=sql_items_creates["insert_item"], src_data=query_params, message=message_item
             )
-            # ic(inserted_id, data.team, item, data.name)
+            # ic(inserted_id, item.team, item, item.name, parent_id)
+
+
+if __name__ == '__main__':
+    import os
+
+    db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
+    # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
+    db_name = os.path.join(db_path, "Normative.sqlite3")
+
+    fill_directory_catalog_items(db_name)
