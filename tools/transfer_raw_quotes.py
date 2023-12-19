@@ -1,8 +1,8 @@
 import sqlite3
 from icecream import ic
 
-from config import dbTolls
-from sql_queries import sql_quotes_insert_update, sql_raw_data, sql_catalog_select, sql_quotes_select, sql_quotes_delete
+from config import dbTolls, teams
+from sql_queries import sql_raw_queries, sql_products_queries, sql_items_queries
 from files_features import output_message, output_message_exit
 from tools.code_tolls import clear_code, text_cleaning, get_integer_value, get_float_value
 
@@ -60,6 +60,8 @@ def _update_quote(db: dbTolls, quote_id: int, quote: sqlite3.Row) -> int | None:
     """ Получает строку из Сырой таблице с расценками. Вставляет в рабочую таблицу. """
     data = _make_data_from_raw_quote(db, quote) + (quote_id,)
     db.go_execute(sql_quotes_insert_update["update_quote_id"], data)
+    count = db.go_execute(sql_catalog_queries["select_changes"])
+
     return db.go_execute("""SELECT CHANGES();""")
 
 
@@ -74,52 +76,6 @@ def _insert_raw_quote(db: dbTolls, raw_quote: sqlite3.Row) -> int | None:
     return inserted_id
 
 
-def transfer_raw_table_data_to_quotes(db_filename: str):
-    """ Записывает расценки из сырой базы в рабочую.
-        Расценки которые надо добавить предварительно загружены в tblRawData.
-        В рабочей таблице tblQuotes ищется расценка с таким же шифром, если такая есть то она обновляется,
-        нет добавляется.
-     """
-    with dbTolls(db_filename) as db:
-        raw_cursor = db.go_execute(sql_raw_data["select_rwd_all"])
-        if raw_cursor:
-            inserted_success = []
-            updated_success = []
-            for raw_count, row in enumerate(raw_cursor.fetchall()):
-                raw_code = clear_code(row["PRESSMARK"])
-                raw_period = get_integer_value(row["PERIOD"])
-                # Найти запись с шифром raw_cod в рабочей таблице расценок
-                work_cursor = db.go_execute(sql_quotes_select["select_quotes_row_code"], (raw_code,))
-                work_row = work_cursor.fetchone() if work_cursor else None
-                if work_row:
-                    work_period = work_row['period']
-                    work_id = work_row['ID_tblQuote']
-                    if raw_period >= work_period:
-                        work_id = _update_quote(db, work_id, row)
-                        if work_id:
-                            updated_success.append((id, raw_code))
-                    else:
-                        output_message_exit(
-                            f"Ошибка загрузки Расценки с шифром: {raw_code!r}",
-                            f"текущий период Расценки {work_period} старше загружаемого {raw_period}")
-                else:
-                    work_id = _insert_raw_quote(db, row)
-                    if work_id:
-                        inserted_success.append((id, raw_code))
-            raw_count += 1
-            alog = f"Всего записей в raw таблице: {raw_count}."
-            ilog = f"Добавлено {len(inserted_success)} расценок."
-            ulog = f"Обновлено {len(updated_success)} расценок."
-            none_log = f"Непонятных записей: {raw_count - (len(updated_success) + len(inserted_success))}."
-            ic(alog, ilog, ulog, none_log)
-        else:
-            output_message(f"в RAW таблице с данными для каталога не найдено ни одной записи:",
-                           f"")
-
-    # удалить из Расценок записи период которых меньше чем максимальный период
-    _delete_last_period_quotes_row(db_filename)
-
-
 def _delete_last_period_quotes_row(db_filename: str):
     with (dbTolls(db_filename) as db):
         work_cursor = db.go_execute(sql_quotes_select["select_quotes_max_period"])
@@ -130,7 +86,7 @@ def _delete_last_period_quotes_row(db_filename: str):
             deleted_cursor = db.go_execute(sql_quotes_select["select_quotes_count_period_less"], (current_period,))
             mess = f"Из Расценок будут удалены {deleted_cursor.fetchone()[0]} записей у которых период меньше текущего: {current_period}"
             ic(mess)
-            deleted_cursor = db.go_execute(sql_quotes_delete["delete_quotes_last_periods"], (current_period, ))
+            deleted_cursor = db.go_execute(sql_quotes_delete["delete_quotes_last_periods"], (current_period,))
             mess = f"Из Расценок удалено {deleted_cursor.rowcount} записей с period < {current_period}"
             ic(mess)
         else:
@@ -138,13 +94,60 @@ def _delete_last_period_quotes_row(db_filename: str):
                                 f"{sql_catalog_select['select_max_period']!r}")
 
 
+def transfer_raw_table_data_to_quotes(db_filename: str):
+    """ Записывает расценки из сырой таблицы tblRawData в рабочую.
+        В рабочей таблице tblQuotes ищется расценка с таким же шифром, если такая есть то она обновляется,
+        нет добавляется.
+     """
+    with dbTolls(db_filename) as db:
+        raw_cursor = db.go_execute(sql_raw_queries["select_rwd_all"])
+        raw_data = raw_cursor.fetchall() if raw_cursor else None
+        if not raw_data:
+            output_message_exit(f"в RAW таблице с данными для Расценок не найдено ни одной записи:",
+                                f"tblRawData пустая")
+            return None
+
+        type = db.get_row_id(sql_items_queries["select_items_dual_teams"], ("units", "quote"))
+
+        inserted_success, updated_success = [], []
+        for row_count, row in enumerate(raw_data):
+            raw_code = clear_code(row["PRESSMARK"])
+            raw_period = get_integer_value(row["PERIOD"])
+            # Найти запись с шифром raw_cod в таблице расценок tblProducts
+            work_cursor = db.go_execute(sql_products_queries["select_products_item_code"], (raw_code,))
+            work_row = work_cursor.fetchone() if work_cursor else None
+            if work_row:
+                work_period = work_row['period']
+                work_id = work_row['ID_tblQuote']
+                if raw_period >= work_period:
+                    work_id = _update_quote(db, work_id, row)
+                    if work_id:
+                        updated_success.append((id, raw_code))
+                else:
+                    output_message_exit(
+                        f"Ошибка загрузки Расценки с шифром: {raw_code!r}",
+                        f"текущий период Расценки {work_period} старше загружаемого {raw_period}")
+            else:
+                work_id = _insert_raw_quote(db, row)
+                if work_id:
+                    inserted_success.append((id, raw_code))
+        row_count += 1
+        alog = f"Всего записей в raw таблице: {raw_count}."
+        ilog = f"Добавлено {len(inserted_success)} расценок."
+        ulog = f"Обновлено {len(updated_success)} расценок."
+        none_log = f"Непонятных записей: {raw_count - (len(updated_success) + len(inserted_success))}."
+        ic(alog, ilog, ulog, none_log)
+
+    # удалить из Расценок записи период которых меньше чем максимальный период
+    # _delete_last_period_quotes_row(db_filename)
+
+
 if __name__ == '__main__':
     import os
 
-    db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
-    # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
+    # db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
+    db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
+    db_name = os.path.join(db_path, "Normative.sqlite3")
 
-    db_name = os.path.join(db_path, "quotes_test.sqlite3")
     ic(db_name)
-    # transfer_raw_table_data_to_quotes(db_name)
-    _delete_last_period_quotes_row(db_name)
+    transfer_raw_table_data_to_quotes(db_name)

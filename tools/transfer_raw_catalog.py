@@ -1,12 +1,12 @@
 import sqlite3
 import pandas as pd
 from icecream import ic
-from config import dbTolls, items_catalog
+from config import dbTolls, items_catalog, teams
 from sql_queries import (
     sql_items_queries, sql_raw_queries, sql_catalog_queries
 )
 from files_features import output_message, output_message_exit
-from tools.code_tolls import clear_code, title_catalog_extraction, get_integer_value
+from tools.code_tolls import clear_code, title_catalog_extraction, get_integer_value, look_item_index
 
 
 def _get_catalog_id(code: str, db: dbTolls) -> int | None:
@@ -28,7 +28,7 @@ def _get_directory_id(item_name: str, db: dbTolls) -> int | None:
     return id_catalog_items
 
 
-def _make_data_from_raw_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row, item: tuple[int, str]) -> tuple:
+def _make_data_from_raw_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row, item: tuple[int, str, str]) -> tuple:
     """ Из строки raw_catalog_row таблицы tblRawData с данными для Каталога.
         Выбирает данные, проверяет их, находит в Каталоге запись родителя.
         Возвращает кортеж с данными для вставки в Рабочую Таблицу Каталога.
@@ -41,7 +41,7 @@ def _make_data_from_raw_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row, item:
     else:
         parent_code = clear_code(raw_parent_code)
         parent_id = _get_catalog_id(code=parent_code, db=db)
-    # id типа записи каталога
+    # id записи элемента каталога
     id_items = str(item[0])
     if parent_id and id_items:
         period = get_integer_value(raw_catalog_row["PERIOD"])
@@ -57,7 +57,7 @@ def _make_data_from_raw_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row, item:
     return tuple()
 
 
-def _update_catalog(db: dbTolls, catalog_id: int, raw_table_row: sqlite3.Row, item: tuple[int, str]) -> int | None:
+def _update_catalog(db: dbTolls, catalog_id: int, raw_table_row: sqlite3.Row, item: tuple[int, str, str]) -> int | None:
     """ Формирует строку из Сырой таблицы. Изменяет catalog_id запись в таблице Каталога. """
     data = _make_data_from_raw_catalog(db, raw_table_row, item)
     # ID_parent, period, code, description, FK_tblCatalogs_tblItems, ID_tblCatalog, period
@@ -68,7 +68,7 @@ def _update_catalog(db: dbTolls, catalog_id: int, raw_table_row: sqlite3.Row, it
     return count.fetchone()['changes'] if count else None
 
 
-def _insert_raw_catalog(db: dbTolls, raw_table_row: sqlite3.Row, item: tuple[int, str]) -> int | None:
+def _insert_raw_catalog(db: dbTolls, raw_table_row: sqlite3.Row, item: tuple[int, str, str]) -> int | None:
     """ Формирует строку из Сырой таблицы. Вставляет новую запись в таблицу Каталога. """
     data = _make_data_from_raw_catalog(db, raw_table_row, item)
     message = f"INSERT tblCatalog {item[1]!r} шифр {data[2]!r} период: {data[1]!r}"
@@ -79,44 +79,51 @@ def _insert_raw_catalog(db: dbTolls, raw_table_row: sqlite3.Row, item: tuple[int
     return inserted_id
 
 
-def _get_raw_data_items(db: dbTolls, item_name: str) -> list[sqlite3.Row] | None:
+def _get_item_pattern(db: dbTolls, directory_name: str, item_name: str) -> str | None:
+    items_cursor = db.go_execute(sql_items_queries["select_items_all_team_name"], (directory_name, item_name))
+    item = items_cursor.fetchone() if items_cursor else None
+    return item['re_pattern'] if item else None
+
+
+def _get_raw_data_items(db: dbTolls, directory_name: str, item_name: str) -> list[sqlite3.Row] | None:
     """ Выбрать все записи из сырой таблицы у которых шифр соответствует паттерну для этого типа записей. """
-    item_pattern = items_catalog[item_name].re_pattern
+
+    # получить паттерн из справочника
+    item_pattern = _get_item_pattern(db, directory_name, item_name)
+
     if item_pattern is None:
         return None
     raw_cursor = db.go_execute(sql_raw_queries["select_rwd_code_regexp"], (item_pattern,))
     results = raw_cursor.fetchall() if raw_cursor else None
     if not results:
-        output_message(f"в RAW таблице с данными для каталога не найдено ни одной записи:",
+        output_message_exit(f"в RAW таблице с данными для каталога не найдено ни одной записи:",
                        f"{items_catalog[item_name].name!r}, {item_pattern}")
         return None
     return results
 
 
-def _transfer_raw_item_to_catalog(item: tuple[int, str], db_filename: str):
+def _transfer_raw_item_to_catalog(item: tuple[int, str, str], db_filename: str):
     """ Записывает все значения типа item_name в каталог из таблицы с исходными данными
         в таблицу каталога и создает ссылки на родителей.
         Если запись с таким шифром уже есть в каталоге, то обновляет ее, иначе вставляет новую.
         Период записываем только если он больше либо равен предыдущему.
     """
     with (dbTolls(db_filename) as db):
-        raw_data = _get_raw_data_items(db, item[1])
+        raw_data = _get_raw_data_items(db, item[2], item[1])
         if not raw_data:
             return None
         inserted_success, updated_success = [], []
         for row_count, row in enumerate(raw_data):
             raw_code = clear_code(row["PRESSMARK"])
             raw_period = get_integer_value(row["PERIOD"])
-            catalog_cursor = db.go_execute(
-                sql_catalog_queries["select_catalog_id_code"], (raw_code,)
-            )
+            catalog_cursor = db.go_execute(sql_catalog_queries["select_catalog_id_code"], (raw_code,))
             catalog_row = catalog_cursor.fetchone() if catalog_cursor else None
             if catalog_row:
                 row_period = catalog_row['period']
                 row_id = catalog_row['ID_tblCatalog']
                 if raw_period >= row_period:
-                    work_id = _update_catalog(db, row_id, row, item)
-                    if work_id:
+                    changed_count = _update_catalog(db, row_id, row, item)
+                    if changed_count:
                         updated_success.append((id, raw_code))
                 else:
                     output_message_exit(
@@ -143,7 +150,7 @@ def _delete_last_period_catalog_row(db_filename: str):
             return
         ic(max_period)
 
-        db.go_execute(sql_catalog_queries["update_catalog_period_main_row"], (max_period, ))
+        db.go_execute(sql_catalog_queries["update_catalog_period_main_row"], (max_period,))
         changes = db.go_execute(sql_catalog_queries["select_changes"]).fetchone()['changes']
         message = f"обновлен период {max_period} головной записи: {changes}"
         ic(message)
@@ -159,12 +166,16 @@ def _delete_last_period_catalog_row(db_filename: str):
 
 
 def _get_sorted_items(db_filename: str, directory_name: str) -> tuple[tuple[int, str], ...] | None:
-    """ Формирует упорядоченный кортеж из элементов справочник (id, code)
+    """ Формирует упорядоченный кортеж (id, name) из элементов справочника directory_name
         в соответствии с иерархией заданной полем ID_parent. Если это поле не задано,
-        то берутся все элементы справочника последовательно """
+        то берутся все элементы справочника последовательно.
+        Первым элементом добавляется элементы группы 'main'.
+        """
+
+    parameters = [teams[0].lower(), directory_name.lower()]
     with (dbTolls(db_filename) as db):
         df = pd.read_sql_query(
-            sql=sql_items_queries["select_items_team"], params=[directory_name.lower()], con=db.connection
+            sql=sql_items_queries["select_items_dual_teams"], params=parameters, con=db.connection
         )
     if df.empty:
         return None
@@ -175,12 +186,12 @@ def _get_sorted_items(db_filename: str, directory_name: str) -> tuple[tuple[int,
         # x=df[df['ID_parent'].isna()]['ID_tblItem'].values[0]
         dir_tree = []
         top_item = df[df['ID_parent'].isna()].to_records(index=False).tolist()[0]
-        dir_tree.append(top_item[:2])
+        dir_tree.append(top_item[:2] + (parameters[0],))
         top_id = top_item[0]
         item_df = df[df['ID_parent'] == top_id]
         while not item_df.empty:
             item_data = item_df.to_records(index=False).tolist()[0]
-            dir_tree.append(item_data[:2])
+            dir_tree.append(item_data[:2] + (parameters[1],))
             next_id = item_data[0]
             item_df = df[df['ID_parent'] == next_id]
         return tuple(dir_tree)
@@ -195,8 +206,8 @@ def transfer_raw_table_data_to_catalog(operating_db: str):
         Иерархия задается родителями в классе ItemCatalogDirectory.
     """
     ic()
-    # получить отсортированные по иерархии элементы справочника 'clip'
-    dir_catalog = _get_sorted_items(operating_db, directory_name='clip')
+    # получить отсортированные по иерархии элементы справочника 'quotes'
+    dir_catalog = _get_sorted_items(operating_db, directory_name='quotes')
     ic(dir_catalog)
 
     for item in dir_catalog[1:]:
@@ -209,16 +220,8 @@ def transfer_raw_table_data_to_catalog(operating_db: str):
 if __name__ == '__main__':
     import os
 
-    db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
-    # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
+    # db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
+    db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
     db_name = os.path.join(db_path, "Normative.sqlite3")
 
     transfer_raw_table_data_to_catalog(db_name)
-
-    # catalog_items = _get_sorted_directory_items(db_name, directory_name='Catalog')
-    # ic(catalog_items)
-    # (1, 67, '3', 'Строительные работы', 3, 2))
-
-    # transfer_raw_table_data_to_catalog(db_name)
-
-    # _delete_last_period_catalog_row(db_name)

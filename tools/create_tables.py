@@ -1,5 +1,5 @@
 from config import dbTolls
-from sql_queries import sql_items_creates, sql_catalog_creates, sql_bases_creates
+from sql_queries import sql_items_creates, sql_catalog_creates, sql_products_creates
 
 
 def _create_directory_environment(db: dbTolls):
@@ -40,25 +40,27 @@ def _create_catalog_environment(db: dbTolls):
     db.go_execute(sql_catalog_creates["create_trigger_history_catalog_update"])
 
 
-# def _create_bases_environment(db: dbTolls):
-#     """ Создать инфраструктуру базовой таблицы.
-#         Для хранения Материалов, Машин и Оборудования.
-#         Таблицы, индексы, триггеры и представления. """
-#     db.go_execute(sql_bases_creates["delete_table_bases"])
-#     db.go_execute(sql_bases_creates["delete_index_bases"])
-#     db.go_execute(sql_bases_creates["delete_view_bases"])
-#     #
-#     db.go_execute(sql_bases_creates["create_table_bases"])
-#     db.go_execute(sql_bases_creates["create_index_bases"])
-#     db.go_execute(sql_bases_creates["create_view_bases"])
-#     #
-#     db.go_execute(sql_bases_creates["create_table_history_bases"])
-#     db.go_execute(sql_bases_creates["create_index_history_bases"])
-#     #
-#     db.go_execute(sql_bases_creates["create_trigger_history_bases_insert"])
-#     db.go_execute(sql_bases_creates["create_trigger_history_bases_delete"])
-#     db.go_execute(sql_bases_creates["create_trigger_history_bases_update"])
-
+def _create_products_environment(db: dbTolls):
+    """ Создать инфраструктуру базовой таблицы для хранения
+        Расценок, Материалов, Машин и Оборудования.
+        Таблицы, индексы, триггеры и представления. """
+    db.go_execute(sql_products_creates["delete_table_products"])
+    db.go_execute(sql_products_creates["delete_index_products"])
+    db.go_execute(sql_products_creates["delete_view_products"])
+    #
+    db.go_execute(sql_products_creates["delete_table_products_history"])
+    db.go_execute(sql_products_creates["delete_index_products_history"])
+    #
+    db.go_execute(sql_products_creates["create_table_products"])
+    db.go_execute(sql_products_creates["create_index_products"])
+    db.go_execute(sql_products_creates["create_view_products"])
+    #
+    db.go_execute(sql_products_creates["create_table_history_products"])
+    db.go_execute(sql_products_creates["create_index_history_products"])
+    #
+    db.go_execute(sql_products_creates["create_trigger_history_products_insert"])
+    db.go_execute(sql_products_creates["create_trigger_history_products_delete"])
+    db.go_execute(sql_products_creates["create_trigger_history_products_update"])
 
 
 # def _create_quotes_chains_environment(db: dbTolls):
@@ -101,10 +103,8 @@ def create_tables_indexes(db_file_name: str):
         _create_directory_environment(db)
         # --- > Каталог -- tblCatalogs ---
         _create_catalog_environment(db)
-
-
-        # # --- > Расценки, Материалы, Машины и Оборудование -- tblBases ---
-        # _create_bases_environment(db)
+        # --- > Расценки, Материалы, Машины и Оборудование -- tblBases ---
+        _create_products_environment(db)
 
         # # --- > Иерархия расценок -- tblQuotesChains ---
         # _create_quotes_chains_environment(db)

@@ -182,11 +182,11 @@ sql_catalog_creates = {
         CREATE VIEW viewCatalog AS
             SELECT 
                 m.period AS 'период',
-                i.name AS 'тип', 
+                i.title AS 'тип', 
                 m.code AS 'шифр', 
                 m.description AS 'описание',
             
-                (SELECT i.name
+                (SELECT i.title
                 FROM tblCatalogs p
                 LEFT JOIN tblItems i ON i.ID_tblItem = p.FK_tblCatalogs_tblItems
                 WHERE p.ID_tblCatalog = m.ID_parent) AS 'тип родителя',

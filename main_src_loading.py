@@ -4,7 +4,8 @@ from icecream import ic
 from collections import namedtuple
 
 from tools import (
-    create_tables_indexes, fill_directory_catalog_items, read_csv_to_raw_table, insert_root_record_to_catalog
+    create_tables_indexes, fill_directory_catalog_items, read_csv_to_raw_table,
+    insert_root_record_to_catalog, transfer_raw_table_data_to_catalog
 )
 
 PlacePath = namedtuple("PlacePath", ["data_path", "db_path"])
@@ -20,18 +21,17 @@ places = {
     ),
 }
 db_name = "Normative.sqlite3"
-now = "home"  # "office"  # "home"
+now = "office"  # "office"  # "home"
 
 if __name__ == '__main__':
     version = f"{sqlite3.version} {sqlite3.sqlite_version}"
     db_name = os.path.join(places[now].db_path, db_name)
 
-    period = 68
-    catalog_data = os.path.join(places[now].data_path, "TABLES_68.csv")
+    period = 67
+    catalog_data = os.path.join(places[now].data_path, "TABLES_67.csv")
+    quotes_data = os.path.join(places[now].data_path, "WORK_PROCESS_67.csv")
 
-    ic(version)
-    ic(db_name)
-    ic(catalog_data)
+    ic(version, db_name, catalog_data, period)
 
     # удаляем файл БД если такой есть
     if os.path.isfile(db_name):
@@ -44,9 +44,15 @@ if __name__ == '__main__':
     # вставить корневую запись в каталог
     insert_root_record_to_catalog(db_name)
 
-    # 1 Каталог
+    # --- > 1 Каталог
     # прочитать из csv файла данные для Каталога в таблицу tblRawData для периода period
-    # read_csv_to_raw_table(db_name, catalog_data, period)
+    read_csv_to_raw_table(db_name, catalog_data, period)
+    # заполнить Каталог данными из таблицы tblRawData
+    transfer_raw_table_data_to_catalog(db_name)
 
-    # # заполнить Каталог данными из таблицы tblRawData
-    # transfer_raw_table_data_to_catalog(db_name)
+    # --- > 2 Расценки
+    # прочитать из csv файла данные для Расценок в таблицу tblRawData для периода period
+    ic(quotes_data)
+    read_csv_to_raw_table(db_name, quotes_data, period)
+    # заполнить Расценки данными из таблицы tblRawData
+    # transfer_raw_table_data_to_quotes(db_name)

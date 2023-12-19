@@ -42,12 +42,20 @@ def keep_just_numbers_dots(source: str = None) -> str | None:
 #     bid_quote = items_data[item_name].compiled.match(source)
 #     return bid_quote.group(0) if bid_quote else ""
 
+def look_item_index(target_name: str) -> int | None:
+    """ Ищет объект с именем target_name в items_catalog возвращает индекс"""
+    for i, item in enumerate(items_catalog):
+        if item.name == target_name:
+            return i
+    return None
+
 
 def title_catalog_extraction(title: str, item_name: str) -> str | None:
     """ Удаляет из заголовка префикс. В первом слове делает первую букву заглавной. Удаляет лишние пробелы. """
     title = text_cleaning(title)
     if title:
-        return items_catalog[item_name].prefix.sub('', title).strip().capitalize()
+        item_index = look_item_index(item_name)
+        return items_catalog[item_index].prefix.sub('', title).strip().capitalize()
     return None
 
 

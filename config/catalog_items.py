@@ -6,39 +6,39 @@ from icecream import ic
 # chain_items = ('Catalog', 'Chapter', 'Collection', 'Section', 'Subsection', 'Table',)
 
 # названия справочников
-team = ['main', 'units', 'quotes', 'materials', 'machines', 'equipments']
+teams = ['main', 'units', 'quotes', 'materials', 'machines', 'equipments']
 
 src_catalog_items = [
-    (team[0], 'main', 'справочник', None, r"^\s*0000\s*$", None),
+    (teams[0], 'main', 'справочник', None, r"^\s*0000\s*$", None),
     # список хранимых объектов
-    (team[1], 'Quote',      'Расценка',     None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
-    (team[1], 'Material',   'Материал',     None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
-    (team[1], 'Machine',    'Машина',       None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
-    (team[1], 'Equipment',  'Оборудование', None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
+    (teams[1], 'Quote',      'Расценка',     None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
+    (teams[1], 'Material',   'Материал',     None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
+    (teams[1], 'Machine',    'Машина',       None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
+    (teams[1], 'Equipment',  'Оборудование', None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
 
     # разделы для каталога Расценок
-    (team[2], 'Chapter',    'Глава',    None,      r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)*"),
-    (team[2], 'Collection', 'Сборник',  'Chapter',      r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Сборник\s*((\d+)\.)*"),
-    (team[2], 'Section',    'Отдел',    'Collection',   r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*Отдел\s*((\d+)\.)*"),
-    (team[2], 'Subsection', 'Раздел',   'Section',      r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", r"^\s*Раздел\s*((\d+)\.)*"),
-    (team[2], 'Table',      'Таблица',  'Subsection',   r"^\s*((\d+)\.(\d+)(-(\d+)){4})\s*$", r"^\s*Таблица\s*((\d+)\.(\d+)-(\d+)\.)*"),
+    (teams[2], 'Chapter',    'Глава',    None,      r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)*"),
+    (teams[2], 'Collection', 'Сборник',  'Chapter',      r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Сборник\s*((\d+)\.)*"),
+    (teams[2], 'Section',    'Отдел',    'Collection',   r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*Отдел\s*((\d+)\.)*"),
+    (teams[2], 'Subsection', 'Раздел',   'Section',      r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", r"^\s*Раздел\s*((\d+)\.)*"),
+    (teams[2], 'Table',      'Таблица',  'Subsection',   r"^\s*((\d+)\.(\d+)(-(\d+)){4})\s*$", r"^\s*Таблица\s*((\d+)\.(\d+)-(\d+)\.)*"),
 
     # разделы для каталога Материалов глава 1
-    (team[3], 'chapter', 'глава', None, r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)*"),
-    (team[3], 'section', 'раздел', 'chapter', r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Раздел\s*((\d+)\.)*"),
-    (team[3], 'block_1', 'блок_1', 'section', r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*((\d+)\.)*"),
-    (team[3], 'block_2', 'блок_2', 'block_1', r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", r"^\s*((\d+)\.(\d+)\.)*"),
+    (teams[3], 'chapter', 'глава', None, r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)*"),
+    (teams[3], 'section', 'раздел', 'chapter', r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Раздел\s*((\d+)\.)*"),
+    (teams[3], 'block_1', 'блок_1', 'section', r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*((\d+)\.)*"),
+    (teams[3], 'block_2', 'блок_2', 'block_1', r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", r"^\s*((\d+)\.(\d+)\.)*"),
 
     # разделы для каталога Машин глава 2
-    (team[4], 'chapter', 'глава', None, r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)*"),
-    (team[4], 'section', 'раздел', 'chapter', r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Раздел\s*((\d+)\.)*"),
-    (team[4], 'block_1', 'блок_1', 'section', r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*((\d+)\.)*"),
-    (team[4], 'block_2', 'блок_2', 'block_1', r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", r"^\s*((\d+)\.(\d+)\.)*"),
+    (teams[4], 'chapter', 'глава', None, r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)*"),
+    (teams[4], 'section', 'раздел', 'chapter', r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Раздел\s*((\d+)\.)*"),
+    (teams[4], 'block_1', 'блок_1', 'section', r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*((\d+)\.)*"),
+    (teams[4], 'block_2', 'блок_2', 'block_1', r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", r"^\s*((\d+)\.(\d+)\.)*"),
 
     # разделы для каталога Оборудования глава 13
-    (team[5], 'chapter', 'глава', None, r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)*"),
-    (team[5], 'section', 'отдел', 'chapter', r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Отдел\s*((\d+)\.)*"),
-    (team[5], 'block_1', 'блок_1', 'section', r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*((\d+)\.)*"),
+    (teams[5], 'chapter', 'глава', None, r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)*"),
+    (teams[5], 'section', 'отдел', 'chapter', r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Отдел\s*((\d+)\.)*"),
+    (teams[5], 'block_1', 'блок_1', 'section', r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*((\d+)\.)*"),
 ]
 
 

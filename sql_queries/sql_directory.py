@@ -1,11 +1,25 @@
 
 sql_items_queries = {
-    "select_items":         """SELECT * FROM tblItems;""",
-    "select_items_team_code": """SELECT ID_tblItem FROM tblItems WHERE team IS ? and name IS ?;""",
+    "select_items":  """SELECT * FROM tblItems;""",
+    "select_items_id_team_name": """
+        SELECT ID_tblItem FROM tblItems WHERE team IS ? and name IS ?;
+    """,
 
-    "select_items_team": """SELECT ID_tblItem, name, title, ID_parent, re_pattern 
-                            FROM tblItems 
-                            WHERE team IS ?;""",
+    "select_items_all_team_name": """
+        SELECT * FROM tblItems WHERE team IS ? and name IS ?;
+    """,
+
+    "select_items_team": """
+        SELECT ID_tblItem, name, title, ID_parent, re_pattern 
+        FROM tblItems 
+        WHERE team IS ?;
+    """,
+
+    "select_items_dual_teams": """
+        SELECT ID_tblItem, name, title, ID_parent, re_pattern 
+        FROM tblItems 
+        WHERE team IN (?, ?);
+    """,
 }
 
 sql_items_creates = {

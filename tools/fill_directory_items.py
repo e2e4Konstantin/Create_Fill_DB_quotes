@@ -17,7 +17,7 @@ def fill_directory_catalog_items(db_file_name: str):
             if item.parent is None:
                 parent_id = main_id if item.team != 'units' else None
             else:
-                parent_id = db.get_row_id(sql_items_queries['select_items_team_code'], (item.team, item.parent))
+                parent_id = db.get_row_id(sql_items_queries['select_items_id_team_name'], (item.team, item.parent))
 
             query_params = (item.team, item.name, item.title, parent_id, item.re_pattern)
             inserted_id = db.go_insert(

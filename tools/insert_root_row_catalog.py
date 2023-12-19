@@ -10,7 +10,7 @@ def insert_root_record_to_catalog(db_filename: str) -> int | None:
     """
     with dbTolls(db_filename) as db:
         target_item = ('main', 'main')
-        item_id = db.get_row_id(sql_items_queries["select_items_team_code"], target_item)
+        item_id = db.get_row_id(sql_items_queries["select_items_id_team_name"], target_item)
         if item_id is None:
             log = f"НЕ добавлена головная запись в справочник: {target_item!r} id: {item_id}"
             ic(log)
