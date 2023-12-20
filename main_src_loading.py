@@ -5,7 +5,7 @@ from collections import namedtuple
 
 from tools import (
     create_tables_indexes, fill_directory_catalog_items, read_csv_to_raw_table,
-    insert_root_record_to_catalog, transfer_raw_table_data_to_catalog
+    insert_root_record_to_catalog, transfer_raw_table_data_to_catalog, transfer_raw_data_to_quotes
 )
 
 PlacePath = namedtuple("PlacePath", ["data_path", "db_path"])
@@ -55,4 +55,4 @@ if __name__ == '__main__':
     ic(quotes_data)
     read_csv_to_raw_table(db_name, quotes_data, period)
     # заполнить Расценки данными из таблицы tblRawData
-    # transfer_raw_table_data_to_quotes(db_name)
+    transfer_raw_data_to_quotes(db_name)

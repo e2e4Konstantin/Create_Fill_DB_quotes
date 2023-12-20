@@ -1,7 +1,7 @@
 import sqlite3
 import re
 import os
-from itertools import chain
+# from itertools import chain
 from icecream import ic
 
 from files_features import output_message_exit, output_message
@@ -65,7 +65,7 @@ class dbTolls(dbControl):
                 return row[0] if row else None
         except sqlite3.Error as error:
             output_message_exit(f"ошибка запроса к БД Sqlite3: {' '.join(error.args)}",
-                           f"получить id записи {src_data}")
+                                f"получить id записи {src_data}")
         return None
 
     def go_insert(self, query: str, src_data: tuple, message: str) -> int | None:
@@ -78,20 +78,30 @@ class dbTolls(dbControl):
             output_message(f"ошибка INSERT запроса БД Sqlite3: {' '.join(error.args)}", f"{message}")
         return None
 
+    # def go_select_chain(self, query: str, src_data: tuple) -> list[sqlite3.Row] | None:
+    #     """ Пытается выполнить запрос на выборку записей из БД. Возвращает список строк.  """
+    #     try:
+    #         results = self.connection.execute(query, src_data)
+    #         try:
+    #             first_row = next(results)
+    #             return list(chain((first_row,), results))
+    #         except StopIteration as e:
+    #             return None
+    #     except sqlite3.Error as error:
+    #         output_message(f"ошибка SELECT запроса БД Sqlite3: {' '.join(error.args)}", f"{src_data}")
+    #     return None
 
-    def go_select(self, query: str, src_data: tuple) -> list[sqlite3.Row] | None:
-        """ Пытается выполнить запрос на выборку записей шз БД. Возвращает  """
+    def go_select(self, query: str, src_data: tuple = None) -> list[sqlite3.Row] | None:
+        """ Пытается выполнить запрос на выборку записей из БД. Возвращает список строк. """
         try:
-            results = self.connection.execute(query, src_data)
-            try:
-                first_row = next(results)
-                return list(chain((first_row,), results))
-            except StopIteration as e:
-                return None
+            if src_data:
+                cursor = self.connection.execute(query, src_data)
+            else:
+                cursor = self.connection.execute(query)
+            return cursor.fetchall() if cursor else None
         except sqlite3.Error as error:
-            output_message(f"ошибка SELECT запроса БД Sqlite3: {' '.join(error.args)}", f"{src_data}")
+            output_message_exit(f"ошибка SELECT запроса БД Sqlite3: {' '.join(error.args)}", f"{src_data}")
         return None
-
 
     def go_execute(self, *args, **kwargs) -> sqlite3.Cursor | None:
         try:

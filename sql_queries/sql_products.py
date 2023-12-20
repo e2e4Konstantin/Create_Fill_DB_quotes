@@ -1,44 +1,51 @@
 
 sql_products_queries = {
 
-    "delete_quotes_last_periods": """
-        DELETE FROM tblQuotes 
-        WHERE ID_tblQuote IN (
-                SELECT ID_tblQuote 
-                FROM tblQuotes 
-                WHERE period > 0 AND period < ?);
-        """,
+    "delete_products_last_periods": """
+        DELETE FROM tblProducts 
+        WHERE ID_tblProduct IN (
+            SELECT ID_tblProduct 
+            FROM tblProducts 
+            WHERE period > 0 AND period < ?
+        );
+    """,
 
-    "select_quotes_code":   """
-        SELECT ID_tblQuote FROM tblQuotes WHERE code = ?;
-        """,
+    "select_product_id_code": """
+        SELECT ID_tblProduct FROM tblProducts WHERE code = ?;
+    """,
+
+    "select_product_id_period_code": """
+        SELECT ID_tblProduct FROM tblProducts WHERE period = ? AND code = ?;
+    """,
+
     "select_products_item_code":   """
-        SELECT * FROM tblProducts WHERE FK_tblProducts_tblItems = ? AND code = ?;
+        SELECT * FROM tblProducts WHERE code = ?;
     """,
 
-    "select_quotes_max_period": """
-        SELECT MAX(period) AS max_period FROM tblQuotes;         
+    "select_products_max_period": """
+        SELECT MAX(period) AS max_period FROM tblProducts;         
     """,
 
-    "select_quotes_count_period_less": """
-        SELECT COUNT(*) FROM tblQuotes WHERE period > 0 AND period < ?;
+    "select_products_count_period_less": """
+        SELECT COUNT(*) FROM tblProducts WHERE period > 0 AND period < ?;
     """,
 
-    "insert_quote": """
-        INSERT INTO tblQuotes (
-                                    FK_tblQuotes_tblCatalogs, period, code, description, measurer, 
-                                    salary, operation_of_machines, cost_of_material
-                                 ) 
-        VALUES ( ?, ?, ?, ?, ?, ?, ?, ?);
+    "select_changes": """SELECT CHANGES() AS changes;""",
+
+    "insert_product": """
+        INSERT INTO tblProducts (
+            FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems,
+            period, code, description, measurer, full_code
+        ) 
+        VALUES ( ?, ?, ?, ?, ?, ?, ?);
     """,
 
-    "update_quote_id": """
-        UPDATE tblQuotes 
+    "update_product_id": """
+        UPDATE tblProducts 
         SET 
-            FK_tblQuotes_tblCatalogs = ?, 
-            period = ?, code = ?, description = ?, measurer = ?, 
-            salary = ?, operation_of_machines = ?, cost_of_material = ? 
-        WHERE ID_tblQuote = ?;
+            FK_tblProducts_tblCatalogs = ?, FK_tblProducts_tblItems = ?,
+            period = ?, code = ?, description = ?, measurer = ?, full_code = ?
+        WHERE ID_tblProduct = ?;
     """,
 }
 
@@ -196,9 +203,9 @@ sql_products_creates = {
                 p.description AS title,
                 p.measurer AS measurer
             FROM tblProducts p 
-            LEFT JOIN tblCatalogs AS c ON c.ID_tblCatalog = b.FK_tblProducts_tblCatalogs
-            LEFT JOIN tblItems AS i ON i.ID_tblItem = c.FK_tblProducts_tblItems
-            ORDER BY quotes_code;
+            LEFT JOIN tblCatalogs AS c ON c.ID_tblCatalog = p.FK_tblProducts_tblCatalogs
+            LEFT JOIN tblItems AS i ON i.ID_tblItem = p.FK_tblProducts_tblItems;
+            --ORDER BY p.code;
     """,
 
 

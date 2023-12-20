@@ -9,6 +9,10 @@ sql_items_queries = {
         SELECT * FROM tblItems WHERE team IS ? and name IS ?;
     """,
 
+    "select_item_id_team_name": """
+        SELECT ID_tblItem FROM tblItems WHERE team IS ? and name IS ?;
+    """,
+
     "select_items_team": """
         SELECT ID_tblItem, name, title, ID_parent, re_pattern 
         FROM tblItems 
