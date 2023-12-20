@@ -7,4 +7,7 @@ sql_raw_queries = {
     # --- > Получение данных ----------------------------------------------------------------------
     "select_rwd_all": """SELECT * FROM tblRawData;""",
     "select_rwd_code_regexp": """SELECT * FROM tblRawData WHERE PRESSMARK REGEXP ?;""",
+
+    # Машины Глава 1
+    "select_rwd_machines_catalog": """ SELECT r.* FROM tblRawData r WHERE r."Ед.Изм." IS NULL OR r.Брутто IS NULL;"""
 }

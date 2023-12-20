@@ -72,6 +72,7 @@ def _insert_raw_quote(db: dbTolls, type_id: int, raw_quote: sqlite3.Row) -> int 
 
 
 def _delete_last_period_quotes_row(db_filename: str):
+    """ Удалить все записи у которых период < максимального.  """
     with (dbTolls(db_filename) as db):
         work_cursor = db.go_execute(sql_products_queries["select_products_max_period"])
         max_period = work_cursor.fetchone() if work_cursor else None
@@ -84,7 +85,7 @@ def _delete_last_period_quotes_row(db_filename: str):
         deleted_cursor = db.go_execute(sql_products_queries["select_products_count_period_less"], (current_period,))
         message = f"Будут удалены {deleted_cursor.fetchone()[0]} расценок с периодом меньше текущего: {current_period}"
         ic(message)
-        deleted_cursor = db.go_execute(sql_products_queries["delete_quotes_last_periods"], (current_period,))
+        deleted_cursor = db.go_execute(sql_products_queries["delete_products_last_periods"], (current_period,))
         mess = f"Из Расценок удалено {deleted_cursor.rowcount} записей с period < {current_period}"
         ic(mess)
 
@@ -111,7 +112,7 @@ def transfer_raw_data_to_quotes(db_filename: str):
             if result:
                 quote = result[0]
                 if raw_period >= quote['period'] and target_type_id == quote['FK_tblProducts_tblItems']:
-                    count_updated = _update_quote(db, target_type_id, quote['ID_tblQuote'], row)
+                    count_updated = _update_quote(db, target_type_id, quote['ID_tblProduct'], row)
                     if count_updated:
                         updated_success.append((id, raw_code))
                 else:
@@ -130,7 +131,7 @@ def transfer_raw_data_to_quotes(db_filename: str):
         ic(alog, ilog, ulog, none_log)
 
     # удалить из Расценок записи период которых меньше чем максимальный период
-    # _delete_last_period_quotes_row(db_filename)
+    _delete_last_period_quotes_row(db_filename)
 
 
 if __name__ == '__main__':

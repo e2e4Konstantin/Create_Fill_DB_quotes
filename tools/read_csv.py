@@ -3,7 +3,7 @@ from icecream import ic
 from pathlib import Path
 from config import dbTolls
 
-from files_features import output_message
+from files_features import output_message_exit
 
 
 def read_csv_to_raw_table(db_file_name: str, csv_file_name: str, period: int):
@@ -24,7 +24,7 @@ def read_csv_to_raw_table(db_file_name: str, csv_file_name: str, period: int):
             count = f"{int(x.iloc[0]['count'])} записей вставлено в таблицу {table_name} из файла {Path(csv_file_name).name}"
             ic(count)
     except IOError as err:
-        output_message(err, csv_file_name)
+        output_message_exit(err, csv_file_name)
 
 
 if __name__ == '__main__':

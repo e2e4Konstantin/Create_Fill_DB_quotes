@@ -1,12 +1,13 @@
 import sqlite3
-import pandas as pd
+
 from icecream import ic
-from config import dbTolls, items_catalog, teams
+from config import dbTolls, items_catalog
 from sql_queries import (
     sql_items_queries, sql_raw_queries, sql_catalog_queries
 )
 from files_features import output_message, output_message_exit
-from tools.code_tolls import clear_code, title_catalog_extraction, get_integer_value, look_item_index
+from tools.code_tolls import clear_code, title_catalog_extraction, get_integer_value
+from tools.get_directory_items import get_sorted_directory_items
 
 
 def _get_catalog_id(code: str, db: dbTolls) -> int | None:
@@ -165,56 +166,22 @@ def _delete_last_period_catalog_row(db_filename: str):
         ic(mess)
 
 
-def _get_sorted_items(db_filename: str, directory_name: str) -> tuple[tuple[int, str], ...] | None:
-    """ Формирует упорядоченный кортеж (id, name) из элементов справочника directory_name
-        в соответствии с иерархией заданной полем ID_parent. Если это поле не задано,
-        то берутся все элементы справочника последовательно.
-        Первым элементом добавляется элементы группы 'main'.
-        """
-
-    parameters = [teams[0].lower(), directory_name.lower()]
-    with (dbTolls(db_filename) as db):
-        df = pd.read_sql_query(
-            sql=sql_items_queries["select_items_dual_teams"], params=parameters, con=db.connection
-        )
-    if df.empty:
-        return None
-    columns = ['ID_tblItem', 'ID_parent']
-    df[columns] = df[columns].astype(pd.Int8Dtype())
-    if df['ID_parent'].isna().sum() == 1:
-        # справочник иерархический
-        # x=df[df['ID_parent'].isna()]['ID_tblItem'].values[0]
-        dir_tree = []
-        top_item = df[df['ID_parent'].isna()].to_records(index=False).tolist()[0]
-        dir_tree.append(top_item[:2] + (parameters[0],))
-        top_id = top_item[0]
-        item_df = df[df['ID_parent'] == top_id]
-        while not item_df.empty:
-            item_data = item_df.to_records(index=False).tolist()[0]
-            dir_tree.append(item_data[:2] + (parameters[1],))
-            next_id = item_data[0]
-            item_df = df[df['ID_parent'] == next_id]
-        return tuple(dir_tree)
-
-    dir_tree = [(row['ID_tblItem'], row['code']) for row in df.rows]
-    return tuple(dir_tree)
 
 
-def transfer_raw_table_data_to_catalog(operating_db: str):
-    """ Заполняет каталог данными из таблицы с исходными данными в таблицу Каталога.
+def transfer_raw_data_to_catalog_machines(operating_db: str):
+    """ Заполняет каталог данными из таблицы с RAW данными для МАШИН Глава 1 в таблицу Каталога.
         Каталог заполняется в соответствии с иерархией элементов каталога.
         Иерархия задается родителями в классе ItemCatalogDirectory.
     """
-    ic()
-    # получить отсортированные по иерархии элементы справочника 'quotes'
-    dir_catalog = _get_sorted_items(operating_db, directory_name='quotes')
+    # получить отсортированный справочник 'machines'
+    dir_catalog = get_sorted_directory_items(operating_db, directory_name='machines')
     ic(dir_catalog)
 
     for item in dir_catalog[1:]:
-        _transfer_raw_item_to_catalog(item, operating_db)
-
-    # удалить из Каталога записи период которых меньше чем текущий период
-    _delete_last_period_catalog_row(operating_db)
+        _transfer_raw_item_machines_to_catalog(item, operating_db)
+    #
+    # # удалить из Каталога записи период которых меньше чем текущий период
+    # _delete_last_period_catalog_row(operating_db)
 
 
 if __name__ == '__main__':
@@ -224,4 +191,4 @@ if __name__ == '__main__':
     db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
     db_name = os.path.join(db_path, "Normative.sqlite3")
 
-    transfer_raw_table_data_to_catalog(db_name)
+    transfer_raw_data_to_catalog_machines(db_name)

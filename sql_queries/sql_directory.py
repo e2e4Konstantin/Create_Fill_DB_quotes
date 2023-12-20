@@ -20,7 +20,7 @@ sql_items_queries = {
     """,
 
     "select_items_dual_teams": """
-        SELECT ID_tblItem, name, title, ID_parent, re_pattern 
+        SELECT ID_tblItem, team, name, title, ID_parent, re_pattern 
         FROM tblItems 
         WHERE team IN (?, ?);
     """,
