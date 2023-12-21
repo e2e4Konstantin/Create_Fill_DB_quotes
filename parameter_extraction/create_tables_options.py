@@ -1,5 +1,5 @@
 from config import dbTolls
-from sql_queries import sql_options_queries
+from sql_queries.OLD import sql_options_queries
 
 
 def create_tables_idx_options(db_file_name: str):

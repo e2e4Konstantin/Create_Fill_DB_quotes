@@ -46,7 +46,8 @@ sql_items_creates = {
                 name        TEXT NOT NULL,                              -- название
                 title     	TEXT NOT NULL,                              -- описание
                 ID_parent   INTEGER REFERENCES tblItems (ID_tblItem),   -- родитель 
-                re_pattern  TEXT NOT NULL,                          -- re паттерн шифра категории
+                re_pattern  TEXT NOT NULL,                              -- re паттерн шифра категории
+                re_prefix   TEXT,                                       -- re паттерн названия/title
                 last_update INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')),
                 UNIQUE (team, name)
         );
@@ -57,7 +58,7 @@ sql_items_creates = {
     """,
 
     "insert_item": """
-        INSERT INTO tblItems (team, name, title, ID_parent, re_pattern) VALUES ( ?, ?, ?, ?, ?);
+        INSERT INTO tblItems (team, name, title, ID_parent, re_pattern, re_prefix) VALUES ( ?, ?, ?, ?, ?, ?);
     """,
 
     # --- > таблица для хранения истории изменений Справочников ---------------------------
@@ -68,7 +69,8 @@ sql_items_creates = {
     # 8:  title
     # 16: ID_parent
     # 32: re_pattern
-    # 64: last_update
+    # 64: re_prefix
+    # 128: last_update
     # _mask равная -1 показывает что запись была удалена.
     "create_table_history_items": """
         CREATE TABLE IF NOT EXISTS _tblHistoryItems (
@@ -79,6 +81,7 @@ sql_items_creates = {
             title      	TEXT,
             ID_parent   INTEGER,
             re_pattern  TEXT,
+            re_prefix   TEXT,
             last_update INTEGER,          
             _version    INTEGER NOT NULL,
             _updated    INTEGER NOT NULL,
@@ -95,12 +98,12 @@ sql_items_creates = {
         AFTER INSERT ON tblItems
         BEGIN
             INSERT INTO _tblHistoryItems (
-                _rowid, ID_tblItem, team, name, title, ID_parent, re_pattern, last_update, 
+                _rowid, ID_tblItem, team, name, title, ID_parent, re_pattern, re_prefix, last_update, 
                 _version, _updated, _mask
             )
             VALUES (
                 new.rowid, new.ID_tblItem, new.team, new.name, new.title, new.ID_parent, 
-                new.re_pattern, new.last_update,
+                new.re_pattern, new.re_prefix, new.last_update,
                 1, unixepoch('now'), 0
             );
         END;
@@ -111,12 +114,12 @@ sql_items_creates = {
         AFTER DELETE ON tblItems
         BEGIN
             INSERT INTO _tblHistoryItems (
-                _rowid, ID_tblItem, team, name, title, ID_parent, re_pattern, last_update,
+                _rowid, ID_tblItem, team, name, title, ID_parent, re_pattern, re_prefix, last_update,
                 _version, _updated, _mask
             )
             VALUES (
                 old.rowid, 
-                old.ID_tblItem, old.team, old.name, old.title, old.ID_parent, old.re_pattern, old.last_update,
+                old.ID_tblItem, old.team, old.name, old.title, old.ID_parent, old.re_pattern, old.re_prefix, old.last_update,
                 (SELECT COALESCE(MAX(_version), 0) FROM _tblHistoryItems WHERE _rowid = old.rowid) + 1,
                 unixepoch('now'), -1
             );
@@ -129,7 +132,7 @@ sql_items_creates = {
         FOR EACH ROW
         BEGIN
             INSERT INTO _tblHistoryItems (
-                _rowid, ID_tblItem, team, name, title, ID_parent, re_pattern, last_update, 
+                _rowid, ID_tblItem, team, name, title, ID_parent, re_pattern, re_prefix, last_update, 
                 _version, _updated, _mask
             )
             SELECT 
@@ -140,6 +143,7 @@ sql_items_creates = {
                 CASE WHEN old.name != new.title THEN new.title ELSE null END,
                 CASE WHEN old.ID_parent != new.ID_parent THEN new.ID_parent ELSE null END,
                 CASE WHEN old.re_pattern != new.re_pattern THEN new.re_pattern ELSE null END,
+                CASE WHEN old.re_prefix != new.re_prefix THEN new.re_prefix ELSE null END,
                 CASE WHEN old.last_update != new.last_update THEN new.last_update ELSE null END,
                 (SELECT MAX(_version) FROM _tblHistoryItems WHERE _rowid = old.rowid) + 1,
                 unixepoch('now'),
@@ -149,14 +153,16 @@ sql_items_creates = {
                 (CASE WHEN old.title != new.title then 8 else 0 END) +
                 (CASE WHEN old.ID_parent != new.ID_parent then 16 else 0 END) +
                 (CASE WHEN old.re_pattern != new.re_pattern then 32 else 0 END) +
-                (CASE WHEN old.last_update != new.last_update then 64 else 0 END)
+                (CASE WHEN old.re_prefix != new.re_prefix then 64 else 0 END) +
+                (CASE WHEN old.last_update != new.last_update then 128 else 0 END)
             WHERE 
                 old.ID_tblItem != new.ID_tblItem OR
                 old.team != new.team OR
                 old.name != new.name OR
                 old.title != new.title OR   
                 old.ID_parent != new.ID_parent OR
-                old.re_pattern != new.re_pattern OR   
+                old.re_pattern != new.re_pattern OR 
+                old.re_prefix != new.re_prefix OR   
                 old.last_update != new.last_update;
         END;
     """,

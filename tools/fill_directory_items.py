@@ -19,7 +19,7 @@ def fill_directory_catalog_items(db_file_name: str):
             else:
                 parent_id = db.get_row_id(sql_items_queries['select_items_id_team_name'], (item.team, item.parent))
 
-            query_params = (item.team, item.name, item.title, parent_id, item.re_pattern)
+            query_params = (item.team, item.name, item.title, parent_id, item.re_pattern, item.prefix)
             inserted_id = db.go_insert(
                 query=sql_items_creates["insert_item"], src_data=query_params, message=message_item
             )

@@ -6,8 +6,24 @@ sql_raw_queries = {
 
     # --- > Получение данных ----------------------------------------------------------------------
     "select_rwd_all": """SELECT * FROM tblRawData;""",
-    "select_rwd_code_regexp": """SELECT * FROM tblRawData WHERE PRESSMARK REGEXP ?;""",
+    "select_rwd_code_regexp": """
+        SELECT * FROM tblRawData WHERE PRESSMARK REGEXP ?;
+    """,
 
-    # Машины Глава 1
-    "select_rwd_machines_catalog": """ SELECT r.* FROM tblRawData r WHERE r."Ед.Изм." IS NULL OR r.Брутто IS NULL;"""
+    # Материалы Глава 1
+    "select_rwd_materials_catalog": """
+        SELECT ID, PARENT, CMT, TITLE, "Ед.Изм.", "Брутто", PERIOD 
+        FROM tblRawData 
+        WHERE "Ед.Изм." IS NULL OR "Брутто" IS NULL;
+    """,
+
+    "select_rwd_materials_items_re_catalog": """
+        SELECT ID, PARENT, CMT, TITLE, PERIOD 
+        FROM tblRawData 
+        WHERE ("Ед.Изм." IS NULL OR "Брутто" IS NULL) AND CMT REGEXP ?;        
+    """,
+
+    "select_rwd_material_cmt_id": """
+        SELECT CMT FROM tblRawData WHERE id = ?;
+    """,
 }

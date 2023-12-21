@@ -1,7 +1,7 @@
 import re
 from fastnumbers import isfloat, isint
 
-from config import items_catalog
+from config import items_catalog, DirectoryItem
 
 _re_compiled_patterns = {
     'subsection_groups': re.compile(r"(^\d+\.\d+-\d+-)(\d+)\s*"),
@@ -42,19 +42,19 @@ def keep_just_numbers_dots(source: str = None) -> str | None:
 #     bid_quote = items_data[item_name].compiled.match(source)
 #     return bid_quote.group(0) if bid_quote else ""
 
-def look_item_index(target_name: str) -> int | None:
+def look_item_index(directory_line: DirectoryItem) -> int | None:
     """ Ищет объект с именем target_name в items_catalog возвращает индекс"""
     for i, item in enumerate(items_catalog):
-        if item.name == target_name:
+        if (item.team == directory_line.directory_name) and (item.name == directory_line.item_name):
             return i
     return None
 
 
-def title_catalog_extraction(title: str, item_name: str) -> str | None:
+def title_catalog_extraction(title: str, item: DirectoryItem) -> str | None:
     """ Удаляет из заголовка префикс. В первом слове делает первую букву заглавной. Удаляет лишние пробелы. """
     title = text_cleaning(title)
     if title:
-        item_index = look_item_index(item_name)
+        item_index = look_item_index(item)
         return items_catalog[item_index].prefix.sub('', title).strip().capitalize()
     return None
 

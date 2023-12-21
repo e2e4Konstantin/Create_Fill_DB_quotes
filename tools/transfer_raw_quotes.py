@@ -99,10 +99,13 @@ def transfer_raw_data_to_quotes(db_filename: str):
         # получить все строки raw таблицы
         raw_data = db.go_select(sql_raw_queries["select_rwd_all"])
         if not raw_data:
-            output_message_exit(f"в RAW таблице с Расценками нет записей:",f"tblRawData пустая")
+            output_message_exit(f"в RAW таблице с Расценками нет записей:", f"tblRawData пустая")
             return None
         # получить id типа для расценки
         target_type_id = db.get_row_id(sql_items_queries["select_item_id_team_name"], ("units", "quote"))
+        if not target_type_id:
+            output_message_exit(f"в Справочнике 'units':", f"не найдена запись 'quote'")
+            return None
         inserted_success, updated_success = [], []
         for row_count, row in enumerate(raw_data):
             raw_code = clear_code(row["PRESSMARK"])

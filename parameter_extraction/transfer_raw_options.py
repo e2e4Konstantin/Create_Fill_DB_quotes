@@ -3,7 +3,8 @@ from icecream import ic
 from tools import read_csv_to_raw_table
 from parameter_extraction.create_tables_options import create_tables_idx_options
 from config import dbTolls
-from sql_queries import sql_raw_data, sql_options_queries, sql_quotes_select
+from sql_queries import sql_raw_data, sql_quotes_select
+from sql_queries.OLD import sql_options_queries
 from files_features import output_message_exit
 from tools.code_tolls import clear_code, text_cleaning, get_integer_value, get_float_value
 
