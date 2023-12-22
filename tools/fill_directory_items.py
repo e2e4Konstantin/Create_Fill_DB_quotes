@@ -9,7 +9,7 @@ def fill_directory_catalog_items(db_file_name: str):
     with dbTolls(db_file_name) as db:
         message_item = "вставка записи в справочник объектов каталога."
         item = items_catalog[0]
-        main_data = (item.team, item.name, item.title, None, item.re_pattern)
+        main_data = (item.team, item.name, item.title, None, item.re_pattern, None)
         main_id = db.go_insert(
             query=sql_items_creates["insert_item"], src_data=main_data, message=message_item
         )

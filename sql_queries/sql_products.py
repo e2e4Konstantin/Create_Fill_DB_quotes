@@ -10,15 +10,32 @@ sql_products_queries = {
         );
     """,
 
+    "delete_products_period_team_name": """
+        DELETE FROM tblProducts 
+        WHERE ID_tblProduct IN (
+            SELECT ID_tblProduct 
+            FROM tblProducts AS p
+            WHERE 
+                p.period > 0 AND 
+                p.period < ? AND 
+                p.FK_tblProducts_tblItems = (
+                    SELECT ID_tblItem 
+                    FROM tblItems AS i 
+                    WHERE i.team = ? AND i.name = ?)
+        );
+    """,
+
+
     "select_product_id_code": """
         SELECT ID_tblProduct FROM tblProducts WHERE code = ?;
     """,
 
     "select_product_id_period_code": """
-        SELECT ID_tblProduct FROM tblProducts WHERE period = ? AND code = ?;
+        SELECT ID_tblProduct FROM tblProducts 
+        WHERE period = ? AND code = ?;
     """,
 
-    "select_products_item_code":   """
+    "select_products_code":   """
         SELECT * FROM tblProducts WHERE code = ?;
     """,
 
@@ -26,12 +43,35 @@ sql_products_queries = {
         SELECT MAX(period) AS max_period FROM tblProducts;         
     """,
 
+    "select_products_max_period_team_name": """
+        SELECT MAX(period) AS max_period 
+        FROM tblProducts AS p
+        WHERE p.FK_tblProducts_tblItems = (
+            SELECT ID_tblItem FROM tblItems AS i WHERE i.team = ? AND i.name = ?
+            );
+    """,
+
     "select_products_count_period_less": """
         SELECT COUNT(*) FROM tblProducts WHERE period > 0 AND period < ?;
     """,
 
+
+    "select_products_count_period_team_name": """
+        SELECT COUNT(*) AS number FROM tblProducts AS p 
+        WHERE 
+            p.period > 0 AND 
+            p.period < ? AND 
+            FK_tblProducts_tblItems = (
+                SELECT ID_tblItem FROM tblItems AS i WHERE i.team = ? AND i.name = ?
+                );
+    """,
+
+
+
     "select_changes": """SELECT CHANGES() AS changes;""",
 
+
+    # --->
     "insert_product": """
         INSERT INTO tblProducts (
             FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems,
@@ -197,7 +237,7 @@ sql_products_creates = {
     "create_view_products": """
         CREATE VIEW viewProducts AS
             SELECT 
-                i.title AS parent,
+                i.title AS type,
                 c.code AS parent_code,
                 p.code AS code,
                 p.description AS title,

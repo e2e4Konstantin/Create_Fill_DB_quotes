@@ -6,11 +6,10 @@ from sql_queries import (
     sql_items_queries, sql_raw_queries, sql_catalog_queries
 )
 from files_features import output_message, output_message_exit
-from tools.code_tolls import clear_code, title_catalog_extraction, get_integer_value, look_item_index
+from tools.code_tolls import clear_code, title_catalog_extraction, get_integer_value
 from tools.shared_features import (
     get_sorted_directory_items, get_catalog_id_by_code, delete_catalog_rows_with_old_period
 )
-
 
 
 def _get_directory_id(item_name: str, db: dbTolls) -> int | None:

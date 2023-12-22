@@ -1,16 +1,37 @@
 import pandas as pd
+from icecream import ic
+import sqlite3
 
 from config import dbTolls, DirectoryItem
-from sql_queries import sql_items_queries, sql_catalog_queries
+from sql_queries import sql_items_queries, sql_catalog_queries, sql_products_queries
 from files_features import output_message, output_message_exit
 
 
+def get_catalog_id_by_period_code(db: dbTolls, period: int, code: str) -> int | None:
+    """ Ищет в Каталоге tblCatalogs запись по периоду и шифру. Возвращает id. """
+    row_id = db.get_row_id(sql_catalog_queries["select_catalog_id_period_code"], (period, code))
+    if row_id:
+        return row_id
+    output_message(f"В каталоге не найдена запись:", f"период: {period} и шифр: {code!r}")
+    return None
+
+
 def get_catalog_id_by_code(db: dbTolls, code: str) -> int | None:
-    """ Ищет в Каталоге tblCatalogs запись по шифру. """
+    """ Ищет в Каталоге tblCatalogs запись по шифру. Возвращает id. """
     row_id = db.get_row_id(sql_catalog_queries["select_catalog_id_code"], (code,))
-    if row_id is None:
-        output_message(f"В каталоге не найдена запись:", f"шифр: {code!r}")
-    return row_id
+    if row_id:
+        return row_id
+    output_message(f"В каталоге не найдена запись:", f"шифр: {code!r}")
+    return None
+
+
+def get_catalog_row_by_code(db: dbTolls, code: str) -> sqlite3.Row | None:
+    """ Ищет в Каталоге tblCatalogs запись по шифру. Возвращает строку целиком. """
+    rows = db.go_select(sql_catalog_queries["select_catalog_code"], (code,))
+    if rows:
+        return rows[0]
+    output_message(f"В каталоге не найдена запись:", f"шифр: {code!r}")
+    return None
 
 
 def get_sorted_directory_items(db_filename: str, directory_name: str) -> tuple[DirectoryItem, ...] | None:
@@ -34,21 +55,23 @@ def get_sorted_directory_items(db_filename: str, directory_name: str) -> tuple[D
         top_item = df[df['ID_parent'].isna()].to_records(index=False).tolist()[0]
         top_id = top_item[0]
         dir_tree.append(DirectoryItem(
-            id=top_id, item_name=top_item[2], directory_name=parameters[0], re_pattern=top_item[5])
+            id=top_id, item_name=top_item[2], directory_name=parameters[0],
+            re_pattern=top_item[5], re_prefix=top_item[6])
         )
         item_df = df[df['ID_parent'] == top_id]
         while not item_df.empty:
             item_data = item_df.to_records(index=False).tolist()[0]
             next_id = item_data[0]
-            dir_tree.append(
-                DirectoryItem(id=next_id, item_name=item_data[2], directory_name=item_data[1], re_pattern=item_data[5])
+            dir_tree.append(DirectoryItem(
+                id=next_id, item_name=item_data[2], directory_name=item_data[1],
+                re_pattern=item_data[5], re_prefix=item_data[6])
             )
             item_df = df[df['ID_parent'] == next_id]
         return tuple(dir_tree)
 
     df = df.drop(df.index[0])
     df = df.sort_values(by='name', ascending=True)
-    return tuple([DirectoryItem(row[0], row[2], row[1], row[5]) for row in df.itertuples(index=False)])
+    return tuple([DirectoryItem(row[0], row[2], row[1], row[5], row[6]) for row in df.itertuples(index=False)])
 
 
 def delete_catalog_rows_with_old_period(db_filename: str):
@@ -70,15 +93,70 @@ def delete_catalog_rows_with_old_period(db_filename: str):
 
         deleted_cursor = db.go_execute(sql_catalog_queries["select_count_last_period"], (max_period,))
         number_past = deleted_cursor.fetchone()[0]
-        mess = f"Из Каталога будут удалены {number_past} записей у которых период меньше текущего: {max_period}"
-        ic(mess)
-        #
-        deleted_cursor = db.go_execute(sql_catalog_queries["delete_catalog_last_periods"], (max_period,))
-        mess = f"Из Каталога удалено {deleted_cursor.rowcount} записей с period < {max_period}"
-        ic(mess)
+        if number_past > 0:
+            mess = f"Из Каталога будут удалены {number_past} записей у которых период меньше текущего: {max_period}"
+            ic(mess)
+            deleted_cursor = db.go_execute(sql_catalog_queries["delete_catalog_last_periods"], (max_period,))
+            mess = f"Из Каталога удалено {deleted_cursor.rowcount} записей с period < {max_period}"
+            ic(mess)
 
 
+def update_product(db: dbTolls, data: tuple) -> int | None:
+    """ Получает кортеж с данными продукта для обновления записи в таблице tblProducts. """
+    db.go_execute(sql_products_queries["update_product_id"], data)
+    count = db.go_execute(sql_products_queries["select_changes"])
+    if count:
+        return count.fetchone()['changes']
+    output_message(f"продукт {data}", f"не обновлен в таблице tblProducts")
+    return None
 
+
+def insert_product(db: dbTolls, data) -> int | None:
+    """ Получает кортеж с данными продукта для вставки в таблицу tblProducts. """
+    message = f"INSERT tblProducts шифр {data[2]!r} период: {data[1]}"
+    inserted_id = db.go_insert(sql_products_queries["insert_product"], data, message)
+    if inserted_id:
+        return inserted_id
+    output_message(f"продукт {data}", f"не добавлен в tblProducts")
+    return None
+
+
+def get_product_row_by_code(db: dbTolls, product_code: str) -> sqlite3.Row | None:
+    """ Получает строку из tblProducts у которой шифр равен product_code. """
+    products = db.go_select(sql_products_queries["select_products_code"], (product_code,))
+    if products:
+        return products[0]
+    # output_message(f"в tblProducts не найден", f"продукт с шифром: {product_code}")
+    return None
+
+
+def delete_last_period_product_row(db_filename: str, team: str, name: str):
+    """ Вычисляет максимальный период для таблицы tblProducts.
+        Удаляет все записи у которых период < максимального.  """
+    with (dbTolls(db_filename) as db):
+        work_cursor = db.go_execute(sql_products_queries["select_products_max_period_team_name"], (team, name))
+        max_period = work_cursor.fetchone() if work_cursor else None
+        if max_period is None:
+            output_message_exit(f"Что то пошло не так при получении максимального периода Продуктов",
+                                f"для {team!r} {name!r}")
+            return
+        current_max_period = max_period['max_period']
+        ic(team, name, current_max_period)
+        deleted_cursor = db.go_execute(
+            sql_products_queries["select_products_count_period_team_name"], (current_max_period, team, name)
+        )
+        del_number = deleted_cursor.fetchone()['number']
+        if del_number > 0:
+            message = (f"Будут удалены {del_number} продуктов с периодом меньше: {current_max_period} "
+                       f"для {team!r} {name!r}")
+            ic(message)
+
+            deleted_cursor = db.go_execute(
+                sql_products_queries["delete_products_period_team_name"], (current_max_period, team, name)
+            )
+            mess = (f"Из Продуктов удалено {deleted_cursor.rowcount} записей с period < {current_max_period}"
+                    f" для {team!r} {name!r}")
+            ic(mess)
 
 
 if __name__ == '__main__':
@@ -89,11 +167,14 @@ if __name__ == '__main__':
     # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
     db_name = os.path.join(db_path, "Normative.sqlite3")
 
-    directory = get_sorted_directory_items(db_name, directory_name='machines')
-    ic(directory)
+    delete_last_period_product_row(db_name, team='units', name='material')
 
-    directory = get_sorted_directory_items(db_name, directory_name='units')
-    ic(directory)
-
-    directory = get_sorted_directory_items(db_name, directory_name='quotes')
-    ic(directory)
+    #
+    # directory = get_sorted_directory_items(db_name, directory_name='machines')
+    # ic(directory)
+    #
+    # directory = get_sorted_directory_items(db_name, directory_name='units')
+    # ic(directory)
+    #
+    # directory = get_sorted_directory_items(db_name, directory_name='quotes')
+    # ic(directory)

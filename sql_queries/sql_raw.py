@@ -26,4 +26,11 @@ sql_raw_queries = {
     "select_rwd_material_cmt_id": """
         SELECT CMT FROM tblRawData WHERE id = ?;
     """,
+
+    "select_rwd_materials": """
+        SELECT ID, PARENT, CMT, TITLE, "Ед.Изм.", "Брутто", PERIOD 
+        FROM tblRawData 
+        WHERE ("Ед.Изм." IS NOT NULL OR "Брутто" IS NOT NULL);
+    """,
+
 }

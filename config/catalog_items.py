@@ -50,13 +50,16 @@ class ItemCatalogDirectory:
     parent:     str | None
     re_pattern: str | None
     compiled:   re.Pattern | None
-    prefix:     re.Pattern | None
+    prefix:     str | None
 
 
 items_catalog: list[str: ItemCatalogDirectory] = [
     ItemCatalogDirectory(
-        x[0].lower(), x[1].lower(), x[2].lower(), x[3].lower() if x[3] else None, x[4],
-        re.compile(str(x[4])), re.compile(str(x[5]))
+        x[0].lower(), x[1].lower(), x[2].lower(),
+        x[3].lower() if x[3] else None,
+        x[4],
+        re.compile(str(x[4])),
+        x[5] if x[5] else None
     )
     for x in src_catalog_items
 ]

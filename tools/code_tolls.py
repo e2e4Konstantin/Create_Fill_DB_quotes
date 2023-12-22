@@ -1,7 +1,7 @@
 import re
 from fastnumbers import isfloat, isint
 
-from config import items_catalog, DirectoryItem
+from config import items_catalog
 
 _re_compiled_patterns = {
     'subsection_groups': re.compile(r"(^\d+\.\d+-\d+-)(\d+)\s*"),
@@ -36,26 +36,11 @@ def keep_just_numbers_dots(source: str = None) -> str | None:
     return ""
 
 
-#
-# def extract_code(source: str, item_name: str) -> str:
-#     """ Выделяет из входной строки шифр объекта в соответствии с названием объекта"""
-#     bid_quote = items_data[item_name].compiled.match(source)
-#     return bid_quote.group(0) if bid_quote else ""
-
-def look_item_index(directory_line: DirectoryItem) -> int | None:
-    """ Ищет объект с именем target_name в items_catalog возвращает индекс"""
-    for i, item in enumerate(items_catalog):
-        if (item.team == directory_line.directory_name) and (item.name == directory_line.item_name):
-            return i
-    return None
-
-
-def title_catalog_extraction(title: str, item: DirectoryItem) -> str | None:
-    """ Удаляет из заголовка префикс. В первом слове делает первую букву заглавной. Удаляет лишние пробелы. """
+def title_catalog_extraction(title: str, pattern_prefix: str) -> str | None:
+    """ Удаляет лишние пробелы. Удаляет из заголовка префикс. В первом слове делает первую букву заглавной. """
     title = text_cleaning(title)
     if title:
-        item_index = look_item_index(item)
-        return items_catalog[item_index].prefix.sub('', title).strip().capitalize()
+        return re.sub(pattern_prefix, '', title).strip().capitalize()
     return None
 
 
@@ -134,17 +119,24 @@ def get_integer_value(value: str) -> int:
 if __name__ == "__main__":
     from icecream import ic
 
-    c = '5.1-2-8'
-    s = '5  . 1-1 .**-1-0-   1   '
-    ic(keep_just_numbers(s))
-    ic(keep_just_numbers_dots(s))
+    item_prefix = r'^\s*Глава\s*((\d+)\.)*'
+    x_title = 'Глава 1. Средние сметные цены на материалы, изделия и конструкции'
+    xx = title_catalog_extraction(x_title, item_prefix)
+    ic(xx)
 
-    ic(remove_wildcard(s))
 
-    ic(split_code(c))
 
-    ic(clear_code(s))
-    ic(clear_code(""))
+    # c = '5.1-2-8'
+    # s = '5  . 1-1 .**-1-0-   1   '
+    # ic(keep_just_numbers(s))
+    # ic(keep_just_numbers_dots(s))
+    #
+    # ic(remove_wildcard(s))
+    #
+    # ic(split_code(c))
+    #
+    # ic(clear_code(s))
+    # ic(clear_code(""))
 
     # print(items_data.keys())
     # print([x for x in items_data.keys()])
@@ -152,3 +144,5 @@ if __name__ == "__main__":
     # test = ['5', '5.1', '5.1-1', '5.1-1-1', '5.1-1-1-0-1', '5.1-1-1']
     # for x in test:
     #     print(identify_item(x))
+
+

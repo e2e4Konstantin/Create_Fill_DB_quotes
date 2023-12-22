@@ -5,7 +5,8 @@ from collections import namedtuple
 
 from tools import (
     create_tables_indexes, fill_directory_catalog_items, read_csv_to_raw_table,
-    insert_root_record_to_catalog, transfer_raw_table_data_to_catalog, transfer_raw_data_to_quotes
+    insert_root_record_to_catalog, transfer_raw_table_data_to_catalog, transfer_raw_data_to_quotes,
+    transfer_raw_data_to_catalog_materials, transfer_raw_data_to_materials
 )
 
 PlacePath = namedtuple("PlacePath", ["data_path", "db_path"])
@@ -62,9 +63,10 @@ if __name__ == '__main__':
     # # заполнить Расценки данными из таблицы tblRawData
     # transfer_raw_data_to_quotes(db_name)
 
-    # # --- > 3 Материалы Глава 1
-    # # прочитать из csv файла данные для Машин в таблицу tblRawData для периода period
-    # ic(machines_data)
+    # --- > 3 Материалы Глава 1
+    # прочитать из csv файла данные для Машин в таблицу tblRawData для периода period
+    ic(machines_data)
     read_csv_to_raw_table(db_name, machines_data, period)
-    # # заполнить Расценки данными из таблицы tblRawData
-    # # # transfer_raw_data_to_catalog_machine(db_name)
+    # заполнить Расценки данными из таблицы tblRawData
+    transfer_raw_data_to_catalog_materials(db_name)
+    transfer_raw_data_to_materials(db_name)

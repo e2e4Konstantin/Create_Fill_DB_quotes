@@ -11,17 +11,6 @@ from tools.shared_features import (
     get_sorted_directory_items, get_catalog_id_by_code, delete_catalog_rows_with_old_period
 )
 
-#
-# def _get_directory_id(item_name: str, db: dbTolls) -> int | None:
-#     """ Ищет в справочнике clip запись с именем item_name, возвращает id """
-#     directory_name = "clip"
-#     id_catalog_items = db.get_row_id(
-#         sql_items_queries["select_items_team_code"], (directory_name, item_name,)
-#     )
-#     if id_catalog_items is None:
-#         output_message(f"В {directory_name} справочнике не найден:", f"название: {item_name!r}")
-#     return id_catalog_items
-
 
 def _make_data_from_raw_catalog_material(db: dbTolls, raw_catalog_row: sqlite3.Row, item: DirectoryItem) -> tuple | None:
     """ Из строки raw_catalog_row таблицы tblRawData с raw данными для Каталога.
@@ -39,7 +28,7 @@ def _make_data_from_raw_catalog_material(db: dbTolls, raw_catalog_row: sqlite3.R
     if parent_id and str(item.id):
         period = get_integer_value(raw_catalog_row["PERIOD"])
         code = clear_code(raw_catalog_row["CMT"])
-        description = title_catalog_extraction(raw_catalog_row["TITLE"], item)
+        description = title_catalog_extraction(raw_catalog_row["TITLE"], item.re_prefix)
         # ID_parent, period, code, description, FK_tblCatalogs_tblDirectoryItems
         data = (parent_id, period, code, description, item.id)
         return data
