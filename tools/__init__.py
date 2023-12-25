@@ -9,5 +9,5 @@ from tools.insert_root_row_catalog import insert_root_record_to_catalog
 from tools.transfer_raw_catalog import transfer_raw_table_data_to_catalog
 from tools.transfer_raw_quotes import transfer_raw_data_to_quotes
 
-from tools.transfer_raw_catalog_materials import transfer_raw_data_to_catalog_materials
+# from tools.transfer_raw_catalog_materials import transfer_raw_data_to_catalog_materials
 from tools.transfer_raw_materials import transfer_raw_data_to_materials

@@ -101,6 +101,35 @@ def delete_catalog_rows_with_old_period(db_filename: str):
             ic(mess)
 
 
+def delete_catalog_old_period_for_parent_code(db_filename: str, parent_code: str):
+    """
+    Удаляет из Каталога все записи у которых период < максимального начиная с записи 'parent_code' для этого родителя.
+    Вычисляет максимальный период для всех дочерних записей каталога начиная с родительской записи с шифром parent_code.
+    """
+    with (dbTolls(db_filename) as db):
+        max_period_res = db.go_select(sql_catalog_queries["select_catalog_max_level_period"], (parent_code,))
+        if max_period_res is None:
+            output_message_exit(f"при получении максимального периода Каталога", f"для {parent_code=}")
+            return
+        max_period = max_period_res[0]['max_period']
+        mess = f"Для группы {parent_code!r} максимальный период: {max_period}"
+        ic(mess)
+        count_cursor = db.go_execute(
+            sql_catalog_queries["select_catalog_count_level_period"], (parent_code, max_period)
+        )
+        number = count_cursor.fetchone()[0] if count_cursor else None
+        if number and number > 0:
+            mess = (f"Из Каталога для родителя {parent_code} будут удалены {number} записей "
+                    f"у которых период меньше: {max_period}")
+            ic(mess)
+            deleted_cursor = db.go_execute(
+                sql_catalog_queries["delete_catalog_level_last_periods"], (parent_code, max_period)
+            )
+            mess = (f"Из Каталога для родителя {parent_code} удалено {deleted_cursor.rowcount} записей "
+                    f"у которых период < {max_period}")
+            ic(mess)
+
+
 def update_product(db: dbTolls, data: tuple) -> int | None:
     """ Получает кортеж с данными продукта для обновления записи в таблице tblProducts. """
     db.go_execute(sql_products_queries["update_product_id"], data)
@@ -167,7 +196,8 @@ if __name__ == '__main__':
     # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
     db_name = os.path.join(db_path, "Normative.sqlite3")
 
-    delete_last_period_product_row(db_name, team='units', name='material')
+    delete_catalog_old_period_for_level(db_name, parent_code='1')
+    # delete_last_period_product_row(db_name, team='units', name='material')
 
     #
     # directory = get_sorted_directory_items(db_name, directory_name='machines')

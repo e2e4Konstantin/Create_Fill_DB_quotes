@@ -1,10 +1,28 @@
 sql_catalog_queries = {
+
+    # -- >  DELETE ----------------------------------------------------------------------
     "delete_catalog_last_periods": """
         DELETE FROM tblCatalogs 
         WHERE ID_tblCatalog IN (
                 SELECT ID_tblCatalog 
                 FROM tblCatalogs 
                 WHERE period < ?);
+    """,
+
+    "delete_catalog_level_last_periods": """
+        DELETE 
+        FROM tblCatalogs 
+        WHERE 
+            tblCatalogs.ID_tblCatalog IN (
+                WITH CatalogLevel AS (
+                    SELECT ID_tblCatalog, ID_parent from tblCatalogs WHERE code = ?
+                    UNION ALL 
+                        SELECT c.ID_tblCatalog, c.ID_parent from tblCatalogs AS c
+                        JOIN CatalogLevel ON c.ID_parent = CatalogLevel.ID_tblCatalog
+                    ) 
+                    SELECT ID_tblCatalog from CatalogLevel
+            ) AND
+            tblCatalogs.period < ?;    
     """,
 
     # -- >  SELECT ----------------------------------------------------------------------
@@ -16,7 +34,7 @@ sql_catalog_queries = {
         SELECT ID_tblCatalog FROM tblCatalogs WHERE period = ? AND code = ?;
     """,
 
-    "select_catalog_id":   """
+    "select_catalog_id": """
         SELECT * FROM tblCatalogs WHERE ID_tblCatalog = ?;
     """,
 
@@ -34,6 +52,50 @@ sql_catalog_queries = {
     "select_changes": """
         SELECT CHANGES() AS changes;         
     """,
+
+    # выводит все дочерние записи каталога для записи с нужным code
+    # все записи для которых родителем является запись с code
+    "select_catalog_level": """
+        WITH CatalogLevel AS (
+            SELECT ID_tblCatalog, ID_parent 
+                FROM tblCatalogs 
+                WHERE code = ?
+            UNION ALL 
+            SELECT c.ID_tblCatalog, c.ID_parent from tblCatalogs AS c
+                JOIN CatalogLevel ON c.ID_parent = CatalogLevel.ID_tblCatalog
+        ) 
+        SELECT ID_tblCatalog from CatalogLevel;
+     """,
+
+    "select_catalog_max_level_period": """
+        SELECT MAX(m.period) AS max_period 
+        FROM tblCatalogs m 
+        WHERE m.ID_tblCatalog IN (
+            WITH CatalogLevel AS (
+                SELECT ID_tblCatalog, ID_parent from tblCatalogs WHERE code = ?
+                UNION ALL 
+                SELECT c.ID_tblCatalog, c.ID_parent from tblCatalogs AS c
+                JOIN CatalogLevel ON c.ID_parent = CatalogLevel.ID_tblCatalog
+            ) 
+            SELECT ID_tblCatalog from CatalogLevel
+        );
+    """,
+
+    "select_catalog_count_level_period": """
+    SELECT COUNT(m.period) AS count 
+    FROM tblCatalogs m 
+    WHERE m.ID_tblCatalog IN (
+            WITH CatalogLevel AS (
+                SELECT ID_tblCatalog, ID_parent from tblCatalogs WHERE code = ?
+                UNION ALL 
+                SELECT c.ID_tblCatalog, c.ID_parent from tblCatalogs AS c
+                JOIN CatalogLevel ON c.ID_parent = CatalogLevel.ID_tblCatalog
+                ) 
+            SELECT ID_tblCatalog from CatalogLevel
+        )
+        AND m.period < ?;
+    """,
+
 
 
 
