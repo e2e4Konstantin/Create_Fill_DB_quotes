@@ -12,7 +12,8 @@ from tools.shared_features import (
 )
 
 
-def _make_data_from_raw_catalog_material(db: dbTolls, raw_catalog_row: sqlite3.Row, item: DirectoryItem) -> tuple | None:
+def _make_data_from_raw_catalog_material(db: dbTolls, raw_catalog_row: sqlite3.Row,
+                                         item: DirectoryItem) -> tuple | None:
     """ Из строки raw_catalog_row таблицы tblRawData с raw данными для Каталога.
         Выбирает данные, проверяет их, находит в Каталоге запись родителя.
         Возвращает кортеж с данными для вставки в Рабочую Таблицу Каталога.
@@ -38,7 +39,8 @@ def _make_data_from_raw_catalog_material(db: dbTolls, raw_catalog_row: sqlite3.R
     return None
 
 
-def _update_material_catalog(db: dbTolls, catalog_id: int, raw_table_row: sqlite3.Row, item: DirectoryItem) -> int | None:
+def _update_material_catalog(db: dbTolls, catalog_id: int, raw_table_row: sqlite3.Row,
+                             item: DirectoryItem) -> int | None:
     """ Формирует строку из Сырой таблицы. Изменяет catalog_id запись в таблице Каталога. """
     data = _make_data_from_raw_catalog_material(db, raw_table_row, item)
     # ID_parent, period, code, description, FK_tblCatalogs_tblItems, ID_tblCatalog, period
@@ -60,7 +62,7 @@ def _insert_material_raw_catalog(db: dbTolls, raw_table_row: sqlite3.Row, item: 
     return inserted_id
 
 
-def _get_raw_data_materials_items(db: dbTolls, item: DirectoryItem) -> list[sqlite3.Row] | None:
+def _get_raw_data_items(db: dbTolls, item: DirectoryItem) -> list[sqlite3.Row] | None:
     """ Выбрать все записи из сырой таблицы у которых шифр соответствует паттерну для item типа записей. """
     raw_cursor = db.go_execute(
         sql_raw_queries["select_rwd_materials_items_re_catalog"], (item.re_pattern,)
@@ -74,13 +76,13 @@ def _get_raw_data_materials_items(db: dbTolls, item: DirectoryItem) -> list[sqli
 
 
 def _transfer_raw_item_to_catalog(item: DirectoryItem, db_filename: str):
-    """ Записывает все значения item для МАТЕРИАЛОВ в каталог из таблицы с исходными данными.
+    """ Записывает все значения item в каталог из таблицы с исходными данными tblRawData.
         Создает ссылки на родителей.
         Если запись с таким шифром уже есть в каталоге, то обновляет ее, иначе вставляет новую.
         Период записываем только если он больше либо равен предыдущему.
     """
     with (dbTolls(db_filename) as db):
-        raw_data = _get_raw_data_materials_items(db, item)
+        raw_data = _get_raw_data_items(db, item)
         if not raw_data:
             return None
         inserted_success, updated_success = [], []
@@ -126,12 +128,11 @@ def transfer_raw_data_to_catalog(db_name: str, directory: str, main_code: str):
     delete_catalog_old_period_for_parent_code(db_name, parent_code=main_code)
 
 
-
 if __name__ == '__main__':
     import os
 
-    db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
-    # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
+    # db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
+    db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
     db_file_name = os.path.join(db_path, "Normative.sqlite3")
 
     transfer_raw_data_to_catalog(db_file_name, directory='machines', main_code='2')
