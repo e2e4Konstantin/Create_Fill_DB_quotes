@@ -3,8 +3,33 @@ from icecream import ic
 import sqlite3
 
 from config import dbTolls, DirectoryItem
-from sql_queries import sql_items_queries, sql_catalog_queries, sql_products_queries
+from sql_queries import sql_items_queries, sql_catalog_queries, sql_products_queries, sql_raw_queries
 from files_features import output_message, output_message_exit
+from tools.code_tolls import clear_code
+
+
+def get_directory_id(db: dbTolls, directory_team: str, item_name: str) -> int | None:
+    """ Ищет в таблице справочников справочник directory_team и возвращает id записи item_name. """
+    directory_id = db.get_row_id(
+        sql_items_queries["select_item_id_team_name"], (directory_team, item_name)
+    )
+    if directory_id is None:
+        output_message_exit(f"в Справочнике {directory_team!r}:", f"не найдена запись {item_name!r}")
+        return None
+    return directory_id
+
+
+def get_parent_catalog_id(db: dbTolls, raw_parent_id: int, period: int) -> int | None:
+    """ По raw_parent_id родителя из сырой таблицы tblRawData из колонки 'PARENT'.
+        Находит его в tblRawData и берет его шифр.
+        Ищет в Каталоге запись с таким шифром и периодом возвращает его id
+    """
+    select = db.go_select(sql_raw_queries["select_rwd_cmt_id"], (raw_parent_id,))
+    parent_code = clear_code(select[0]['CMT']) if select else None
+    if parent_code:
+        return get_catalog_id_by_period_code(db=db, period=period, code=parent_code)
+    output_message_exit(f"в таблице tblRawData", f" не найден родитель с 'ID' {raw_parent_id!r}")
+    return None
 
 
 def get_catalog_id_by_period_code(db: dbTolls, period: int, code: str) -> int | None:
@@ -74,7 +99,7 @@ def get_sorted_directory_items(db_filename: str, directory_name: str) -> tuple[D
     return tuple([DirectoryItem(row[0], row[2], row[1], row[5], row[6]) for row in df.itertuples(index=False)])
 
 
-def delete_catalog_rows_with_old_period(db_filename: str):
+def delete_catalog_quotes_with_old_period(db_filename: str):
     """ Поучает максимальный период из всех записей таблицы каталога.
         Обновляет период у головной записи на максимальный.
         Удаляет все записи у которых период < максимального. """

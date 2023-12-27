@@ -39,7 +39,7 @@ def _make_data_from_raw_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row, item:
     if parent_id and str(item.id):
         period = get_integer_value(raw_catalog_row["PERIOD"])
         code = clear_code(raw_catalog_row["PRESSMARK"])
-        description = title_catalog_extraction(raw_catalog_row["TITLE"], item.item_name)
+        description = title_catalog_extraction(raw_catalog_row["TITLE"], item.re_prefix)
         # ID_parent, period, code, description, FK_tblCatalogs_tblDirectoryItems
         data = (parent_id, period, code, description, item.id)
         # ic(data)
@@ -121,9 +121,10 @@ def _transfer_raw_item_to_catalog(item: DirectoryItem, db_filename: str):
         ic(alog, ilog, ulog, none_log)
 
 
-def transfer_raw_table_data_to_catalog(operating_db: str):
-    """ Заполняет таблицу Каталога данными из RAW таблицы. Каталог заполняется последовательно,
-        с самого старшего элемента. В соответствии с иерархией Справочника 'quotes'.
+def transfer_raw_quotes_to_catalog(operating_db: str):
+    """ Заполняет таблицу Каталога данными по расценкам из RAW таблицы.
+        Каталог заполняется последовательно, с самого старшего элемента (Глава...).
+        В соответствии с иерархией Справочника 'quotes'.
         Иерархия задается родителями в классе ItemCatalogDirectory.
     """
     ic()
@@ -133,7 +134,7 @@ def transfer_raw_table_data_to_catalog(operating_db: str):
     for item in dir_catalog[1:]:
         _transfer_raw_item_to_catalog(item, operating_db)
     # удалить из Каталога записи период которых меньше чем текущий период
-    delete_catalog_rows_with_old_period(operating_db)
+    delete_catalog_quotes_with_old_period(operating_db)
 
 
 if __name__ == '__main__':
@@ -143,4 +144,4 @@ if __name__ == '__main__':
     db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
     db_name = os.path.join(db_path, "Normative.sqlite3")
 
-    transfer_raw_table_data_to_catalog(db_name)
+    transfer_raw_quotes_to_catalog(db_name)

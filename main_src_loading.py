@@ -7,7 +7,8 @@ from collections import namedtuple
 from tools import (
     create_tables_indexes, fill_directory_catalog_items, read_csv_to_raw_table,
     insert_root_record_to_catalog, transfer_raw_table_data_to_catalog, transfer_raw_data_to_quotes,
-    transfer_raw_data_to_catalog
+    transfer_raw_data_to_catalog, transfer_raw_data_to_materials, transfer_raw_data_to_machines,
+    transfer_raw_data_to_equipments
 )
 
 PlacePath = namedtuple("PlacePath", ["data_path", "db_path"])
@@ -43,8 +44,8 @@ if __name__ == '__main__':
     # machines_data = os.path.join(places[now].data_path, "2_глава_68_доп.csv")
     # equipments_data = os.path.join(places[now].data_path, "13_глава_35_доп.csv")
 
-    ic(version, db_name, period)
-
+    # ic(version, db_name, period)
+    #
     # # удаляем файл БД если такой есть
     # if os.path.isfile(db_name):
     #     os.unlink(db_name)
@@ -55,38 +56,37 @@ if __name__ == '__main__':
     # fill_directory_catalog_items(db_name)
     # # вставить корневую запись в каталог
     # insert_root_record_to_catalog(db_name)
-    #
-    # # --- > Расценки
-    # # --------------------- > Каталог
+
+    # --- > Расценки
+    # --------------------- > Каталог
     # read_csv_to_raw_table(db_name, catalog_data, period)
-    # transfer_raw_table_data_to_catalog(db_name)
-    # ----------------------- > Данные
+    transfer_raw_table_data_to_catalog(db_name)
+    # # ----------------------- > Данные
     # ic(quotes_data)
     # read_csv_to_raw_table(db_name, quotes_data, period)
-    transfer_raw_data_to_quotes(db_name)
-
+    # transfer_raw_data_to_quotes(db_name)
+    #
     # # --- > Материалы Глава 1
-    # # --------------------- > Каталог
+    # # --------------------- > Каталог Материалы
     # ic(materials_data)
-    # # прочитать из csv файла данные для Машин в таблицу tblRawData для периода period
     # read_csv_to_raw_table(db_name, materials_data, period)
     # transfer_raw_data_to_catalog(db_name, directory='materials', main_code='1')
-    # заполнить Материалы данными из таблицы tblRawData
-    # transfer_raw_data_to_catalog_materials(db_name)
-    # # transfer_raw_data_to_materials(db_name)
+    # # ----------------------- > Данные Материалы
+    # transfer_raw_data_to_materials(db_name)
     #
     # # --- > Машины Глава 2
-    # # ---------------------- > Каталог
+    # # ---------------------- > Каталог Машины
     # ic(machines_data)
     # read_csv_to_raw_table(db_name, machines_data, period)
     # transfer_raw_data_to_catalog(db_name, directory='machines', main_code='2')
-    #
-    # # --- > Оборудование Глава 13
-    # # ---------------------- > Каталог
-    # ic(equipments_data)
-    # read_csv_to_raw_table(db_name, equipments_data, period)
+    # # ----------------------- > Данные Машины
+    # transfer_raw_data_to_machines(db_name)
+    # #
+    # # # --- > Оборудование Глава 13
+    # # # ---------------------- > Каталог
+    # # ic(equipments_data)
+    # read_csv_to_raw_table(db_name, equipments_data, 67)
     # transfer_raw_data_to_catalog(db_name, directory='equipments', main_code='13')
+    # transfer_raw_data_to_equipments(db_name)
 
-    # заполнить Машины данными из таблицы tblRawData
-    # machines_transfer_raw_data_to_catalog(db_name)
-    # transfer_raw_data_to_materials(db_name)
+

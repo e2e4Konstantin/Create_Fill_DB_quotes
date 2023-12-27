@@ -23,7 +23,7 @@ def _make_data_from_raw_catalog_material(db: dbTolls, raw_catalog_row: sqlite3.R
     if raw_parent_id is None:
         parent_id = get_catalog_id_by_code(db=db, code='0000')
     else:
-        select = db.go_select(sql_raw_queries["select_rwd_material_cmt_id"], (raw_parent_id,))
+        select = db.go_select(sql_raw_queries["select_rwd_cmt_id"], (raw_parent_id,))
         parent_code = clear_code(select[0]['CMT']) if select else None
         parent_id = get_catalog_id_by_code(db=db, code=parent_code) if parent_code else None
     if parent_id and str(item.id):
