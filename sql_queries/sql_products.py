@@ -16,12 +16,8 @@ sql_products_queries = {
             SELECT ID_tblProduct 
             FROM tblProducts AS p
             WHERE 
-                p.period > 0 AND 
-                p.period < ? AND 
-                p.FK_tblProducts_tblItems = (
-                    SELECT ID_tblItem 
-                    FROM tblItems AS i 
-                    WHERE i.team = ? AND i.name = ?)
+                p.FK_tblProducts_tblItems = (SELECT ID_tblItem FROM tblItems AS i WHERE i.team = ? AND i.name = ?) AND
+                (p.period > 0 AND p.period < ?)
         );
     """,
 
@@ -58,12 +54,9 @@ sql_products_queries = {
 
     "select_products_count_period_team_name": """
         SELECT COUNT(*) AS number FROM tblProducts AS p 
-        WHERE 
-            p.period > 0 AND 
-            p.period < ? AND 
-            FK_tblProducts_tblItems = (
-                SELECT ID_tblItem FROM tblItems AS i WHERE i.team = ? AND i.name = ?
-                );
+        WHERE  
+            FK_tblProducts_tblItems = (SELECT ID_tblItem FROM tblItems AS i WHERE i.team = ? AND i.name = ?) AND
+            (p.period > 0 AND p.period < ?);
     """,
 
 

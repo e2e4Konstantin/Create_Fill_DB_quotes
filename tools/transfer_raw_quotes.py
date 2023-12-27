@@ -74,20 +74,26 @@ def _insert_raw_quote(db: dbTolls, type_id: int, raw_quote: sqlite3.Row) -> int 
 def _delete_last_period_quotes_row(db_filename: str):
     """ Удалить все записи у которых период < максимального.  """
     with (dbTolls(db_filename) as db):
-        work_cursor = db.go_execute(sql_products_queries["select_products_max_period"])
-        max_period = work_cursor.fetchone() if work_cursor else None
-        if max_period is None:
-            output_message_exit(f"Что то пошло не так при получении максимального периода Расценок",
-                                f"{sql_products_queries['select_products_max_period']!r}")
+        directory = ('units', 'quote')
+        max_period_res = db.go_select(sql_products_queries["select_products_max_period_team_name"], directory)
+        if max_period_res is None:
+            output_message_exit(f"при получении максимального периода Расценок", f"{directory}")
             return
-        current_period = max_period['max_period']
-        ic(current_period)
-        deleted_cursor = db.go_execute(sql_products_queries["select_products_count_period_less"], (current_period,))
-        message = f"Будут удалены {deleted_cursor.fetchone()[0]} расценок с периодом меньше текущего: {current_period}"
-        ic(message)
-        deleted_cursor = db.go_execute(sql_products_queries["delete_products_last_periods"], (current_period,))
-        mess = f"Из Расценок удалено {deleted_cursor.rowcount} записей с period < {current_period}"
+        max_period = max_period_res[0]['max_period']
+        mess = f"Для Расценок максимальный период: {max_period}"
         ic(mess)
+        count_cursor = db.go_execute(
+            sql_products_queries["select_products_count_period_team_name"], directory + (max_period,)
+        )
+        number = count_cursor.fetchone()['number'] if count_cursor else None
+        if number and number > 0:
+            message = f"Будут удалены {number} расценок с периодом меньше текущего: {max_period}"
+            ic(message)
+            deleted_cursor = db.go_execute(
+                sql_products_queries["delete_products_period_team_name"], directory + (max_period,)
+            )
+            mess = f"Из Расценок удалено {deleted_cursor.rowcount} записей с period < {max_period}"
+            ic(mess)
 
 
 def transfer_raw_data_to_quotes(db_filename: str):
@@ -111,7 +117,7 @@ def transfer_raw_data_to_quotes(db_filename: str):
             raw_code = clear_code(row["PRESSMARK"])
             raw_period = get_integer_value(row["PERIOD"])
             # Найти запись с шифром raw_cod в таблице расценок tblProducts
-            result = db.go_select(sql_products_queries["select_products_item_code"], (raw_code,))
+            result = db.go_select(sql_products_queries["select_products_code"], (raw_code,))
             if result:
                 quote = result[0]
                 if raw_period >= quote['period'] and target_type_id == quote['FK_tblProducts_tblItems']:
