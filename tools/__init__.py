@@ -6,7 +6,7 @@ from tools.code_tolls import clear_code, get_float_value, get_integer_value
 
 from tools.read_csv import read_csv_to_raw_table
 from tools.insert_root_row_catalog import insert_root_record_to_catalog
-from tools.transfer_raw_catalog_quotes import transfer_raw_table_data_to_catalog
+from tools.transfer_raw_catalog_quotes import transfer_raw_quotes_to_catalog
 from tools.transfer_raw_quotes import transfer_raw_data_to_quotes
 
 from tools.transfer_raw_catalog_1_2_13 import transfer_raw_data_to_catalog

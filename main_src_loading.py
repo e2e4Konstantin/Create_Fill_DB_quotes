@@ -6,9 +6,9 @@ from collections import namedtuple
 
 from tools import (
     create_tables_indexes, fill_directory_catalog_items, read_csv_to_raw_table,
-    insert_root_record_to_catalog, transfer_raw_table_data_to_catalog, transfer_raw_data_to_quotes,
+    insert_root_record_to_catalog, transfer_raw_data_to_catalog, transfer_raw_data_to_quotes,
     transfer_raw_data_to_catalog, transfer_raw_data_to_materials, transfer_raw_data_to_machines,
-    transfer_raw_data_to_equipments
+    transfer_raw_data_to_equipments, transfer_raw_quotes_to_catalog
 )
 
 PlacePath = namedtuple("PlacePath", ["data_path", "db_path"])
@@ -24,7 +24,7 @@ places = {
     ),
 }
 db_name = "Normative.sqlite3"
-now = "home"  # "office"  # "home"
+now = "office"  # "office"  # "home"
 
 if __name__ == '__main__':
     version = f"SQLite: {sqlite3.sqlite_version}\nPython: {sys.version}"
@@ -44,23 +44,23 @@ if __name__ == '__main__':
     # machines_data = os.path.join(places[now].data_path, "2_глава_68_доп.csv")
     # equipments_data = os.path.join(places[now].data_path, "13_глава_35_доп.csv")
 
-    # ic(version, db_name, period)
-    #
-    # # удаляем файл БД если такой есть
-    # if os.path.isfile(db_name):
-    #     os.unlink(db_name)
-    #
-    # # создать таблицы, индексы, триггеры
-    # create_tables_indexes(db_name)
-    # # заполнить данными справочник элементов каталога
-    # fill_directory_catalog_items(db_name)
-    # # вставить корневую запись в каталог
-    # insert_root_record_to_catalog(db_name)
+    ic(version, db_name, period)
+
+    # удаляем файл БД если такой есть
+    if os.path.isfile(db_name):
+        os.unlink(db_name)
+
+    # создать таблицы, индексы, триггеры
+    create_tables_indexes(db_name)
+    # заполнить данными справочник элементов каталога
+    fill_directory_catalog_items(db_name)
+    # вставить корневую запись в каталог
+    insert_root_record_to_catalog(db_name)
 
     # --- > Расценки
     # --------------------- > Каталог
-    # read_csv_to_raw_table(db_name, catalog_data, period)
-    transfer_raw_table_data_to_catalog(db_name)
+    read_csv_to_raw_table(db_name, catalog_data, period)
+    transfer_raw_quotes_to_catalog(db_name)
     # # ----------------------- > Данные
     # ic(quotes_data)
     # read_csv_to_raw_table(db_name, quotes_data, period)

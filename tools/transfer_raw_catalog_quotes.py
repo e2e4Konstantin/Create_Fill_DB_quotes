@@ -8,7 +8,7 @@ from sql_queries import (
 from files_features import output_message, output_message_exit
 from tools.code_tolls import clear_code, title_catalog_extraction, get_integer_value
 from tools.shared_features import (
-    get_sorted_directory_items, get_catalog_id_by_code, delete_catalog_rows_with_old_period
+    get_sorted_directory_items, get_catalog_id_by_code, get_catalog_row_by_code
 )
 
 
@@ -23,7 +23,7 @@ def _get_directory_id(item_name: str, db: dbTolls) -> int | None:
     return id_catalog_items
 
 
-def _make_data_from_raw_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row, item: DirectoryItem) -> tuple | None:
+def _make_data_from_raw_quotes_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row, item: DirectoryItem) -> tuple | None:
     """ Из строки raw_catalog_row таблицы tblRawData с данными для Каталога.
         Выбирает данные, проверяет их, находит в Каталоге запись родителя.
         Возвращает кортеж с данными для вставки в Рабочую Таблицу Каталога.
@@ -50,24 +50,21 @@ def _make_data_from_raw_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row, item:
     return None
 
 
-def _update_catalog(db: dbTolls, catalog_id: int, raw_table_row: sqlite3.Row, item: DirectoryItem) -> int | None:
+def _update_catalog(db: dbTolls, catalog_id: int, raw_catalog_data: tuple) -> int | None:
     """ Формирует строку из Сырой таблицы. Изменяет catalog_id запись в таблице Каталога. """
-    data = _make_data_from_raw_catalog(db, raw_table_row, item)
     # ID_parent, period, code, description, FK_tblCatalogs_tblItems, ID_tblCatalog, period
-    data = (data + (catalog_id, data[1]))
-
+    data = (raw_catalog_data + (catalog_id, raw_catalog_data[1]))
     db.go_execute(sql_catalog_queries["update_catalog_id_period"], data)
     count = db.go_execute(sql_catalog_queries["select_changes"])
     return count.fetchone()['changes'] if count else None
 
 
-def _insert_raw_catalog(db: dbTolls, raw_table_row: sqlite3.Row, item: DirectoryItem) -> int | None:
+def _insert_raw_catalog(db: dbTolls, raw_catalog_data: tuple) -> int | None:
     """ Формирует строку из Сырой таблицы. Вставляет новую запись в таблицу Каталога. """
-    data = _make_data_from_raw_catalog(db, raw_table_row, item)
-    message = f"INSERT tblCatalog {item.item_name!r} шифр {data[2]!r} период: {data[1]!r}"
-    inserted_id = db.go_insert(sql_catalog_queries["insert_catalog"], data, message)
+    message = f"INSERT tblCatalog {raw_catalog_data}"
+    inserted_id = db.go_insert(sql_catalog_queries["insert_catalog"], raw_catalog_data, message)
     if not inserted_id:
-        output_message(f"запись {tuple(raw_table_row)}", f"НЕ добавлена в Каталог.")
+        output_message(f"запись {raw_catalog_data}", f"НЕ добавлена в Каталог.")
         return None
     return inserted_id
 
@@ -83,42 +80,83 @@ def _get_raw_data_items(db: dbTolls, item: DirectoryItem) -> list[sqlite3.Row] |
     return results
 
 
-def _transfer_raw_item_to_catalog(item: DirectoryItem, db_filename: str):
+#
+# def _transfer_raw_item_to_catalog(item: DirectoryItem, db_filename: str):
+#     """ Записывает все значения типа item_name в каталог из таблицы с исходными данными
+#         в таблицу каталога и создает ссылки на родителей.
+#         Если запись с таким шифром уже есть в каталоге, то обновляет ее, иначе вставляет новую.
+#         Период записываем только если он больше либо равен предыдущему.
+#     """
+#     with (dbTolls(db_filename) as db):
+#         raw_data = _get_raw_data_items(db, item)
+#         if not raw_data:
+#             return None
+#         inserted_success, updated_success = [], []
+#         for row_count, row in enumerate(raw_data):
+#             raw_code = clear_code(row["PRESSMARK"])
+#             raw_period = get_integer_value(row["PERIOD"])
+#             catalog_cursor = db.go_execute(sql_catalog_queries["select_catalog_id_code"], (raw_code,))
+#             catalog_row = catalog_cursor.fetchone() if catalog_cursor else None
+#             if catalog_row:
+#                 row_period = catalog_row['period']
+#                 row_id = catalog_row['ID_tblCatalog']
+#                 if raw_period >= row_period:
+#                     changed_count = _update_catalog(db, row_id, row, item)
+#                     if changed_count:
+#                         updated_success.append((id, raw_code))
+#                 else:
+#                     output_message_exit(
+#                         f"Ошибка загрузки данных в Каталог, записи с шифром: {raw_code!r}",
+#                         f"текущий период каталога {row_period} больше загружаемого {raw_period}")
+#             else:
+#                 work_id = _insert_raw_catalog(db, row, item)
+#                 if work_id:
+#                     inserted_success.append((id, raw_code))
+#         alog = f"Для {item.item_name!r}:Всего пройдено записей в raw таблице: {row_count + 1}."
+#         ilog = f"Добавлено {len(inserted_success)}."
+#         ulog = f"Обновлено {len(updated_success)}."
+#         none_log = f"Непонятных записей: {row_count + 1 - (len(updated_success) + len(inserted_success))}."
+#         ic(alog, ilog, ulog, none_log)
+
+def _save_raw_item_catalog_quotes(item: DirectoryItem, db_filename: str) -> list[tuple[str, str]] | None:
     """ Записывает все значения типа item_name в каталог из таблицы с исходными данными
         в таблицу каталога и создает ссылки на родителей.
         Если запись с таким шифром уже есть в каталоге, то обновляет ее, иначе вставляет новую.
         Период записываем только если он больше либо равен предыдущему.
     """
+    inserted_success, updated_success = [], []
     with (dbTolls(db_filename) as db):
-        raw_data = _get_raw_data_items(db, item)
-        if not raw_data:
+        raw_item_data = _get_raw_data_items(db, item)
+        if not raw_item_data:
             return None
-        inserted_success, updated_success = [], []
-        for row_count, row in enumerate(raw_data):
+        for row in raw_item_data:
             raw_code = clear_code(row["PRESSMARK"])
             raw_period = get_integer_value(row["PERIOD"])
-            catalog_cursor = db.go_execute(sql_catalog_queries["select_catalog_id_code"], (raw_code,))
-            catalog_row = catalog_cursor.fetchone() if catalog_cursor else None
+            pure_data = _make_data_from_raw_quotes_catalog(db, row, item)
+            catalog_row = get_catalog_row_by_code(db, raw_code)
             if catalog_row:
                 row_period = catalog_row['period']
-                row_id = catalog_row['ID_tblCatalog']
                 if raw_period >= row_period:
-                    changed_count = _update_catalog(db, row_id, row, item)
+                    changed_count = _update_catalog(db, catalog_row['ID_tblCatalog'], pure_data)
                     if changed_count:
-                        updated_success.append((id, raw_code))
+                        updated_success.append((raw_code, item.item_name))
                 else:
                     output_message_exit(
                         f"Ошибка загрузки данных в Каталог, записи с шифром: {raw_code!r}",
                         f"текущий период каталога {row_period} больше загружаемого {raw_period}")
             else:
-                work_id = _insert_raw_catalog(db, row, item)
+                work_id = _insert_raw_catalog(db, pure_data, item)
                 if work_id:
-                    inserted_success.append((id, raw_code))
-        alog = f"Для {item.item_name!r}:Всего пройдено записей в raw таблице: {row_count + 1}."
+                    inserted_success.append((raw_code, item.item_name))
+        alog = f"Для {item.item_name!r}:Всего входящих записей: {len(raw_item_data)}."
         ilog = f"Добавлено {len(inserted_success)}."
         ulog = f"Обновлено {len(updated_success)}."
-        none_log = f"Непонятных записей: {row_count + 1 - (len(updated_success) + len(inserted_success))}."
+        none_log = f"Непонятных записей: {len(raw_item_data) - (len(updated_success) + len(inserted_success))}."
         ic(alog, ilog, ulog, none_log)
+    if inserted_success or updated_success:
+        inserted_success.extend(updated_success)
+        return inserted_success
+    return None
 
 
 def transfer_raw_quotes_to_catalog(operating_db: str):
@@ -132,9 +170,9 @@ def transfer_raw_quotes_to_catalog(operating_db: str):
     dir_catalog = get_sorted_directory_items(operating_db, directory_name='quotes')
     ic(dir_catalog)
     for item in dir_catalog[1:]:
-        _transfer_raw_item_to_catalog(item, operating_db)
+        x = _save_raw_item_catalog_quotes(item, operating_db)
     # удалить из Каталога записи период которых меньше чем текущий период
-    delete_catalog_quotes_with_old_period(operating_db)
+    # delete_catalog_quotes_with_old_period(operating_db)
 
 
 if __name__ == '__main__':

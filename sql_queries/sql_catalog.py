@@ -27,7 +27,7 @@ sql_catalog_queries = {
 
     # -- >  SELECT ----------------------------------------------------------------------
     "select_catalog_id_code": """
-        SELECT ID_tblCatalog, period FROM tblCatalogs WHERE code = ?;
+        SELECT ID_tblCatalog FROM tblCatalogs WHERE code = ?;
     """,
 
     "select_catalog_id_period_code": """

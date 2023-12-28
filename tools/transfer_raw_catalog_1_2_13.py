@@ -8,7 +8,8 @@ from sql_queries import (
 from files_features import output_message, output_message_exit
 from tools.code_tolls import clear_code, title_catalog_extraction, get_integer_value
 from tools.shared_features import (
-    get_sorted_directory_items, get_catalog_id_by_code, delete_catalog_old_period_for_parent_code
+    get_sorted_directory_items, get_catalog_id_by_code,
+    delete_catalog_old_period_for_parent_code, get_catalog_row_by_code
 )
 
 
@@ -89,8 +90,7 @@ def _transfer_raw_item_to_catalog(item: DirectoryItem, db_filename: str):
         for row_count, row in enumerate(raw_data):
             raw_code = clear_code(row["CMT"])
             raw_period = get_integer_value(row["PERIOD"])
-            catalog_cursor = db.go_execute(sql_catalog_queries["select_catalog_id_code"], (raw_code,))
-            catalog_row = catalog_cursor.fetchone() if catalog_cursor else None
+            catalog_row = get_catalog_row_by_code(db, raw_code)
             if catalog_row:
                 row_period = catalog_row['period']
                 row_id = catalog_row['ID_tblCatalog']

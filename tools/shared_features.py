@@ -128,7 +128,7 @@ def delete_catalog_quotes_with_old_period(db_filename: str):
 
 def delete_catalog_old_period_for_parent_code(db_filename: str, parent_code: str):
     """
-    Удаляет из Каталога все записи у которых период < максимального начиная с записи 'parent_code' для этого родителя.
+    Удаляет все записи из Каталога у которых период < максимального начиная с родительской записи 'parent_code'.
     Вычисляет максимальный период для всех дочерних записей каталога начиная с родительской записи с шифром parent_code.
     """
     with (dbTolls(db_filename) as db):
