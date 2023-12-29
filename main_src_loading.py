@@ -24,7 +24,7 @@ places = {
     ),
 }
 db_name = "Normative.sqlite3"
-now = "office"  # "office"  # "home"
+now = "home"  # "office"  # "home"
 
 if __name__ == '__main__':
     version = f"SQLite: {sqlite3.sqlite_version}\nPython: {sys.version}"
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     # --- > Расценки
     # --------------------- > Каталог
     read_csv_to_raw_table(db_name, catalog_data, period)
-    transfer_raw_quotes_to_catalog(db_name)
+    # transfer_raw_quotes_to_catalog(db_name)
     # # ----------------------- > Данные
     # ic(quotes_data)
     # read_csv_to_raw_table(db_name, quotes_data, period)

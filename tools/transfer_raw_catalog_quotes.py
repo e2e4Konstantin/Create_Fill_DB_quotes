@@ -8,7 +8,8 @@ from sql_queries import (
 from files_features import output_message, output_message_exit
 from tools.code_tolls import clear_code, title_catalog_extraction, get_integer_value
 from tools.shared_features import (
-    get_sorted_directory_items, get_catalog_id_by_code, get_catalog_row_by_code
+    get_sorted_directory_items, get_catalog_id_by_code,
+    get_catalog_row_by_code, delete_catalog_old_period_for_parent_code
 )
 
 
@@ -145,7 +146,7 @@ def _save_raw_item_catalog_quotes(item: DirectoryItem, db_filename: str) -> list
                         f"Ошибка загрузки данных в Каталог, записи с шифром: {raw_code!r}",
                         f"текущий период каталога {row_period} больше загружаемого {raw_period}")
             else:
-                work_id = _insert_raw_catalog(db, pure_data, item)
+                work_id = _insert_raw_catalog(db, pure_data)
                 if work_id:
                     inserted_success.append((raw_code, item.item_name))
         alog = f"Для {item.item_name!r}:Всего входящих записей: {len(raw_item_data)}."
@@ -169,17 +170,21 @@ def transfer_raw_quotes_to_catalog(operating_db: str):
     # получить отсортированные по иерархии Справочник 'quotes'
     dir_catalog = get_sorted_directory_items(operating_db, directory_name='quotes')
     ic(dir_catalog)
-    for item in dir_catalog[1:]:
-        x = _save_raw_item_catalog_quotes(item, operating_db)
-    # удалить из Каталога записи период которых меньше чем текущий период
-    # delete_catalog_quotes_with_old_period(operating_db)
+    # заполнить и сохранить главы
+    chapters = _save_raw_item_catalog_quotes(dir_catalog[1], operating_db)
+    # заполнить остальные сущности
+    for item in dir_catalog[2:]:
+        _save_raw_item_catalog_quotes(item, operating_db)
+    # удалить из Каталога главы период которых меньше чем текущий период
+    for chapter in chapters:
+        delete_catalog_old_period_for_parent_code(operating_db, parent_code=chapter[0])
 
 
 if __name__ == '__main__':
     import os
 
-    # db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
-    db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
+    db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
+    # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
     db_name = os.path.join(db_path, "Normative.sqlite3")
 
     transfer_raw_quotes_to_catalog(db_name)

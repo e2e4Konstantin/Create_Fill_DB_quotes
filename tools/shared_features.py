@@ -55,7 +55,7 @@ def get_catalog_row_by_code(db: dbTolls, code: str) -> sqlite3.Row | None:
     rows = db.go_select(sql_catalog_queries["select_catalog_code"], (code,))
     if rows:
         return rows[0]
-    output_message(f"В каталоге не найдена запись:", f"шифр: {code!r}")
+    # output_message(f"В каталоге не найдена запись:", f"шифр: {code!r}")
     return None
 
 
@@ -137,7 +137,7 @@ def delete_catalog_old_period_for_parent_code(db_filename: str, parent_code: str
             output_message_exit(f"при получении максимального периода Каталога", f"для {parent_code=}")
             return
         max_period = max_period_res[0]['max_period']
-        mess = f"Для группы {parent_code!r} максимальный период: {max_period}"
+        mess = f"Для записи с кодом: {parent_code!r} максимальный период: {max_period}"
         ic(mess)
         count_cursor = db.go_execute(
             sql_catalog_queries["select_catalog_count_level_period"], (parent_code, max_period)
