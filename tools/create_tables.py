@@ -1,5 +1,5 @@
 from config import dbTolls
-from sql_queries import sql_items_creates, sql_catalog_creates, sql_products_creates
+from sql_queries import sql_items_creates, sql_catalog_creates, sql_products_creates, sql_raw_queries
 
 
 def _create_directory_environment(db: dbTolls):
@@ -110,6 +110,11 @@ def create_tables_indexes(db_file_name: str):
         # _create_quotes_chains_environment(db)
         # # --- > Ресурсы -- tblResources ---
         # _create_resources_environment(db)
+
+
+def delete_raw_tables(db_file_name: str):
+    with dbTolls(db_file_name) as db:
+        db.go_execute(sql_raw_queries["delete_table_raw_data"])
 
 
 if __name__ == '__main__':

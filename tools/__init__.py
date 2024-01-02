@@ -1,4 +1,4 @@
-from tools.create_tables import create_tables_indexes
+from tools.create_tables import create_tables_indexes, delete_raw_tables
 
 from tools.fill_directory_items import fill_directory_catalog_items
 

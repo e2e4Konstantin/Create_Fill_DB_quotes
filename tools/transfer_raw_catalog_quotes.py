@@ -81,44 +81,6 @@ def _get_raw_data_items(db: dbTolls, item: DirectoryItem) -> list[sqlite3.Row] |
     return results
 
 
-#
-# def _transfer_raw_item_to_catalog(item: DirectoryItem, db_filename: str):
-#     """ Записывает все значения типа item_name в каталог из таблицы с исходными данными
-#         в таблицу каталога и создает ссылки на родителей.
-#         Если запись с таким шифром уже есть в каталоге, то обновляет ее, иначе вставляет новую.
-#         Период записываем только если он больше либо равен предыдущему.
-#     """
-#     with (dbTolls(db_filename) as db):
-#         raw_data = _get_raw_data_items(db, item)
-#         if not raw_data:
-#             return None
-#         inserted_success, updated_success = [], []
-#         for row_count, row in enumerate(raw_data):
-#             raw_code = clear_code(row["PRESSMARK"])
-#             raw_period = get_integer_value(row["PERIOD"])
-#             catalog_cursor = db.go_execute(sql_catalog_queries["select_catalog_id_code"], (raw_code,))
-#             catalog_row = catalog_cursor.fetchone() if catalog_cursor else None
-#             if catalog_row:
-#                 row_period = catalog_row['period']
-#                 row_id = catalog_row['ID_tblCatalog']
-#                 if raw_period >= row_period:
-#                     changed_count = _update_catalog(db, row_id, row, item)
-#                     if changed_count:
-#                         updated_success.append((id, raw_code))
-#                 else:
-#                     output_message_exit(
-#                         f"Ошибка загрузки данных в Каталог, записи с шифром: {raw_code!r}",
-#                         f"текущий период каталога {row_period} больше загружаемого {raw_period}")
-#             else:
-#                 work_id = _insert_raw_catalog(db, row, item)
-#                 if work_id:
-#                     inserted_success.append((id, raw_code))
-#         alog = f"Для {item.item_name!r}:Всего пройдено записей в raw таблице: {row_count + 1}."
-#         ilog = f"Добавлено {len(inserted_success)}."
-#         ulog = f"Обновлено {len(updated_success)}."
-#         none_log = f"Непонятных записей: {row_count + 1 - (len(updated_success) + len(inserted_success))}."
-#         ic(alog, ilog, ulog, none_log)
-
 def _save_raw_item_catalog_quotes(item: DirectoryItem, db_filename: str) -> list[tuple[str, str]] | None:
     """ Записывает все значения типа item_name в каталог из таблицы с исходными данными
         в таблицу каталога и создает ссылки на родителей.

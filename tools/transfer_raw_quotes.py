@@ -4,23 +4,9 @@ from icecream import ic
 from config import dbTolls, teams
 from sql_queries import sql_raw_queries, sql_products_queries, sql_items_queries, sql_catalog_queries
 from files_features import output_message, output_message_exit
-from tools.code_tolls import clear_code, text_cleaning, get_integer_value, get_float_value
-
-
-def _get_catalog_id(db: dbTolls, period: int, code: str) -> int | None:
-    """ Ищем в таблице Каталога запись по шифру и периоду """
-    row_id = db.get_row_id(sql_catalog_queries["select_catalog_id_period_code"], (period, code))
-    if row_id is None:
-        output_message(f"В Каталоге не найдена запись", f"шифр {code!r}, период: {period}")
-    return row_id
-
-
-def _get_quote_id(db: dbTolls, period: int, code: str) -> int | None:
-    """ Ищем в таблице Расценок запись по шифру и периоду. """
-    row_id = db.get_row_id(sql_products_queries["select_product_id_period_code"], (period, code))
-    if row_id is None:
-        output_message(f"В Расценках не найдена запись", f"шифр {code!r} период: {period}")
-    return row_id
+from tools.code_tolls import clear_code, text_cleaning, get_integer_value
+from tools.shared_features import get_directory_id, get_product_row_by_code, update_product, insert_product, \
+    delete_last_period_product_row, get_catalog_id_by_period_code
 
 
 def _make_data_from_raw_quote(db: dbTolls, raw_quote: sqlite3.Row, item_id: int) -> tuple | None:
@@ -30,70 +16,35 @@ def _make_data_from_raw_quote(db: dbTolls, raw_quote: sqlite3.Row, item_id: int)
         Возвращает кортеж с данными для вставки в таблицу Расценок.
     """
     raw_period = get_integer_value(raw_quote["PERIOD"])
-    raw_code = raw_quote['PRESSMARK']
     holder_code = raw_quote['GROUP_WORK_PROCESS']
     if holder_code is None:
         # указатель на корневую запись каталога
-        holder_id = _get_catalog_id(db=db, period=0, code='0000')
+        holder_id = get_catalog_id_by_period_code(db=db, period=0, code='0000')
     else:
-        holder_code = clear_code(holder_code)
         # в Каталоге!!! ищем родительскую запись с шифром holder_cod
-        holder_id = _get_catalog_id(db=db, period=raw_period, code=holder_code)
-        if holder_id:
-            code = clear_code(raw_quote["PRESSMARK"])
-            description = text_cleaning(raw_quote["TITLE"]).capitalize()
-            measurer = text_cleaning(raw_quote["UNIT_OF_MEASURE"])
-            # FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, period, code, description, measurer, full_code
-            data = (holder_id, item_id, raw_period, code, description, measurer, "")
-            return data
-        else:
-            output_message_exit(f"Для расценки {raw_code!r} в Каталоге не найдена родительская запись",
-                                f"шифр {holder_code!r}")
+        holder_id = get_catalog_id_by_period_code(db=db, period=raw_period, code=clear_code(holder_code))
+    if holder_id:
+        code = clear_code(raw_quote["PRESSMARK"])
+        description = text_cleaning(raw_quote["TITLE"]).capitalize()
+        measurer = text_cleaning(raw_quote["UNIT_OF_MEASURE"])
+        # FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, period, code, description, measurer, full_code
+        data = (holder_id, item_id, raw_period, code, description, measurer, "")
+        return data
+    else:
+        output_message_exit(
+            f"Для расценки {raw_quote['PRESSMARK']!r} в Каталоге не найдена родительская запись",
+            f"шифр {holder_code!r}"
+        )
     return None
 
 
-def _update_quote(db: dbTolls, type_id: int, quote_id: int, raw_quote: sqlite3.Row) -> int | None:
-    """ Получает строку из Сырой таблицы с расценками. Обновляет расценку с quote_id. """
-    data = _make_data_from_raw_quote(db, raw_quote, type_id) + (quote_id,)
-    db.go_execute(sql_products_queries["update_product_id"], data)
-    count = db.go_execute(sql_products_queries["select_changes"])
-    return count.fetchone()['changes'] if count else None
-
-
-def _insert_raw_quote(db: dbTolls, type_id: int, raw_quote: sqlite3.Row) -> int | None:
-    """ Получает строку из Сырой таблицы с расценками. Вставляет расценку в таблицу tblProducts. """
-    data = _make_data_from_raw_quote(db, raw_quote, type_id)
-    message = f"INSERT tblQuotes шифр {data[2]!r} период: {data[1]}"
-    inserted_id = db.go_insert(sql_products_queries["insert_product"], data, message)
-    if not inserted_id:
-        output_message(f"расценка {tuple(raw_quote)}", f"не добавлена в tblQuotes")
+def _get_raw_quotes(db: dbTolls) -> list[sqlite3.Row] | None:
+    """ Выбрать все записи расценок из сырой таблицы. """
+    results = db.go_select(sql_raw_queries["select_rwd_all"])
+    if not results:
+        output_message_exit(f"в RAW таблице с Расценками нет записей:", f"tblRawData пустая")
         return None
-    return inserted_id
-
-
-def _delete_last_period_quotes_row(db_filename: str):
-    """ Удалить все записи у которых период < максимального.  """
-    with (dbTolls(db_filename) as db):
-        directory = ('units', 'quote')
-        max_period_res = db.go_select(sql_products_queries["select_products_max_period_team_name"], directory)
-        if max_period_res is None:
-            output_message_exit(f"при получении максимального периода Расценок", f"{directory}")
-            return
-        max_period = max_period_res[0]['max_period']
-        mess = f"Для Расценок максимальный период: {max_period}"
-        ic(mess)
-        count_cursor = db.go_execute(
-            sql_products_queries["select_products_count_period_team_name"], directory + (max_period,)
-        )
-        number = count_cursor.fetchone()['number'] if count_cursor else None
-        if number and number > 0:
-            message = f"Будут удалены {number} расценок с периодом меньше текущего: {max_period}"
-            ic(message)
-            deleted_cursor = db.go_execute(
-                sql_products_queries["delete_products_period_team_name"], directory + (max_period,)
-            )
-            mess = f"Из Расценок удалено {deleted_cursor.rowcount} записей с period < {max_period}"
-            ic(mess)
+    return results
 
 
 def transfer_raw_data_to_quotes(db_filename: str):
@@ -103,36 +54,31 @@ def transfer_raw_data_to_quotes(db_filename: str):
      """
     with dbTolls(db_filename) as db:
         # получить все строки raw таблицы
-        raw_data = db.go_select(sql_raw_queries["select_rwd_all"])
-        if not raw_data:
-            output_message_exit(f"в RAW таблице с Расценками нет записей:", f"tblRawData пустая")
-            return None
+        raw_quotes = _get_raw_quotes(db)
         # получить id типа для расценки
-        target_type_id = db.get_row_id(sql_items_queries["select_item_id_team_name"], ("units", "quote"))
-        if not target_type_id:
-            output_message_exit(f"в Справочнике 'units':", f"не найдена запись 'quote'")
-            return None
+        team, name = "units", "quote"
+        quote_item_id = get_directory_id(db, directory_team=team, item_name=name)
         inserted_success, updated_success = [], []
-        for row_count, row in enumerate(raw_data):
+        for row in raw_quotes:
             raw_code = clear_code(row["PRESSMARK"])
             raw_period = get_integer_value(row["PERIOD"])
-            # Найти запись с шифром raw_cod в таблице расценок tblProducts
-            result = db.go_select(sql_products_queries["select_products_code"], (raw_code,))
-            if result:
-                quote = result[0]
-                if raw_period >= quote['period'] and target_type_id == quote['FK_tblProducts_tblItems']:
-                    count_updated = _update_quote(db, target_type_id, quote['ID_tblProduct'], row)
+            data_line = _make_data_from_raw_quote(db, row, quote_item_id)
+            # Найти расценку с шифром raw_cod в таблице расценок tblProducts
+            quote = get_product_row_by_code(db=db, product_code=raw_code)
+            if quote:
+                if raw_period >= quote['period'] and quote_item_id == quote['FK_tblProducts_tblItems']:
+                    count_updated = update_product(db, data_line + (quote['ID_tblProduct'],))
                     if count_updated:
                         updated_success.append((id, raw_code))
                 else:
                     output_message_exit(
-                        f"Ошибка Обновления Расценки: {raw_code!r} или item_type не совпадает {target_type_id}",
+                        f"Ошибка Обновления Расценки: {raw_code!r} или item_type не совпадает {quote_item_id}",
                         f"период Расценки {quote['period']} старше загружаемого {raw_period}")
             else:
-                inserted_id = _insert_raw_quote(db, target_type_id, row)
+                inserted_id = insert_product(db, data_line)
                 if inserted_id:
                     inserted_success.append((id, raw_code))
-        row_count += 1
+        row_count = len(raw_quotes)
         alog = f"Всего записей в raw таблице: {row_count}."
         ilog = f"Добавлено {len(inserted_success)} расценок."
         ulog = f"Обновлено {len(updated_success)} расценок."
@@ -140,14 +86,14 @@ def transfer_raw_data_to_quotes(db_filename: str):
         ic(alog, ilog, ulog, none_log)
 
     # удалить из Расценок записи период которых меньше чем максимальный период
-    _delete_last_period_quotes_row(db_filename)
+    delete_last_period_product_row(db_filename, team=team, name=name)
 
 
 if __name__ == '__main__':
     import os
 
-    # db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
-    db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
+    db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
+    # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
     db_name = os.path.join(db_path, "Normative.sqlite3")
     ic(db_name)
 

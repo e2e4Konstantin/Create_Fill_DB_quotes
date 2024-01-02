@@ -87,7 +87,7 @@ def _transfer_raw_item_to_catalog(item: DirectoryItem, db_filename: str):
         if not raw_data:
             return None
         inserted_success, updated_success = [], []
-        for row_count, row in enumerate(raw_data):
+        for row in raw_data:
             raw_code = clear_code(row["CMT"])
             raw_period = get_integer_value(row["PERIOD"])
             catalog_row = get_catalog_row_by_code(db, raw_code)
@@ -106,10 +106,11 @@ def _transfer_raw_item_to_catalog(item: DirectoryItem, db_filename: str):
                 work_id = _insert_material_raw_catalog(db, row, item)
                 if work_id:
                     inserted_success.append((id, raw_code))
-        alog = f"Для {item[1]!r}:Всего пройдено записей в raw таблице: {row_count + 1}."
+        row_count = len(raw_data)
+        alog = f"Для {item[1]!r}:Всего пройдено записей в raw таблице: {row_count}."
         ilog = f"Добавлено {len(inserted_success)}."
         ulog = f"Обновлено {len(updated_success)}."
-        none_log = f"Непонятных записей: {row_count + 1 - (len(updated_success) + len(inserted_success))}."
+        none_log = f"Непонятных записей: {row_count - (len(updated_success) + len(inserted_success))}."
         ic(alog, ilog, ulog, none_log)
 
 

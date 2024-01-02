@@ -184,6 +184,7 @@ def get_product_row_by_code(db: dbTolls, product_code: str) -> sqlite3.Row | Non
     return None
 
 
+
 def delete_last_period_product_row(db_filename: str, team: str, name: str):
     """ Вычисляет максимальный период для таблицы tblProducts.
         Удаляет все записи у которых период < максимального.  """
@@ -211,6 +212,8 @@ def delete_last_period_product_row(db_filename: str, team: str, name: str):
             mess = (f"Из Продуктов удалено {deleted_cursor.rowcount} записей с period < {current_max_period}"
                     f" для {team!r} {name!r}")
             ic(mess)
+
+
 
 
 if __name__ == '__main__':
