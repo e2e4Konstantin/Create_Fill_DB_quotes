@@ -1,4 +1,3 @@
-
 sql_products_queries = {
 
     "delete_products_last_periods": """
@@ -21,7 +20,6 @@ sql_products_queries = {
         );
     """,
 
-
     "select_product_id_code": """
         SELECT ID_tblProduct FROM tblProducts WHERE code = ?;
     """,
@@ -31,7 +29,7 @@ sql_products_queries = {
         WHERE period = ? AND code = ?;
     """,
 
-    "select_products_code":   """
+    "select_products_code": """
         SELECT * FROM tblProducts WHERE code = ?;
     """,
 
@@ -51,7 +49,6 @@ sql_products_queries = {
         SELECT COUNT(*) FROM tblProducts WHERE period > 0 AND period < ?;
     """,
 
-
     "select_products_count_period_team_name": """
         SELECT COUNT(*) AS number FROM tblProducts AS p 
         WHERE  
@@ -59,10 +56,7 @@ sql_products_queries = {
             (p.period > 0 AND p.period < ?);
     """,
 
-
-
     "select_changes": """SELECT CHANGES() AS changes;""",
-
 
     # --->
     "insert_product": """
@@ -82,8 +76,6 @@ sql_products_queries = {
     """,
 }
 
-
-
 sql_products_creates = {
 
     "delete_table_products": """DROP TABLE IF EXISTS tblProducts;""",
@@ -92,6 +84,7 @@ sql_products_creates = {
 
     "delete_table_products_history": """DROP TABLE IF EXISTS _tblHistoryProducts;""",
     "delete_index_products_history": """DROP INDEX IF EXISTS idxHistoryProducts;""",
+
 
     # --- > Базовая таблица для хранения Расценок, Материалов, Машин и Оборудования ----
     "create_table_products": """
@@ -119,7 +112,6 @@ sql_products_creates = {
     "create_index_products": """
         CREATE UNIQUE INDEX IF NOT EXISTS idxProductsCode ON tblProducts (code, period);
     """,
-
 
     # --- > История базовой таблицы -----------------------------------------------------
     "create_table_history_products": """
@@ -240,8 +232,6 @@ sql_products_creates = {
             LEFT JOIN tblItems AS i ON i.ID_tblItem = p.FK_tblProducts_tblItems;
             --ORDER BY p.code;
     """,
-
-
 
 }
 

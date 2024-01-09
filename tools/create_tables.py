@@ -1,5 +1,5 @@
 from config import dbTolls
-from sql_queries import sql_items_creates, sql_catalog_creates, sql_products_creates, sql_raw_queries
+from sql_queries import sql_items_creates, sql_catalog_creates, sql_products_creates, sql_raw_queries, sql_attributes_queries
 
 
 def _create_directory_environment(db: dbTolls):
@@ -63,6 +63,23 @@ def _create_products_environment(db: dbTolls):
     db.go_execute(sql_products_creates["create_trigger_history_products_update"])
 
 
+def _create_attributes_environment(db: dbTolls):
+    """ Создать инфраструктуру таблицы для хранения Атрибутов расценок. """
+    db.go_execute(sql_attributes_queries["delete_table_attributes"])
+    db.go_execute(sql_attributes_queries["delete_index_attributes"])
+    db.go_execute(sql_attributes_queries["delete_view_attributes"])
+
+    db.go_execute(sql_attributes_queries["create_table_attributes"])
+    db.go_execute(sql_attributes_queries["create_index_attributes"])
+    db.go_execute(sql_attributes_queries["create_view_attributes"])
+
+
+
+
+
+
+
+
 # def _create_quotes_chains_environment(db: dbTolls):
 #     """ Создать инфраструктуру для Иерархии расценок. Таблицы, индексы и триггеры. """
 #     db.go_execute(sql_quotes_chain_create["delete_table_quotes_chains"])
@@ -105,6 +122,9 @@ def create_tables_indexes(db_file_name: str):
         _create_catalog_environment(db)
         # --- > Расценки, Материалы, Машины и Оборудование -- tblBases ---
         _create_products_environment(db)
+
+        # --- > Атрибуты расценок/продуктов -- tblAttributes ---
+        _create_attributes_environment(db)
 
         # # --- > Иерархия расценок -- tblQuotesChains ---
         # _create_quotes_chains_environment(db)

@@ -24,7 +24,7 @@ places = {
     ),
 }
 db_name = "Normative.sqlite3"
-now = "home"  # "office"  # "home"
+now = "office"  # "office"  # "home"
 
 if __name__ == '__main__':
     version = f"SQLite: {sqlite3.sqlite_version}\nPython: {sys.version}"
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     equipments_data = os.path.join(places[now].data_path, "13_глава_35_доп.csv")
 
     ic(version, db_name, period)
-
+    #
     # # удаляем файл БД если такой есть
     # if os.path.isfile(db_name):
     #     os.unlink(db_name)
