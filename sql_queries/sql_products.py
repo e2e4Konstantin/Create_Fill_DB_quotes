@@ -33,6 +33,10 @@ sql_products_queries = {
         SELECT * FROM tblProducts WHERE code = ?;
     """,
 
+    "select_products_id": """
+        SELECT * FROM tblProducts WHERE ID_tblProduct = ?;
+    """,
+
     "select_products_max_period": """
         SELECT MAX(period) AS max_period FROM tblProducts;         
     """,

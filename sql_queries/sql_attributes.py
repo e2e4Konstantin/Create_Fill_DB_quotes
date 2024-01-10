@@ -49,7 +49,7 @@ sql_attributes_queries = {
         DELETE FROM tblAttributes WHERE ID_Attribute = ?;
     """,
 
-    "select_attributes_quote_id_name":   """
+    "select_attributes_id_name":   """
         SELECT * FROM tblAttributes WHERE FK_tblAttributes_tblProducts = ? AND name = ?;
     """,
 
