@@ -1,11 +1,11 @@
+# --- > Атрибуты ----------------------------------------------------------
 sql_attributes_queries = {
-    # --- > Атрибуты ----------------------------------------------------------
     # --- > Период, к которому относится атрибут, будет взят из расценки.
     "create_table_attributes": """
         CREATE TABLE IF NOT EXISTS tblAttributes
             (
                 ID_Attribute                INTEGER PRIMARY KEY NOT NULL,
-                FK_tblAttributes_tblProducts  INTEGER NOT NULL,               -- id родительской расценки 
+                FK_tblAttributes_tblProducts  INTEGER NOT NULL,             -- id родительской расценки 
 
                 name                    	TEXT NOT NULL,                  -- название атрибута
                 value                       TEXT NOT NULL,                  -- значение атрибута

@@ -24,7 +24,20 @@ places = {
     ),
 }
 db_name = "Normative.sqlite3"
-now = "office"  # "office"  # "home"
+now = "home"  # office  # home
+
+def _creat_new_db(db_name):
+    # удаляем файл БД если такой есть
+    if os.path.isfile(db_name):
+        os.unlink(db_name)
+    # создать таблицы, индексы, триггеры
+    create_tables_indexes(db_name)
+    # заполнить данными справочник элементов каталога
+    fill_directory_catalog_items(db_name)
+    # вставить корневую запись в каталог
+    insert_root_record_to_catalog(db_name)
+
+
 
 if __name__ == '__main__':
     version = f"SQLite: {sqlite3.sqlite_version}\nPython: {sys.version}"
@@ -45,17 +58,8 @@ if __name__ == '__main__':
     equipments_data = os.path.join(places[now].data_path, "13_глава_35_доп.csv")
 
     ic(version, db_name, period)
-    #
-    # # удаляем файл БД если такой есть
-    # if os.path.isfile(db_name):
-    #     os.unlink(db_name)
-    #
-    # # создать таблицы, индексы, триггеры
-    # create_tables_indexes(db_name)
-    # # заполнить данными справочник элементов каталога
-    # fill_directory_catalog_items(db_name)
-    # # вставить корневую запись в каталог
-    # insert_root_record_to_catalog(db_name)
+
+    # _creat_new_db(db_name)
 
     # --- > Расценки
     # --------------------- > Каталог

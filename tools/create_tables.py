@@ -1,5 +1,8 @@
 from config import dbTolls
-from sql_queries import sql_items_creates, sql_catalog_creates, sql_products_creates, sql_raw_queries, sql_attributes_queries
+from sql_queries import (
+    sql_items_creates, sql_catalog_creates, sql_products_creates, sql_raw_queries,
+    sql_attributes_queries, sql_options_queries
+)
 
 
 def _create_directory_environment(db: dbTolls):
@@ -64,7 +67,7 @@ def _create_products_environment(db: dbTolls):
 
 
 def _create_attributes_environment(db: dbTolls):
-    """ Создать инфраструктуру таблицы для хранения Атрибутов расценок. """
+    """ Инфраструктура для Атрибутов. """
     db.go_execute(sql_attributes_queries["delete_table_attributes"])
     db.go_execute(sql_attributes_queries["delete_index_attributes"])
     db.go_execute(sql_attributes_queries["delete_view_attributes"])
@@ -74,10 +77,15 @@ def _create_attributes_environment(db: dbTolls):
     db.go_execute(sql_attributes_queries["create_view_attributes"])
 
 
+def _create_options_environment(db: dbTolls):
+    """ Инфраструктура для Параметров. """
+    db.go_execute(sql_options_queries["delete_table_options"])
+    db.go_execute(sql_options_queries["delete_index_options"])
+    db.go_execute(sql_options_queries["delete_view_options"])
 
-
-
-
+    db.go_execute(sql_options_queries["create_table_options"])
+    db.go_execute(sql_options_queries["create_index_options"])
+    db.go_execute(sql_options_queries["create_view_options"])
 
 
 # def _create_quotes_chains_environment(db: dbTolls):
@@ -123,8 +131,9 @@ def create_tables_indexes(db_file_name: str):
         # --- > Расценки, Материалы, Машины и Оборудование -- tblBases ---
         _create_products_environment(db)
 
-        # --- > Атрибуты расценок/продуктов -- tblAttributes ---
+        # --- > Атрибуты и Параметры продуктов -- tblAttributes, tblOptions ---
         _create_attributes_environment(db)
+        _create_options_environment(db)
 
         # # --- > Иерархия расценок -- tblQuotesChains ---
         # _create_quotes_chains_environment(db)

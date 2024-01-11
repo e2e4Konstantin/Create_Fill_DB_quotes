@@ -4,6 +4,7 @@ from sql_queries.sql_catalog import sql_catalog_creates, sql_catalog_queries
 from sql_queries.sql_products import sql_products_creates, sql_products_queries
 
 from sql_queries.sql_attributes import sql_attributes_queries
+from sql_queries.sql_options import sql_options_queries
 
 #
 # from sql_queries.sql_quotes_chains import sql_quotes_chain_create

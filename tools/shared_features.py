@@ -8,6 +8,7 @@ from files_features import output_message, output_message_exit
 from tools.code_tolls import clear_code
 
 
+
 def get_directory_id(db: dbTolls, directory_team: str, item_name: str) -> int | None:
     """ Ищет в таблице справочников справочник directory_team и возвращает id записи item_name. """
     directory_id = db.get_row_id(
@@ -184,7 +185,6 @@ def get_product_row_by_code(db: dbTolls, product_code: str) -> sqlite3.Row | Non
     return None
 
 
-
 def delete_last_period_product_row(db_filename: str, team: str, name: str):
     """ Вычисляет максимальный период для таблицы tblProducts.
         Удаляет все записи у которых период < максимального.  """
@@ -214,6 +214,14 @@ def delete_last_period_product_row(db_filename: str, team: str, name: str):
             ic(mess)
 
 
+def get_raw_data(db: dbTolls) -> list[sqlite3.Row] | None:
+    """ Выбрать все записи из сырой таблицы. """
+    rows = db.go_select(sql_raw_queries["select_rwd_all"])
+    if not rows:
+        output_message_exit(f"в RAW таблице не найдено ни одной записи:",
+                            f"tblRawData пустая.")
+        return None
+    return rows
 
 
 if __name__ == '__main__':
