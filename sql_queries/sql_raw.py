@@ -50,5 +50,19 @@ sql_raw_queries = {
         WHERE ("Ед.Изм." IS NOT NULL OR "Брутто" IS NOT NULL);
     """,
 
+    # --- > ресурсы ПСМ , главы 71, 72, 73
+    "select_rwd_resources": """
+        SELECT 
+            "Шифр новый действующий" AS CODE, 
+            "Уточненное наименование по данным мониторинга" as TITLE,
+            "Ед. изм." AS MEASURE,  
+            PERIOD
+        FROM tblRawData 
+        WHERE CODE REGEXP ?;
+    """,
 
+    # PRAGMA table_info(tblRawData);
+    "test_pragma": """
+        SELECT name FROM pragma_table_info('tblRawData') where rowid = 4
+    """
 }

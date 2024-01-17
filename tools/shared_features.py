@@ -8,6 +8,35 @@ from files_features import output_message, output_message_exit
 from tools.code_tolls import clear_code
 
 
+def update_catalog(db: dbTolls, catalog_id: int, raw_catalog_data: tuple) -> int | None:
+    """ Формирует строку из Сырой таблицы. Изменяет catalog_id запись в таблице Каталога. """
+    # ID_parent, period, code, description, FK_tblCatalogs_tblItems, ID_tblCatalog, period
+    data = (raw_catalog_data + (catalog_id, raw_catalog_data[1]))
+    db.go_execute(sql_catalog_queries["update_catalog_id_period"], data)
+    count = db.go_execute(sql_catalog_queries["select_changes"])
+    return count.fetchone()['changes'] if count else None
+
+
+def insert_raw_catalog(db: dbTolls, raw_catalog_data: tuple) -> int | None:
+    """ Формирует строку из Сырой таблицы. Вставляет новую запись в таблицу Каталога. """
+    message = f"INSERT tblCatalog {raw_catalog_data}"
+    inserted_id = db.go_insert(sql_catalog_queries["insert_catalog"], raw_catalog_data, message)
+    if not inserted_id:
+        output_message(f"запись {raw_catalog_data}", f"НЕ добавлена в Каталог.")
+        return None
+    return inserted_id
+
+
+def get_raw_data_items(db: dbTolls, item: DirectoryItem) -> list[sqlite3.Row] | None:
+    """ Выбрать все записи из сырой таблицы у которых шифр соответствует паттерну для item типа записей. """
+    raw_cursor = db.go_execute(sql_raw_queries["select_rwd_code_regexp"], (item.re_pattern,))
+    results = raw_cursor.fetchall() if raw_cursor else None
+    if not results:
+        output_message_exit(f"в RAW таблице с данными для каталога не найдено ни одной записи:",
+                            f"{item.item_name!r}, {item.re_pattern}")
+        return None
+    return results
+
 
 def get_directory_id(db: dbTolls, directory_team: str, item_name: str) -> int | None:
     """ Ищет в таблице справочников справочник directory_team и возвращает id записи item_name. """

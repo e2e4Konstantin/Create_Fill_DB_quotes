@@ -106,7 +106,7 @@ if __name__ == '__main__':
     db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
 
     db_name = os.path.join(db_path, "Normative.sqlite3")
-    options_data = os.path.join(data_path, "Расценки_10_68_split_options.csv")
+    options_data = os.path.join(data_path, "Машины_2_68_split_options.csv")
 
     period = 68
 

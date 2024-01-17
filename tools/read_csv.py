@@ -6,12 +6,16 @@ from config import dbTolls
 from files_features import output_message_exit
 
 
-def read_csv_to_raw_table(db_file_name: str, csv_file_name: str, period: int):
+def read_csv_to_raw_table(
+        db_file_name: str, csv_file_name: str, set_period: int,  new_column_name: list[str] = None
+) -> None:
     """ Читает данные из csv файла в df. Добавляет столбец 'период'.
      Записывает df в таблицу tblRawDat БД. """
     try:
         df = pd.read_csv(csv_file_name, delimiter=";", index_col=False, encoding="utf8", dtype=pd.StringDtype())
-        df['PERIOD'] = period
+        if new_column_name is not None:
+            df.columns = new_column_name + df.columns.to_numpy().tolist()[len(new_column_name):]
+        df['PERIOD'] = set_period
         memory = f"использовано памяти: {df.memory_usage(index=True, deep=True).sum():_} bytes"
         ic(memory)
         with dbTolls(db_file_name) as db:
@@ -25,6 +29,9 @@ def read_csv_to_raw_table(db_file_name: str, csv_file_name: str, period: int):
             ic(count)
     except IOError as err:
         output_message_exit(err, csv_file_name)
+
+
+
 
 
 if __name__ == '__main__':

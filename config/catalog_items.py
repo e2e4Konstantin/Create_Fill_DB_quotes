@@ -4,9 +4,14 @@ from icecream import ic
 
 # иерархия элементов каталога
 # chain_items = ('Catalog', 'Chapter', 'Collection', 'Section', 'Subsection', 'Table',)
+# --- > ПСМ Каталог PROJECT OUTLAY MODULE
 
 # названия справочников
-teams = ['main', 'units', 'quotes', 'materials', 'machines', 'equipments']
+teams = (
+    'main', 'units', 'quotes', 'materials', 'machines', 'equipments', 'pom_materials', 'pom_machines', 'pom_equipments'
+    )
+
+
 
 src_catalog_items = [
     (teams[0], 'main', 'справочник', None, r"^\s*0000\s*$", None),
@@ -17,11 +22,11 @@ src_catalog_items = [
     (teams[1], 'Equipment',  'Оборудование', None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
 
     # разделы для каталога Расценок
-    (teams[2], 'Chapter',    'Глава',    None,      r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)\s"),
-    (teams[2], 'Collection', 'Сборник',  'Chapter',      r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Сборник\s*((\d+)\.)\s"),
-    (teams[2], 'Section',    'Отдел',    'Collection',   r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*Отдел\s*((\d+)\.)\s"),
-    (teams[2], 'Subsection', 'Раздел',   'Section',      r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", r"^\s*Раздел\s*((\d+)\.)\s"),
-    (teams[2], 'Table',      'Таблица',  'Subsection',   r"^\s*((\d+)\.(\d+)(-(\d+)){4})\s*$", r"^\s*Таблица\s*((\d+)\.(\d+)-(\d+)\.)\s"),
+    (teams[2], 'Chapter',    'глава',    None,      r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)\s"),
+    (teams[2], 'Collection', 'сборник',  'Chapter',      r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Сборник\s*((\d+)\.)\s"),
+    (teams[2], 'Section',    'отдел',    'Collection',   r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*Отдел\s*((\d+)\.)\s"),
+    (teams[2], 'Subsection', 'раздел',   'Section',      r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", r"^\s*Раздел\s*((\d+)\.)\s"),
+    (teams[2], 'Table',      'таблица',  'Subsection',   r"^\s*((\d+)\.(\d+)(-(\d+)){4})\s*$", r"^\s*Таблица\s*((\d+)\.(\d+)-(\d+)\.)\s"),
 
     # разделы для каталога Материалов глава 1
     (teams[3], 'chapter', 'глава', None, r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)\s"),
@@ -34,11 +39,24 @@ src_catalog_items = [
     (teams[4], 'section', 'раздел', 'chapter', r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Раздел\s*((\d+)\.)\s"),
     (teams[4], 'block_1', 'блок_1', 'section', r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*((\d+)\.)\s"),
 
-
     # разделы для каталога Оборудования глава 13
     (teams[5], 'chapter', 'глава', None, r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)\s"),
     (teams[5], 'section', 'отдел', 'chapter', r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Отдел\s*((\d+)\.)\s"),
     (teams[5], 'block_1', 'блок_1', 'section', r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*((\d+)\.)\s"),
+
+    # разделы для каталога ПСМ Материалов. Глава 71
+    (teams[6], 'Chapter',    'глава',    None, r"^\s*(\d+)\s*$", None),
+    (teams[6], 'Collection', 'сборник',  'Chapter', r"^\s*((\d+)\.(\d+))\s*$", None),
+
+    # разделы для каталога ПСМ Машин. Глава 72
+    (teams[7], 'Chapter',    'глава',    None, r"^\s*(\d+)\s*$", None),
+    (teams[7], 'Collection', 'сборник',  'Chapter', r"^\s*((\d+)\.(\d+))\s*$", None),
+
+    # разделы для каталога ПСМ Оборудования. Глава 73
+    (teams[8], 'Chapter',    'глава',    None, r"^\s*(\d+)\s*$", None),
+    (teams[8], 'Collection', 'сборник',  'Chapter', r"^\s*((\d+)\.(\d+))\s*$", None),
+
+
 ]
 
 

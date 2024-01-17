@@ -1,15 +1,13 @@
 import sqlite3
-import pandas as pd
+
 from icecream import ic
-from config import dbTolls, items_catalog, DirectoryItem
-from sql_queries import (
-    sql_items_queries, sql_raw_queries, sql_catalog_queries
-)
+from config import dbTolls, DirectoryItem
+from sql_queries import sql_items_queries
 from files_features import output_message, output_message_exit
-from tools.code_tolls import clear_code, title_catalog_extraction, get_integer_value
+from tools.code_tolls import clear_code, get_integer_value
+
 from tools.shared_features import (
-    get_sorted_directory_items, get_catalog_id_by_code,
-    get_catalog_row_by_code, delete_catalog_old_period_for_parent_code,
+    get_sorted_directory_items, get_catalog_id_by_code, get_catalog_row_by_code,
     get_raw_data_items, update_catalog, insert_raw_catalog
 )
 
@@ -25,7 +23,7 @@ def _get_directory_id(item_name: str, db: dbTolls) -> int | None:
     return id_catalog_items
 
 
-def _make_data_from_raw_quotes_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row, item: DirectoryItem) -> tuple | None:
+def _make_data_from_raw_items_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row, item: DirectoryItem) -> tuple | None:
     """ Из строки raw_catalog_row таблицы tblRawData с данными для Каталога.
         Выбирает данные, проверяет их, находит в Каталоге запись родителя.
         Возвращает кортеж с данными для вставки в Рабочую Таблицу Каталога.
@@ -41,7 +39,7 @@ def _make_data_from_raw_quotes_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row
     if parent_id and str(item.id):
         period = get_integer_value(raw_catalog_row["PERIOD"])
         code = clear_code(raw_catalog_row["PRESSMARK"])
-        description = title_catalog_extraction(raw_catalog_row["TITLE"], item.re_prefix)
+        description: str = raw_catalog_row["TITLE"]
         # ID_parent, period, code, description, FK_tblCatalogs_tblDirectoryItems
         data = (parent_id, period, code, description, item.id)
         # ic(data)
@@ -52,9 +50,9 @@ def _make_data_from_raw_quotes_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row
     return None
 
 
-def _save_raw_item_catalog_quotes(item: DirectoryItem, db_filename: str) -> list[tuple[str, str]] | None:
-    """ Записывает все значения типа item_name в каталог из таблицы с исходными данными
-        в таблицу каталога и создает ссылки на родителей.
+def _save_raw_item_catalog(item: DirectoryItem, db_filename: str) -> list[tuple[str, str]] | None:
+    """ Записывает все значения типа item.item_name в каталог из таблицы с исходными данными tblRawData
+        в таблицу каталога tblCatalogs и создает ссылки на родителей.
         Если запись с таким шифром уже есть в каталоге, то обновляет ее, иначе вставляет новую.
         Период записываем только если он больше либо равен предыдущему.
     """
@@ -66,7 +64,7 @@ def _save_raw_item_catalog_quotes(item: DirectoryItem, db_filename: str) -> list
         for row in raw_item_data:
             raw_code = clear_code(row["PRESSMARK"])
             raw_period = get_integer_value(row["PERIOD"])
-            pure_data = _make_data_from_raw_quotes_catalog(db, row, item)
+            pure_data = _make_data_from_raw_items_catalog(db, row, item)
             catalog_row = get_catalog_row_by_code(db, raw_code)
             if catalog_row:
                 row_period = catalog_row['period']
@@ -93,31 +91,28 @@ def _save_raw_item_catalog_quotes(item: DirectoryItem, db_filename: str) -> list
     return None
 
 
-def transfer_raw_quotes_to_catalog(operating_db: str):
-    """ Заполняет таблицу Каталога данными по расценкам из RAW таблицы.
-        Каталог заполняется последовательно, с самого старшего элемента (Глава...).
-        В соответствии с иерархией Справочника 'quotes'.
+def transfer_raw_pom_resources_to_catalog(db_file_name: str):
+    """ Заполняет Каталог данными по НЦКР Ресурсам из RAW таблицы tblRawData.
         Иерархия задается родителями в классе ItemCatalogDirectory.
     """
     ic()
     # получить отсортированные по иерархии Справочник 'quotes'
-    dir_catalog = get_sorted_directory_items(operating_db, directory_name='quotes')
+    dir_catalog = get_sorted_directory_items(db_file_name, directory_name='pom_materials')
     ic(dir_catalog)
-    # заполнить и сохранить главы
-    chapters = _save_raw_item_catalog_quotes(dir_catalog[1], operating_db)
-    # заполнить остальные сущности
-    for item in dir_catalog[2:]:
-        _save_raw_item_catalog_quotes(item, operating_db)
-    # удалить из Каталога главы период которых меньше чем текущий период
-    for chapter in chapters:
-        delete_catalog_old_period_for_parent_code(operating_db, parent_code=chapter[0])
+    for item in dir_catalog[1:]:
+        _save_raw_item_catalog(item, db_file_name)
 
 
 if __name__ == '__main__':
     import os
+    from read_csv import read_csv_to_raw_table
 
     db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
     # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
     db_name = os.path.join(db_path, "Normative.sqlite3")
+    data_path = r"F:\Kazak\GoogleDrive\NIAC\АИС_Выгрузка\csv"
+    pom_catalog = os.path.join(data_path, "Каталог_НЦКР_Временный_каталог_Март_2022_Ресурсы_ТСН.csv")
 
-    transfer_raw_quotes_to_catalog(db_name)
+    period = 0
+    read_csv_to_raw_table(db_name, pom_catalog, period)
+    transfer_raw_pom_resources_to_catalog(db_name)

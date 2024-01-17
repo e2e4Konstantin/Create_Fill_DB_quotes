@@ -69,7 +69,7 @@ def transfer_raw_table_to_attributes(db_filename: str):
         inserted_attributes = []
         deleted_attributes = []
         for row in raw_attributes:
-            ic(tuple(row))
+            # ic(tuple(row))
             data = _make_data_from_raw_attribute(db, row)
             # ищем в таблице атрибутов совпадающий атрибут
             same_id = _get_attribute_id(db, data[:2])
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     period = 68
 
     db_name = os.path.join(db_path, "Normative.sqlite3")
-    attributes_data = os.path.join(data_path, "Материалы_1_13_split_attributes.csv") # Расценки_4_68_split_attributes   /// Расценки_3_68_split_attributes // Материалы_1_13_split_attributes
+    attributes_data = os.path.join(data_path, "Оборудование_13_68_split_attributes.csv") # Расценки_4_68_split_attributes   /// Расценки_3_68_split_attributes // Материалы_1_13_split_attributes
 
     ic(db_name)
     ic(attributes_data)
@@ -126,4 +126,4 @@ if __name__ == '__main__':
     read_csv_to_raw_table(db_name, attributes_data, period=68)
 
     # заполнить Атрибуты данными из таблицы tblRawData
-    transfer_raw_table_to_attributes(db_name)
+    # transfer_raw_table_to_attributes(db_name)
