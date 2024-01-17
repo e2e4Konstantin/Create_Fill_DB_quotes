@@ -1,7 +1,7 @@
 from config import dbTolls
 from sql_queries import (
     sql_items_creates, sql_catalog_creates, sql_products_creates, sql_raw_queries,
-    sql_attributes_queries, sql_options_queries
+    sql_attributes_queries, sql_options_queries, sql_origins
 )
 
 
@@ -21,6 +21,14 @@ def _create_directory_environment(db: dbTolls):
     db.go_execute(sql_items_creates["create_trigger_history_items_insert"])
     db.go_execute(sql_items_creates["create_trigger_history_items_delete"])
     db.go_execute(sql_items_creates["create_trigger_history_items_update"])
+
+    # --- > Справочник Происхождения
+
+    db.go_execute(sql_origins["delete_table_origins"])
+    db.go_execute(sql_origins["delete_index_origins"])
+    db.go_execute(sql_origins["create_table_origins"])
+    db.go_execute(sql_origins["create_index_origins"])
+
 
 
 def _create_catalog_environment(db: dbTolls):

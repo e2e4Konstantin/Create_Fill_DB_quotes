@@ -3,7 +3,7 @@ from icecream import ic
 import sqlite3
 
 from config import dbTolls, DirectoryItem
-from sql_queries import sql_items_queries, sql_catalog_queries, sql_products_queries, sql_raw_queries
+from sql_queries import sql_items_queries, sql_catalog_queries, sql_products_queries, sql_raw_queries, sql_origins
 from files_features import output_message, output_message_exit
 from tools.code_tolls import clear_code
 
@@ -253,6 +253,19 @@ def get_raw_data(db: dbTolls) -> list[sqlite3.Row] | None:
     return rows
 
 
+def get_origin_id(db: dbTolls, origin_name: str) -> int | None:
+    """ Получает Id элемента справочника происхождения с именем origin_name. """
+    if origin_name is None:
+        return None
+    origin_id = db.get_row_id(sql_origins["select_origin_name"], (origin_name,))
+    if origin_id:
+        return origin_id
+    output_message_exit(f"в справочнике происхождения tblOrigins:",
+                        f"не найдено записи с названием: {origin_name}.")
+
+
+
+
 if __name__ == '__main__':
     import os
     from icecream import ic
@@ -261,7 +274,7 @@ if __name__ == '__main__':
     # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
     db_name = os.path.join(db_path, "Normative.sqlite3")
 
-    delete_catalog_old_period_for_level(db_name, parent_code='1')
+    # delete_catalog_old_period_for_level(db_name, parent_code='1')
     # delete_last_period_product_row(db_name, team='units', name='material')
 
     #

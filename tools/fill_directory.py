@@ -1,7 +1,7 @@
 from icecream import ic
 
 from config import dbTolls, items_catalog
-from sql_queries import sql_items_creates, sql_items_queries
+from sql_queries import sql_items_creates, sql_items_queries, sql_origins
 
 
 def fill_directory_catalog_items(db_file_name: str):
@@ -26,6 +26,19 @@ def fill_directory_catalog_items(db_file_name: str):
             # ic(inserted_id, item.team, item, item.name, parent_id)
 
 
+def fill_directory_origins(db_file_name: str):
+    """ Заполняет справочник происхождения tblOrigins. """
+    with dbTolls(db_file_name) as db:
+        message_item = "вставка данных в справочник Происхождения продуктов."
+        origin_items = (
+            ('ТСН', 'База сметных нормативов'),
+            ('НЦКР', 'Нормативы Цен на Комплексы Работ'),
+            ('ПСМ', 'Проектно Сметный Модуль')
+        )
+        for origin in origin_items:
+            inserted_id = db.go_insert(sql_origins['insert_origin'], origin, message_item)
+
+
 if __name__ == '__main__':
     import os
 
@@ -34,3 +47,5 @@ if __name__ == '__main__':
     db_name = os.path.join(db_path, "Normative.sqlite3")
 
     fill_directory_catalog_items(db_name)
+    fill_directory_origins(db_name)
+

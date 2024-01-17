@@ -9,7 +9,7 @@ from tools import (
     insert_root_record_to_catalog, transfer_raw_data_to_quotes,
     transfer_raw_data_to_catalog, transfer_raw_data_to_materials, transfer_raw_data_to_machines,
     transfer_raw_data_to_equipments, transfer_raw_quotes_to_catalog, delete_raw_tables,
-    transfer_raw_pom_resources_to_catalog,
+    transfer_raw_pom_resources_to_catalog, transfer_raw_data_to_pom_resources, fill_directory_origins
 )
 
 PlacePath = namedtuple("PlacePath", ["data_path", "db_path"])
@@ -32,6 +32,7 @@ def _creat_new_db(db_name: str):
     if os.path.isfile(db_name):
         os.unlink(db_name)                  # удаляем файл БД если такой есть
     create_tables_indexes(db_name)          # создать таблицы, индексы, триггеры
+    fill_directory_origins(db_name)         # заполнить справочник происхождения tblOrigins
     fill_directory_catalog_items(db_name)   # заполнить данными справочник элементов каталога
     insert_root_record_to_catalog(db_name)  # вставить корневую запись в каталог
 
@@ -41,11 +42,11 @@ if __name__ == '__main__':
     db_name = os.path.join(places[now].db_path, db_name)
 
     period = 67
-    # catalog_data = os.path.join(places[now].data_path, "TABLES_67.csv")
-    # quotes_data = os.path.join(places[now].data_path, "WORK_PROCESS_67.csv")
-    # materials_data = os.path.join(places[now].data_path, "1_глава_67_доп.csv")
-    # machines_data = os.path.join(places[now].data_path, "2_глава_67_доп.csv")
-    # equipments_data = os.path.join(places[now].data_path, "13_глава_34_доп.csv")
+    catalog_data = os.path.join(places[now].data_path, "TABLES_67.csv")
+    quotes_data = os.path.join(places[now].data_path, "WORK_PROCESS_67.csv")
+    materials_data = os.path.join(places[now].data_path, "1_глава_67_доп.csv")
+    machines_data = os.path.join(places[now].data_path, "2_глава_67_доп.csv")
+    equipments_data = os.path.join(places[now].data_path, "13_глава_34_доп.csv")
     pom_catalog = os.path.join(places[now].data_path, "Каталог_НЦКР_Временный_каталог_Март_2022_Ресурсы_ТСН.csv")
     pom_resource = os.path.join(places[now].data_path, "Данные_НЦКР_Временный_каталог_НЦКР_2023_4_кв.csv")
     #
@@ -57,18 +58,17 @@ if __name__ == '__main__':
     # equipments_data = os.path.join(places[now].data_path, "13_глава_35_доп.csv")
 
     ic(version, db_name, period)
+    _creat_new_db(db_name)
 
-    # _creat_new_db(db_name)
-
-    # # --- > Расценки
-    # # --------------------- > Каталог
-    # ic(catalog_data)
-    # read_csv_to_raw_table(db_name, catalog_data, period)
-    # transfer_raw_quotes_to_catalog(db_name)
-    # # ---------------------- > Данные
-    # ic(quotes_data)
-    # read_csv_to_raw_table(db_name, quotes_data, period)
-    # transfer_raw_data_to_quotes(db_name)
+    # --- > Расценки
+    # --------------------- > Каталог
+    ic(catalog_data)
+    read_csv_to_raw_table(db_name, catalog_data, period)
+    transfer_raw_quotes_to_catalog(db_name)
+    # ---------------------- > Данные
+    ic(quotes_data)
+    read_csv_to_raw_table(db_name, quotes_data, period)
+    transfer_raw_data_to_quotes(db_name)
     #
     # # --- > Материалы Глава 1
     # # --------------------- > Каталог Материалы
@@ -94,16 +94,16 @@ if __name__ == '__main__':
     # # ----------------------- > Данные Оборудование
     # transfer_raw_data_to_equipments(db_name)
     #
-    # delete_raw_tables(db_name)
-
-    # --- > Ресурсы ПСМ
-    # --------------------- > Ресурсы ПСМ
-    ic(pom_catalog)
-    period = 0
+    # # --- > Ресурсы ПСМ
+    # # --------------------- > Ресурсы ПСМ
+    # ic(pom_catalog)
+    # period = 0
     # read_csv_to_raw_table(db_name, pom_catalog, period)
     # transfer_raw_pom_resources_to_catalog(db_name)
     # # ----------------------- > Данные Ресурсы ПСМ
-    # read_csv_to_raw_table(db_name, pom_resource, period)
-    transfer_raw_data_to_pom_resources(db_name)
-
-
+    # read_csv_to_raw_table(db_name, pom_resource, period, new_column_name=['N', 'NPP', 'Шифр новый действующий', 'Уточненное наименование по данным мониторинга'])
+    # transfer_raw_data_to_pom_resources(db_name)
+    #
+    # # delete_raw_tables(db_name)
+    #
+    #

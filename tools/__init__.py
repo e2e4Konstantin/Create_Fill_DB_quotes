@@ -1,6 +1,6 @@
 from tools.create_tables import create_tables_indexes, delete_raw_tables
 
-from tools.fill_directory_items import fill_directory_catalog_items
+from tools.fill_directory import fill_directory_catalog_items, fill_directory_origins
 
 from tools.code_tolls import clear_code, get_float_value, get_integer_value
 
@@ -14,3 +14,4 @@ from tools.transfer_raw_materials import transfer_raw_data_to_materials
 from tools.transfer_raw_machines import transfer_raw_data_to_machines
 from tools.transfer_raw_equipments import transfer_raw_data_to_equipments
 from tools.transfer_raw_pom_resources_to_catalog import transfer_raw_pom_resources_to_catalog
+from tools.transfer_raw_pom_resourses import transfer_raw_data_to_pom_resources

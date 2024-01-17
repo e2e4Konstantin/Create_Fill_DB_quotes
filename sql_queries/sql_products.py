@@ -94,10 +94,11 @@ sql_products_creates = {
     "create_table_products": """
         CREATE TABLE IF NOT EXISTS tblProducts
             (
-                ID_tblProduct INTEGER PRIMARY KEY NOT NULL,
-                FK_tblProducts_tblCatalogs INTEGER NOT NULL,    -- родитель каталога
-                FK_tblProducts_tblItems INTEGER NOT NULL,       -- тип элемента из справочника 'units'
-                                                                -- материал/машина/расценка/оборудование
+                ID_tblProduct               INTEGER PRIMARY KEY NOT NULL,
+                FK_tblProducts_tblCatalogs  INTEGER NOT NULL, -- родитель каталога
+                FK_tblProducts_tblItems     INTEGER NOT NULL, -- тип элемента из справочника 'units'
+                                                              -- материал/машина/расценка/оборудование
+                FK_tblProducts_tblOrigins   INTEGER NOT NULL, -- происхождение ТСН/ПСМ...                                                                 
                 -- 
                 period      INTEGER NOT NULL,   -- период
                 code	 	TEXT NOT NULL,		-- шифр					
@@ -109,6 +110,7 @@ sql_products_creates = {
                 
                 FOREIGN KEY (FK_tblProducts_tblCatalogs) REFERENCES tblCatalogs (ID_tblCatalog),
                 FOREIGN KEY (FK_tblProducts_tblItems) REFERENCES tblItems (ID_tblItem),
+                FOREIGN KEY (FK_tblProducts_tblOrigins) REFERENCES tblOrigins (ID_tblOrigin),
                 UNIQUE (code)
             );
         """,

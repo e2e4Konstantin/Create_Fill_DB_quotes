@@ -2,11 +2,11 @@ import sqlite3
 from icecream import ic
 
 from config import dbTolls, teams
-from sql_queries import sql_raw_queries, sql_products_queries, sql_items_queries, sql_catalog_queries
+from sql_queries import sql_raw_queries, sql_origins, sql_products_queries, sql_items_queries, sql_catalog_queries
 from files_features import output_message, output_message_exit
 from tools.code_tolls import clear_code, text_cleaning, get_integer_value
 from tools.shared_features import get_directory_id, get_product_row_by_code, update_product, insert_product, \
-    delete_last_period_product_row, get_catalog_id_by_period_code
+    delete_last_period_product_row, get_catalog_id_by_period_code, get_origin_id
 
 
 def _make_data_from_raw_quote(db: dbTolls, raw_quote: sqlite3.Row, item_id: int) -> tuple | None:
@@ -47,6 +47,9 @@ def _get_raw_quotes(db: dbTolls) -> list[sqlite3.Row] | None:
     return results
 
 
+
+
+
 def transfer_raw_data_to_quotes(db_filename: str):
     """ Записывает расценки из сырой таблицы tblRawData в рабочую таблицу tblProducts.
         В рабочей таблице tblProducts ищется расценка с таким же шифром, если такая есть то она обновляется,
@@ -59,6 +62,9 @@ def transfer_raw_data_to_quotes(db_filename: str):
         team, name = "units", "quote"
         quote_item_id = get_directory_id(db, directory_team=team, item_name=name)
         inserted_success, updated_success = [], []
+
+        origin_id = get_origin_id(db, origin_name='ТСН')
+
         for row in raw_quotes:
             raw_code = clear_code(row["PRESSMARK"])
             raw_period = get_integer_value(row["PERIOD"])
