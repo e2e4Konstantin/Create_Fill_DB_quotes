@@ -1,29 +1,39 @@
 from icecream import ic
 from config import dbTolls
 from sql_queries import sql_items_queries, sql_catalog_queries
+from files_features import output_message_exit
+from tools.shared_features import get_origin_id
 
 
-def insert_root_record_to_catalog(db_filename: str) -> int | None:
-    """ Вставляем в каталог запись 'Справочник' с шифром '0000',
-        для обозначения самого верхнего уровня каталога.
-        Ссылка на родительскую запись NULL.
+def update_catalog_parent_himself(db: dbTolls, id: int) -> int | None:
+    """ Меняет ссылку родителя на самого себя. """
+    db.go_execute(sql_catalog_queries["update_catalog_parent_himself"], (id, ))
+    count = db.go_execute("""SELECT CHANGES() AS changes;""")
+    if count:
+        return count.fetchone()['changes']
+    output_message_exit(f"элемент каталога {id=}", f"не обновлен в таблице tblCatalogs")
+    return None
+
+
+def insert_root_record_to_catalog(db_filename: str, catalog: str, code: str, period: int, description) -> int | None:
+    """ Вставляет в каталог запись с шифром code, для обозначения самого верхнего уровня каталога.
+        Родительская ссылка указывает на саму запись.
     """
     with dbTolls(db_filename) as db:
         target_item = ('main', 'main')
         item_id = db.get_row_id(sql_items_queries["select_items_id_team_name"], target_item)
         if item_id is None:
-            log = f"НЕ добавлена головная запись в справочник: {target_item!r} id: {item_id}"
+            log = f"в справочнике tblItems: не найдена запись {target_item!r}"
             ic(log)
             return None
-        # ID_parent, period, code, description, FK_tblCatalogs_tblItems
-        code = '0000'
-        period = 0
-        description = 'Справочник нормативов'
-        data = (1, period, code, description, item_id)
+        origin_id = get_origin_id(db, origin_name=catalog)
+        # FK_tblCatalogs_tblOrigins, ID_parent, period, code, description, FK_tblCatalogs_tblItems
+        data = (origin_id, 1, period, code, description, item_id)
         message = f"вставка корневой записи в Каталог' {code}"
         inserted_id = db.go_insert(sql_catalog_queries["insert_catalog"], data, message)
+        update_catalog_parent_himself(db, inserted_id)
         if inserted_id:
-            log = f"добавлена запись в каталог: {description!r} id: {inserted_id}"
+            log = f"добавлена запись в каталог {catalog}: {description!r} id: {inserted_id}"
             ic(log)
             return inserted_id
-
+    output_message_exit(f"Не добавлена", f"корневая запись для Каталога {code}")

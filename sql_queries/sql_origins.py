@@ -25,5 +25,9 @@ sql_origins = {
     "select_origin_name": """
         SELECT ID_tblOrigin FROM tblOrigins WHERE name = ?;
     """,
+
+    "select_origin_id": """
+        SELECT * FROM tblOrigins WHERE ID_tblOrigin = ?;
+    """,
 }
 

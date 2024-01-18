@@ -8,9 +8,9 @@ from sql_queries import (
 from files_features import output_message, output_message_exit
 from tools.code_tolls import clear_code, title_catalog_extraction, get_integer_value
 from tools.shared_features import (
-    get_sorted_directory_items, get_catalog_id_by_code,
+    get_sorted_directory_items, get_catalog_id_by_origin_code,
     get_catalog_row_by_code, delete_catalog_old_period_for_parent_code,
-    get_raw_data_items, update_catalog, insert_raw_catalog
+    get_raw_data_items, update_catalog, insert_raw_catalog, get_origin_id
 )
 
 
@@ -25,7 +25,9 @@ def _get_directory_id(item_name: str, db: dbTolls) -> int | None:
     return id_catalog_items
 
 
-def _make_data_from_raw_quotes_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row, item: DirectoryItem) -> tuple | None:
+def _make_data_from_raw_quotes_catalog(
+        db: dbTolls, origin_id: int, raw_catalog_row: sqlite3.Row, item: DirectoryItem, catalog_name: str
+) -> tuple | None:
     """ Из строки raw_catalog_row таблицы tblRawData с данными для Каталога.
         Выбирает данные, проверяет их, находит в Каталоге запись родителя.
         Возвращает кортеж с данными для вставки в Рабочую Таблицу Каталога.
@@ -34,16 +36,16 @@ def _make_data_from_raw_quotes_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row
     # в Каталоге ищем родителя
     raw_parent_code = raw_catalog_row["PARENT_PRESSMARK"]
     if raw_parent_code is None:
-        parent_id = get_catalog_id_by_code(db=db, code='0000')
+        parent_id = get_catalog_id_by_origin_code(db=db, origin=origin_id, code=catalog_name)
     else:
         parent_code = clear_code(raw_parent_code)
-        parent_id = get_catalog_id_by_code(db=db, code=parent_code)
+        parent_id = get_catalog_id_by_origin_code(db=db, origin=origin_id, code=parent_code)
     if parent_id and str(item.id):
         period = get_integer_value(raw_catalog_row["PERIOD"])
         code = clear_code(raw_catalog_row["PRESSMARK"])
         description = title_catalog_extraction(raw_catalog_row["TITLE"], item.re_prefix)
         # ID_parent, period, code, description, FK_tblCatalogs_tblDirectoryItems
-        data = (parent_id, period, code, description, item.id)
+        data = (origin_id, parent_id, period, code, description, item.id)
         # ic(data)
         return data
     else:
@@ -52,21 +54,23 @@ def _make_data_from_raw_quotes_catalog(db: dbTolls, raw_catalog_row: sqlite3.Row
     return None
 
 
-def _save_raw_item_catalog_quotes(item: DirectoryItem, db_filename: str) -> list[tuple[str, str]] | None:
-    """ Записывает все значения типа item_name в каталог из таблицы с исходными данными
-        в таблицу каталога и создает ссылки на родителей.
+def _save_raw_item_catalog_quotes(
+        item: DirectoryItem, db_filename: str, catalog_name: str) -> list[tuple[str, str]] | None:
+    """ Записывает все значения типа item_name в каталог из RAW таблицы в таблицу каталога.
+        Создает ссылки на родителей.
         Если запись с таким шифром уже есть в каталоге, то обновляет ее, иначе вставляет новую.
-        Период записываем только если он больше либо равен предыдущему.
-    """
+        Данные записывается только если период больше либо равен периоду текущей записи. """
     inserted_success, updated_success = [], []
     with (dbTolls(db_filename) as db):
         raw_item_data = get_raw_data_items(db, item)
         if not raw_item_data:
             return None
+        # получить идентификатор каталога
+        origin_id = get_origin_id(db, origin_name=catalog_name)
         for row in raw_item_data:
             raw_code = clear_code(row["PRESSMARK"])
             raw_period = get_integer_value(row["PERIOD"])
-            pure_data = _make_data_from_raw_quotes_catalog(db, row, item)
+            pure_data = _make_data_from_raw_quotes_catalog(db, origin_id, row, item, catalog_name)
             catalog_row = get_catalog_row_by_code(db, raw_code)
             if catalog_row:
                 row_period = catalog_row['period']
@@ -93,21 +97,20 @@ def _save_raw_item_catalog_quotes(item: DirectoryItem, db_filename: str) -> list
     return None
 
 
-def transfer_raw_quotes_to_catalog(operating_db: str):
-    """ Заполняет таблицу Каталога данными по расценкам из RAW таблицы.
+def transfer_raw_quotes_to_catalog(operating_db: str, catalog_name: str):
+    """ Заполняет Каталог данными из RAW таблицы каталога расценок.
         Каталог заполняется последовательно, с самого старшего элемента (Глава...).
-        В соответствии с иерархией Справочника 'quotes'.
-        Иерархия задается родителями в классе ItemCatalogDirectory.
-    """
+        В соответствии с иерархией Справочника 'quotes' в таблице tblItems.
+        Иерархия задается родителями в классе ItemCatalogDirectory. """
     ic()
     # получить отсортированные по иерархии Справочник 'quotes'
     dir_catalog = get_sorted_directory_items(operating_db, directory_name='quotes')
     ic(dir_catalog)
-    # заполнить и сохранить главы
-    chapters = _save_raw_item_catalog_quotes(dir_catalog[1], operating_db)
+    # заполнить и сохранить Главы чтоб было на кого ссылаться
+    chapters = _save_raw_item_catalog_quotes(dir_catalog[1], operating_db, catalog_name)
     # заполнить остальные сущности
     for item in dir_catalog[2:]:
-        _save_raw_item_catalog_quotes(item, operating_db)
+        _save_raw_item_catalog_quotes(item, operating_db, catalog_name)
     # удалить из Каталога главы период которых меньше чем текущий период
     for chapter in chapters:
         delete_catalog_old_period_for_parent_code(operating_db, parent_code=chapter[0])

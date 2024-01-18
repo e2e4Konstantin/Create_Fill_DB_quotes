@@ -62,18 +62,17 @@ def transfer_raw_data_to_quotes(db_filename: str):
         team, name = "units", "quote"
         quote_item_id = get_directory_id(db, directory_team=team, item_name=name)
         inserted_success, updated_success = [], []
-
         origin_id = get_origin_id(db, origin_name='ТСН')
-
         for row in raw_quotes:
+            data_line = _make_data_from_raw_quote(db, row, quote_item_id) + (origin_id, )
+
             raw_code = clear_code(row["PRESSMARK"])
             raw_period = get_integer_value(row["PERIOD"])
-            data_line = _make_data_from_raw_quote(db, row, quote_item_id)
             # Найти расценку с шифром raw_cod в таблице расценок tblProducts
             quote = get_product_row_by_code(db=db, product_code=raw_code)
             if quote:
                 if raw_period >= quote['period'] and quote_item_id == quote['FK_tblProducts_tblItems']:
-                    count_updated = update_product(db, data_line + (quote['ID_tblProduct'],))
+                    count_updated = update_product(db, data_line + (quote['ID_tblProduct'], ))
                     if count_updated:
                         updated_success.append((id, raw_code))
                 else:

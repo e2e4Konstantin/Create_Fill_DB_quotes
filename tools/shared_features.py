@@ -71,9 +71,9 @@ def get_catalog_id_by_period_code(db: dbTolls, period: int, code: str) -> int | 
     return None
 
 
-def get_catalog_id_by_code(db: dbTolls, code: str) -> int | None:
+def get_catalog_id_by_origin_code(db: dbTolls, origin: int, code: str) -> int | None:
     """ Ищет в Каталоге tblCatalogs запись по шифру. Возвращает id. """
-    row_id = db.get_row_id(sql_catalog_queries["select_catalog_id_code"], (code,))
+    row_id = db.get_row_id(sql_catalog_queries["select_catalog_id_code"], (origin, code))
     if row_id:
         return row_id
     output_message(f"В каталоге не найдена запись:", f"шифр: {code!r}")
@@ -264,6 +264,15 @@ def get_origin_id(db: dbTolls, origin_name: str) -> int | None:
                         f"не найдено записи с названием: {origin_name}.")
 
 
+def get_origin_row_by_id(db: dbTolls, origin_id: int) -> sqlite3.Row | None:
+    """ Получает Id элемента справочника происхождения с именем origin_name. """
+    if origin_id is None or origin_id == 0:
+        return None
+    origin_row = db.go_select(sql_origins["select_origin_id"], (origin_id,))
+    if origin_row:
+        return origin_row[0]
+    output_message_exit(f"в справочнике происхождения tblOrigins:",
+                        f"не найдено записи с id: {origin_id}.")
 
 
 if __name__ == '__main__':

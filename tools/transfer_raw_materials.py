@@ -8,7 +8,7 @@ from tools.code_tolls import clear_code, text_cleaning, get_integer_value
 
 from tools.shared_features import (
     get_parent_catalog_id, update_product, insert_product,
-    get_product_row_by_code, delete_last_period_product_row, get_directory_id
+    get_product_row_by_code, delete_last_period_product_row, get_directory_id, get_origin_id
 )
 
 
@@ -55,10 +55,11 @@ def transfer_raw_data_to_materials(db_filename: str):
         team, name = "units", "material"
         material_item_id = get_directory_id(db, directory_team=team, item_name=name)
         inserted_success, updated_success = [], []
+        origin_id = get_origin_id(db, origin_name='ТСН')
         for row in raw_materials:
+            data_line = _make_data_from_raw_material(db, row, material_item_id) + (origin_id,)
             raw_code = clear_code(row['CMT'])
             raw_period = get_integer_value(row['PERIOD'])
-            data_line = _make_data_from_raw_material(db, row, material_item_id)
             material = get_product_row_by_code(db=db, product_code=raw_code)
             if material:
                 if raw_period >= material['period'] and material_item_id == material['FK_tblProducts_tblItems']:

@@ -3,6 +3,8 @@ from icecream import ic
 from config import dbTolls, items_catalog
 from sql_queries import sql_items_creates, sql_items_queries, sql_origins
 
+from config import TON_CATALOG, PNWC_CATALOG, POM_CATALOG
+
 
 def fill_directory_catalog_items(db_file_name: str):
     """ Заполняет справочник элементов каталога. """
@@ -31,9 +33,9 @@ def fill_directory_origins(db_file_name: str):
     with dbTolls(db_file_name) as db:
         message_item = "вставка данных в справочник Происхождения продуктов."
         origin_items = (
-            ('ТСН', 'База сметных нормативов'),
-            ('НЦКР', 'Нормативы Цен на Комплексы Работ'),
-            ('ПСМ', 'Проектно Сметный Модуль')
+            (TON_CATALOG, 'Территориальные сметные нормативы'),
+            (PNWC_CATALOG, 'Нормативы Цен на Комплексы Работ'),
+            (POM_CATALOG, 'Проектно Сметные Модули')
         )
         for origin in origin_items:
             inserted_id = db.go_insert(sql_origins['insert_origin'], origin, message_item)
@@ -48,4 +50,3 @@ if __name__ == '__main__':
 
     fill_directory_catalog_items(db_name)
     fill_directory_origins(db_name)
-

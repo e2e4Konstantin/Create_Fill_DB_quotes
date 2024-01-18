@@ -9,7 +9,8 @@ from sql_queries import sql_raw_queries
 
 from tools.shared_features import (
     update_product, insert_product, get_parent_catalog_id,
-    get_product_row_by_code, delete_last_period_product_row, get_directory_id, get_catalog_id_by_period_code
+    get_product_row_by_code, delete_last_period_product_row, get_directory_id,
+    get_catalog_id_by_period_code, get_origin_id
 )
 
 
@@ -50,12 +51,13 @@ def transfer_raw_data_to_pom_resources(db_filename: str):
         если не найдена, то вставляется новая машина.
     """
     with dbTolls(db_filename) as db:
-        resource_pattern = "^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$"
+        resource_pattern = r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$"
         raw_resources = _get_raw_data_pom_resources(db, resource_pattern)
         if raw_resources is None:
             return None
         team = "units"
         inserted_success, updated_success = [], []
+        origin_id = get_origin_id(db, origin_name='НЦКР')
         for row in raw_resources:
             raw_code = clear_code(row['CODE'])
             match raw_code.split('.')[0]:
@@ -68,8 +70,8 @@ def transfer_raw_data_to_pom_resources(db_filename: str):
                 case _:
                     name = "material"
             equipment_item_id = get_directory_id(db, directory_team=team, item_name=name)
+            data_line = _make_data_from_raw_pom_resource(db, row, equipment_item_id) + (origin_id,)
             raw_period = get_integer_value(row['PERIOD'])
-            data_line = _make_data_from_raw_pom_resource(db, row, equipment_item_id)
             equipment = get_product_row_by_code(db=db, product_code=raw_code)
             if equipment:
                 if raw_period >= equipment['period'] and equipment_item_id == equipment['FK_tblProducts_tblItems']:

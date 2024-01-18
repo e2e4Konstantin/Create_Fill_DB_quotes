@@ -6,27 +6,27 @@ from icecream import ic
 # chain_items = ('Catalog', 'Chapter', 'Collection', 'Section', 'Subsection', 'Table',)
 # --- > ПСМ Каталог PROJECT OUTLAY MODULE
 
-# названия справочников
+# названия Справочников
 teams = (
-    'main', 'units', 'quotes', 'materials', 'machines', 'equipments', 'pom_materials', 'pom_machines', 'pom_equipments'
-    )
-
-
+    'main', 'units', 'quotes', 'materials', 'machines', 'equipments',
+    'pnwc_materials', 'pnwc_machines', 'pnwc_equipments'
+)
 
 src_catalog_items = [
     (teams[0], 'main', 'справочник', None, r"^\s*0000\s*$", None),
     # список хранимых объектов
-    (teams[1], 'Quote',      'Расценка',     None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
-    (teams[1], 'Material',   'Материал',     None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
-    (teams[1], 'Machine',    'Машина',       None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
-    (teams[1], 'Equipment',  'Оборудование', None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
+    (teams[1], 'Quote', 'Расценка', None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
+    (teams[1], 'Material', 'Материал', None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
+    (teams[1], 'Machine', 'Машина', None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
+    (teams[1], 'Equipment', 'Оборудование', None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
 
     # разделы для каталога Расценок
-    (teams[2], 'Chapter',    'глава',    None,      r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)\s"),
-    (teams[2], 'Collection', 'сборник',  'Chapter',      r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Сборник\s*((\d+)\.)\s"),
-    (teams[2], 'Section',    'отдел',    'Collection',   r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*Отдел\s*((\d+)\.)\s"),
-    (teams[2], 'Subsection', 'раздел',   'Section',      r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", r"^\s*Раздел\s*((\d+)\.)\s"),
-    (teams[2], 'Table',      'таблица',  'Subsection',   r"^\s*((\d+)\.(\d+)(-(\d+)){4})\s*$", r"^\s*Таблица\s*((\d+)\.(\d+)-(\d+)\.)\s"),
+    (teams[2], 'Chapter', 'глава', None, r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)\s"),
+    (teams[2], 'Collection', 'сборник', 'Chapter', r"^\s*((\d+)\.(\d+))\s*$", r"^\s*Сборник\s*((\d+)\.)\s"),
+    (teams[2], 'Section', 'отдел', 'Collection', r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*Отдел\s*((\d+)\.)\s"),
+    (teams[2], 'Subsection', 'раздел', 'Section', r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", r"^\s*Раздел\s*((\d+)\.)\s"),
+    (teams[2], 'Table', 'таблица', 'Subsection', r"^\s*((\d+)\.(\d+)(-(\d+)){4})\s*$",
+     r"^\s*Таблица\s*((\d+)\.(\d+)-(\d+)\.)\s"),
 
     # разделы для каталога Материалов глава 1
     (teams[3], 'chapter', 'глава', None, r"^\s*(\d+)\s*$", r"^\s*Глава\s*((\d+)\.)\s"),
@@ -45,30 +45,29 @@ src_catalog_items = [
     (teams[5], 'block_1', 'блок_1', 'section', r"^\s*((\d+)\.(\d+)-(\d+))\s*$", r"^\s*((\d+)\.)\s"),
 
     # разделы для каталога ПСМ Материалов. Глава 71
-    (teams[6], 'Chapter',    'глава',    None, r"^\s*(\d+)\s*$", None),
-    (teams[6], 'Collection', 'сборник',  'Chapter', r"^\s*((\d+)\.(\d+))\s*$", None),
+    (teams[6], 'Chapter', 'глава', None, r"^\s*(\d+)\s*$", None),
+    (teams[6], 'Collection', 'сборник', 'Chapter', r"^\s*((\d+)\.(\d+))\s*$", None),
 
     # разделы для каталога ПСМ Машин. Глава 72
-    (teams[7], 'Chapter',    'глава',    None, r"^\s*(\d+)\s*$", None),
-    (teams[7], 'Collection', 'сборник',  'Chapter', r"^\s*((\d+)\.(\d+))\s*$", None),
+    (teams[7], 'Chapter', 'глава', None, r"^\s*(\d+)\s*$", None),
+    (teams[7], 'Collection', 'сборник', 'Chapter', r"^\s*((\d+)\.(\d+))\s*$", None),
 
     # разделы для каталога ПСМ Оборудования. Глава 73
-    (teams[8], 'Chapter',    'глава',    None, r"^\s*(\d+)\s*$", None),
-    (teams[8], 'Collection', 'сборник',  'Chapter', r"^\s*((\d+)\.(\d+))\s*$", None),
-
+    (teams[8], 'Chapter', 'глава', None, r"^\s*(\d+)\s*$", None),
+    (teams[8], 'Collection', 'сборник', 'Chapter', r"^\s*((\d+)\.(\d+))\s*$", None),
 
 ]
 
 
 @dataclass
 class ItemCatalogDirectory:
-    team:       str | None
-    name:       str | None
-    title:      str | None
-    parent:     str | None
+    team: str | None
+    name: str | None
+    title: str | None
+    parent: str | None
     re_pattern: str | None
-    compiled:   re.Pattern | None
-    prefix:     str | None
+    compiled: re.Pattern | None
+    prefix: str | None
 
 
 items_catalog: list[str: ItemCatalogDirectory] = [
@@ -81,7 +80,6 @@ items_catalog: list[str: ItemCatalogDirectory] = [
     )
     for x in src_catalog_items
 ]
-
 
 Physical_Property = (
     ('Directory', 'Measures', 'Измерения'),

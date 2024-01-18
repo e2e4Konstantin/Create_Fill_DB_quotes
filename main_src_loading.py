@@ -4,13 +4,20 @@ import sqlite3
 from icecream import ic
 from collections import namedtuple
 
+from config import TON_CATALOG, PNWC_CATALOG
+
 from tools import (
-    create_tables_indexes, fill_directory_catalog_items, read_csv_to_raw_table,
-    insert_root_record_to_catalog, transfer_raw_data_to_quotes,
-    transfer_raw_data_to_catalog, transfer_raw_data_to_materials, transfer_raw_data_to_machines,
-    transfer_raw_data_to_equipments, transfer_raw_quotes_to_catalog, delete_raw_tables,
-    transfer_raw_pom_resources_to_catalog, transfer_raw_data_to_pom_resources, fill_directory_origins
+    create_tables_indexes, fill_directory_origins, fill_directory_catalog_items, insert_root_record_to_catalog,
+    read_csv_to_raw_table, transfer_raw_quotes_to_catalog
 )
+
+# from tools import (
+#
+#     transfer_raw_data_to_quotes,
+#     transfer_raw_data_to_catalog, transfer_raw_data_to_materials, transfer_raw_data_to_machines,
+#     transfer_raw_data_to_equipments, delete_raw_tables, transfer_raw_pom_resources_to_catalog,
+#     transfer_raw_data_to_pom_resources
+# )
 
 PlacePath = namedtuple("PlacePath", ["data_path", "db_path"])
 
@@ -25,16 +32,21 @@ places = {
     ),
 }
 db_name = "Normative.sqlite3"
-now = "home"  # office  # home
+now = "office"  # office  # home
 
 
-def _creat_new_db(db_name: str):
-    if os.path.isfile(db_name):
-        os.unlink(db_name)                  # удаляем файл БД если такой есть
-    create_tables_indexes(db_name)          # создать таблицы, индексы, триггеры
-    fill_directory_origins(db_name)         # заполнить справочник происхождения tblOrigins
-    fill_directory_catalog_items(db_name)   # заполнить данными справочник элементов каталога
-    insert_root_record_to_catalog(db_name)  # вставить корневую запись в каталог
+def _creat_new_db(db_file_name: str):
+    if os.path.isfile(db_file_name):
+        os.unlink(db_file_name)  # удаляем файл БД если такой есть
+    create_tables_indexes(db_file_name)  # создать таблицы, индексы, триггеры
+    fill_directory_origins(db_file_name)  # заполнить справочник происхождения tblOrigins
+    fill_directory_catalog_items(db_file_name)  # заполнить данными справочник элементов каталога
+    insert_root_record_to_catalog(
+        db_file_name, catalog=TON_CATALOG, code=TON_CATALOG, period=0, description='Справочник нормативов ТСН'
+    )  # вставить корневую запись для ТСН
+    insert_root_record_to_catalog(
+        db_file_name, catalog=PNWC_CATALOG, code=PNWC_CATALOG, period=0, description='Справочник ресурсов НЦКР'
+    )  # вставить корневую запись в каталог для НЦКР
 
 
 if __name__ == '__main__':
@@ -58,52 +70,52 @@ if __name__ == '__main__':
     # equipments_data = os.path.join(places[now].data_path, "13_глава_35_доп.csv")
 
     ic(version, db_name, period)
-    _creat_new_db(db_name)
+    # _creat_new_db(db_name)
 
     # --- > Расценки
     # --------------------- > Каталог
     ic(catalog_data)
     read_csv_to_raw_table(db_name, catalog_data, period)
-    transfer_raw_quotes_to_catalog(db_name)
-    # ---------------------- > Данные
-    ic(quotes_data)
-    read_csv_to_raw_table(db_name, quotes_data, period)
-    transfer_raw_data_to_quotes(db_name)
+    transfer_raw_quotes_to_catalog(db_name, catalog_name=TON_CATALOG)
+    # # ---------------------- > Данные
+    # ic(quotes_data)
+    # read_csv_to_raw_table(db_name, quotes_data, period)
+    # transfer_raw_data_to_quotes(db_name)
     #
-    # # --- > Материалы Глава 1
-    # # --------------------- > Каталог Материалы
+    # --- > Материалы Глава 1
+    # --------------------- > Каталог Материалы
     # ic(materials_data)
     # read_csv_to_raw_table(db_name, materials_data, period)
-    # transfer_raw_data_to_catalog(db_name, directory='materials', main_code='1')
-    # # ----------------------- > Данные Материалы
+    # transfer_raw_data_to_catalog(db_name, directory='materials', catalog_name='ТСН', main_code='1')
+    # ----------------------- > Данные Материалы
     # transfer_raw_data_to_materials(db_name)
     #
-    # # --- > Машины Глава 2
-    # # ---------------------- > Каталог Машины
+    # --- > Машины Глава 2
+    # ---------------------- > Каталог Машины
     # ic(machines_data)
     # read_csv_to_raw_table(db_name, machines_data, period)
     # transfer_raw_data_to_catalog(db_name, directory='machines', main_code='2')
     # # ----------------------- > Данные Машины
     # transfer_raw_data_to_machines(db_name)
     # #
-    # # --- > Оборудование Глава 13
-    # # ---------------------- > Каталог
+    # --- > Оборудование Глава 13
+    # ---------------------- > Каталог
     # ic(equipments_data)
     # read_csv_to_raw_table(db_name, equipments_data, period)
     # transfer_raw_data_to_catalog(db_name, directory='equipments', main_code='13')
     # # ----------------------- > Данные Оборудование
     # transfer_raw_data_to_equipments(db_name)
     #
-    # # --- > Ресурсы ПСМ
-    # # --------------------- > Ресурсы ПСМ
+    # --- > Ресурсы НЦКР
+    # --------------------- > Каталог НЦКР
     # ic(pom_catalog)
     # period = 0
-    # read_csv_to_raw_table(db_name, pom_catalog, period)
-    # transfer_raw_pom_resources_to_catalog(db_name)
-    # # ----------------------- > Данные Ресурсы ПСМ
+    # # read_csv_to_raw_table(db_name, pom_catalog, period)
+    # # transfer_raw_pom_resources_to_catalog(db_name)
+    # # ----------------------- > Данные Ресурсы НЦКР
     # read_csv_to_raw_table(db_name, pom_resource, period, new_column_name=['N', 'NPP', 'Шифр новый действующий', 'Уточненное наименование по данным мониторинга'])
     # transfer_raw_data_to_pom_resources(db_name)
-    #
+
     # # delete_raw_tables(db_name)
     #
     #

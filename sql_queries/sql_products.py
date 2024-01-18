@@ -66,16 +66,16 @@ sql_products_queries = {
     "insert_product": """
         INSERT INTO tblProducts (
             FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems,
-            period, code, description, measurer, full_code
+            period, code, description, measurer, full_code, FK_tblProducts_tblOrigins
         ) 
-        VALUES ( ?, ?, ?, ?, ?, ?, ?);
+        VALUES ( ?, ?, ?, ?, ?, ?, ?, ?);
     """,
 
     "update_product_id": """
         UPDATE tblProducts 
         SET 
             FK_tblProducts_tblCatalogs = ?, FK_tblProducts_tblItems = ?,
-            period = ?, code = ?, description = ?, measurer = ?, full_code = ?
+            period = ?, code = ?, description = ?, measurer = ?, full_code = ?, FK_tblProducts_tblOrigins = ?
         WHERE ID_tblProduct = ?;
     """,
 }
@@ -96,8 +96,7 @@ sql_products_creates = {
             (
                 ID_tblProduct               INTEGER PRIMARY KEY NOT NULL,
                 FK_tblProducts_tblCatalogs  INTEGER NOT NULL, -- родитель каталога
-                FK_tblProducts_tblItems     INTEGER NOT NULL, -- тип элемента из справочника 'units'
-                                                              -- материал/машина/расценка/оборудование
+                FK_tblProducts_tblItems     INTEGER NOT NULL, -- тип материал/машина/расценка/оборудование
                 FK_tblProducts_tblOrigins   INTEGER NOT NULL, -- происхождение ТСН/ПСМ...                                                                 
                 -- 
                 period      INTEGER NOT NULL,   -- период
@@ -111,12 +110,12 @@ sql_products_creates = {
                 FOREIGN KEY (FK_tblProducts_tblCatalogs) REFERENCES tblCatalogs (ID_tblCatalog),
                 FOREIGN KEY (FK_tblProducts_tblItems) REFERENCES tblItems (ID_tblItem),
                 FOREIGN KEY (FK_tblProducts_tblOrigins) REFERENCES tblOrigins (ID_tblOrigin),
-                UNIQUE (code)
+                UNIQUE (FK_tblProducts_tblOrigins, code)
             );
         """,
 
     "create_index_products": """
-        CREATE UNIQUE INDEX IF NOT EXISTS idxProductsCode ON tblProducts (code, period);
+        CREATE UNIQUE INDEX IF NOT EXISTS idxProductsCode ON tblProducts (code, period, FK_tblProducts_tblOrigins);
     """,
 
     # --- > История базовой таблицы -----------------------------------------------------
@@ -126,6 +125,7 @@ sql_products_creates = {
             ID_tblProduct INTEGER,
             FK_tblProducts_tblCatalogs INTEGER, 
             FK_tblProducts_tblItems INTEGER,
+            FK_tblProducts_tblOrigins INTEGER,
             period        INTEGER,
             code	 	  TEXT,
             description	  TEXT,
@@ -148,12 +148,14 @@ sql_products_creates = {
         AFTER INSERT ON tblProducts
         BEGIN
             INSERT INTO _tblHistoryProducts (
-                _rowid, ID_tblProduct, FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, 
+                _rowid, ID_tblProduct, 
+                FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins, 
                 period, code, description, measurer, full_code, last_update,
                 _version, _updated, _mask 
             )
             VALUES (
-                new.rowid, new.ID_tblProduct, new.FK_tblProducts_tblCatalogs, new.FK_tblProducts_tblItems, 
+                new.rowid, new.ID_tblProduct, 
+                new.FK_tblProducts_tblCatalogs, new.FK_tblProducts_tblItems, new.FK_tblProducts_tblOrigins, 
                 new.period, new.code, new.description, new.measurer, new.full_code, new.last_update, 
                 1, unixepoch('now'), 0
             );
@@ -165,12 +167,14 @@ sql_products_creates = {
         AFTER DELETE ON tblProducts
         BEGIN
             INSERT INTO _tblHistoryProducts (
-                _rowid, ID_tblProduct, FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, 
+                _rowid, ID_tblProduct, 
+                FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins,
                 period, code, description, measurer, full_code, last_update,
                 _version, _updated, _mask
             )
             VALUES (
-                old.rowid, old.ID_tblProduct, old.FK_tblProducts_tblCatalogs, old.FK_tblProducts_tblItems, 
+                old.rowid, old.ID_tblProduct, 
+                old.FK_tblProducts_tblCatalogs, old.FK_tblProducts_tblItems, old.FK_tblProducts_tblOrigins, 
                 old.period, old.code, old.description, old.measurer, old.full_code, old.last_update, 
                 (SELECT COALESCE(MAX(_version), 0) FROM _tblHistoryProducts WHERE _rowid = old.rowid) + 1,
                 unixepoch('now'), -1
@@ -184,7 +188,8 @@ sql_products_creates = {
         FOR EACH ROW
         BEGIN
             INSERT INTO _tblHistoryProducts (
-                _rowid, ID_tblProduct, FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, 
+                _rowid, ID_tblProduct, 
+                FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins, 
                 period, code, description, measurer, full_code, last_update,
                 _version, _updated, _mask
             )
@@ -193,6 +198,7 @@ sql_products_creates = {
                 CASE WHEN old.ID_tblProduct != new.ID_tblProduct THEN new.ID_tblProduct ELSE null END,
                 CASE WHEN old.FK_tblProducts_tblCatalogs != new.FK_tblProducts_tblCatalogs THEN new.FK_tblProducts_tblCatalogs ELSE null END,
                 CASE WHEN old.FK_tblProducts_tblItems != new.FK_tblProducts_tblItems THEN new.FK_tblProducts_tblItems ELSE null END,
+                CASE WHEN old.FK_tblProducts_tblOrigins != new.FK_tblProducts_tblOrigins THEN new.FK_tblProducts_tblOrigins ELSE null END,
                 CASE WHEN old.period != new.period THEN new.period ELSE null END,
                 CASE WHEN old.code != new.code THEN new.code ELSE null END,
                 CASE WHEN old.description != new.description THEN new.description ELSE null END,
@@ -206,16 +212,18 @@ sql_products_creates = {
                 (CASE WHEN old.ID_tblProduct != new.ID_tblProduct then 1 else 0 END) +
                 (CASE WHEN old.FK_tblProducts_tblCatalogs != new.FK_tblProducts_tblCatalogs then 2 else 0 END) +
                 (CASE WHEN old.FK_tblProducts_tblItems != new.FK_tblProducts_tblItems then 4 else 0 END) +
-                (CASE WHEN old.period != new.period then 8 else 0 END) +
-                (CASE WHEN old.code != new.code then 16 else 0 END) +
-                (CASE WHEN old.description != new.description then 32 else 0 END) +
-                (CASE WHEN old.measurer != new.measurer then 64 else 0 END) +
-                (CASE WHEN old.full_code != new.full_code then 128 else 0 END) +
-                (CASE WHEN old.last_update != new.last_update then 256 else 0 END)
+                (CASE WHEN old.FK_tblProducts_tblOrigins != new.FK_tblProducts_tblItems then 8 else 0 END) +
+                (CASE WHEN old.period != new.period then 16 else 0 END) +
+                (CASE WHEN old.code != new.code then 32 else 0 END) +
+                (CASE WHEN old.description != new.description then 64 else 0 END) +
+                (CASE WHEN old.measurer != new.measurer then 128 else 0 END) +
+                (CASE WHEN old.full_code != new.full_code then 256 else 0 END) +
+                (CASE WHEN old.last_update != new.last_update then 512 else 0 END)
             WHERE 
                 old.ID_tblProduct != new.ID_tblProduct OR
                 old.FK_tblProducts_tblCatalogs != new.FK_tblProducts_tblCatalogs OR
                 old.FK_tblProducts_tblItems != new.FK_tblProducts_tblItems OR
+                old.FK_tblProducts_tblOrigins != new.FK_tblProducts_tblOrigins OR
                 old.period != new.period OR
                 old.code != new.code OR
                 old.description != new.description OR
@@ -228,13 +236,15 @@ sql_products_creates = {
     "create_view_products": """
         CREATE VIEW viewProducts AS
             SELECT 
-                i.title AS type,
+                o.name AS origin,
+                i.title AS product_type,
                 c.code AS parent_code,
                 p.code AS code,
                 p.description AS title,
                 p.measurer AS measurer
             FROM tblProducts p 
             LEFT JOIN tblCatalogs AS c ON c.ID_tblCatalog = p.FK_tblProducts_tblCatalogs
+            LEFT JOIN tblOrigins AS o ON o.ID_tblOrigin = p.FK_tblProducts_tblOrigins
             LEFT JOIN tblItems AS i ON i.ID_tblItem = p.FK_tblProducts_tblItems;
             --ORDER BY p.code;
     """,

@@ -9,7 +9,7 @@ from sql_queries import sql_raw_queries
 
 from tools.shared_features import (
     update_product, insert_product, get_parent_catalog_id,
-    get_product_row_by_code, delete_last_period_product_row, get_directory_id
+    get_product_row_by_code, delete_last_period_product_row, get_directory_id, get_origin_id
 )
 
 
@@ -54,10 +54,11 @@ def transfer_raw_data_to_equipments(db_filename: str):
         team, name = "units", "equipment"
         equipment_item_id = get_directory_id(db, directory_team=team, item_name=name)
         inserted_success, updated_success = [], []
+        origin_id = get_origin_id(db, origin_name='ТСН')
         for row in raw_equipments:
+            data_line = _make_data_from_raw_equipment(db, row, equipment_item_id) + (origin_id,)
             raw_code = clear_code(row['CMT'])
             raw_period = get_integer_value(row['PERIOD'])
-            data_line = _make_data_from_raw_equipment(db, row, equipment_item_id)
             equipment = get_product_row_by_code(db=db, product_code=raw_code)
             if equipment:
                 if raw_period >= equipment['period'] and equipment_item_id == equipment['FK_tblProducts_tblItems']:
