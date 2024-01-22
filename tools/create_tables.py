@@ -30,7 +30,6 @@ def _create_directory_environment(db: dbTolls):
     db.go_execute(sql_origins["create_index_origins"])
 
 
-
 def _create_catalog_environment(db: dbTolls):
     """ Создать инфраструктуру для Каталога. Таблицы, индексы и триггеры. """
     db.go_execute(sql_catalog_creates["delete_table_catalog"])
@@ -152,6 +151,12 @@ def create_tables_indexes(db_file_name: str):
 def delete_raw_tables(db_file_name: str):
     with dbTolls(db_file_name) as db:
         db.go_execute(sql_raw_queries["delete_table_raw_data"])
+
+
+def create_index_resources_raw_data(db_file_name: str):
+    """ Создать индекс tblRawData когда туда прочитаны Ресурсы (1, 2, 13). """
+    with dbTolls(db_file_name) as db:
+        db.go_execute(sql_raw_queries["create_index_raw_data"])
 
 
 if __name__ == '__main__':

@@ -15,7 +15,7 @@ sql_catalog_queries = {
         WHERE 
             tblCatalogs.ID_tblCatalog IN (
                 WITH CatalogLevel AS (
-                    SELECT ID_tblCatalog, ID_parent from tblCatalogs WHERE code = ?
+                    SELECT ID_tblCatalog, ID_parent from tblCatalogs WHERE FK_tblCatalogs_tblOrigins = ? AND code = ?
                     UNION ALL 
                         SELECT c.ID_tblCatalog, c.ID_parent from tblCatalogs AS c
                         JOIN CatalogLevel ON c.ID_parent = CatalogLevel.ID_tblCatalog
@@ -68,7 +68,7 @@ sql_catalog_queries = {
         FROM tblCatalogs m 
         WHERE m.ID_tblCatalog IN (
             WITH CatalogLevel AS (
-                SELECT ID_tblCatalog, ID_parent from tblCatalogs WHERE code = ?
+                SELECT ID_tblCatalog, ID_parent from tblCatalogs WHERE FK_tblCatalogs_tblOrigins = ? AND code = ?
                 UNION ALL 
                 SELECT c.ID_tblCatalog, c.ID_parent from tblCatalogs AS c
                 JOIN CatalogLevel ON c.ID_parent = CatalogLevel.ID_tblCatalog
@@ -82,7 +82,7 @@ sql_catalog_queries = {
     FROM tblCatalogs m 
     WHERE m.ID_tblCatalog IN (
             WITH CatalogLevel AS (
-                SELECT ID_tblCatalog, ID_parent from tblCatalogs WHERE code = ?
+                SELECT ID_tblCatalog, ID_parent from tblCatalogs WHERE  FK_tblCatalogs_tblOrigins = ? AND code = ?
                 UNION ALL 
                 SELECT c.ID_tblCatalog, c.ID_parent from tblCatalogs AS c
                 JOIN CatalogLevel ON c.ID_parent = CatalogLevel.ID_tblCatalog
@@ -97,15 +97,18 @@ sql_catalog_queries = {
 
     # -- >  INSERT ----------------------------------------------------------------------
     "insert_catalog": """
-        INSERT INTO tblCatalogs (FK_tblCatalogs_tblOrigins, ID_parent, period, code, description, FK_tblCatalogs_tblItems) 
+        INSERT INTO tblCatalogs (
+            FK_tblCatalogs_tblOrigins, ID_parent, period, code, description, FK_tblCatalogs_tblItems
+        ) 
         VALUES (?, ?, ?, ?, ?, ?);
     """,
 
     # -- >  UPDATE ----------------------------------------------------------------------
-    "update_catalog_id_period": """
+    "update_catalog_id": """
         UPDATE tblCatalogs 
-        SET 
-            (FK_tblCatalogs_tblOrigins, ID_parent, period, code, description, FK_tblCatalogs_tblItems) = (?, ?, ?, ?, ?, ?) 
+        SET (
+            FK_tblCatalogs_tblOrigins, ID_parent, period, code, description, FK_tblCatalogs_tblItems
+        ) = (?, ?, ?, ?, ?, ?) 
         WHERE ID_tblCatalog = ?;
     """,
 

@@ -15,22 +15,23 @@ sql_products_queries = {
             SELECT ID_tblProduct 
             FROM tblProducts AS p
             WHERE 
+                p.FK_tblProducts_tblOrigins = ? AND 
                 p.FK_tblProducts_tblItems = (SELECT ID_tblItem FROM tblItems AS i WHERE i.team = ? AND i.name = ?) AND
                 (p.period > 0 AND p.period < ?)
         );
     """,
 
-    "select_product_id_code": """
-        SELECT ID_tblProduct FROM tblProducts WHERE code = ?;
+    "select_product_id_origin_code": """
+        SELECT ID_tblProduct FROM tblProducts WHERE FK_tblProducts_tblOrigins = ? AND code = ?;
     """,
 
-    "select_product_id_period_code": """
-        SELECT ID_tblProduct FROM tblProducts 
-        WHERE period = ? AND code = ?;
-    """,
+    # "select_product_id_period_code": """
+    #     SELECT ID_tblProduct FROM tblProducts
+    #     WHERE period = ? AND code = ?;
+    # """,
 
-    "select_products_code": """
-        SELECT * FROM tblProducts WHERE code = ?;
+    "select_products_origin_code": """
+        SELECT * FROM tblProducts WHERE FK_tblProducts_tblOrigins = ? AND code = ?;
     """,
 
     "select_products_id": """
@@ -38,24 +39,25 @@ sql_products_queries = {
     """,
 
     "select_products_max_period": """
-        SELECT MAX(period) AS max_period FROM tblProducts;         
+        SELECT MAX(period) AS max_period FROM tblProducts WHERE FK_tblProducts_tblOrigins = ?;         
     """,
 
-    "select_products_max_period_team_name": """
+    "select_products_max_period_origin_team_name": """
         SELECT MAX(period) AS max_period 
         FROM tblProducts AS p
-        WHERE p.FK_tblProducts_tblItems = (
-            SELECT ID_tblItem FROM tblItems AS i WHERE i.team = ? AND i.name = ?
-            );
+        WHERE
+            FK_tblProducts_tblOrigins = ? AND 
+            p.FK_tblProducts_tblItems = (SELECT ID_tblItem FROM tblItems AS i WHERE i.team = ? AND i.name = ?);
     """,
 
     "select_products_count_period_less": """
-        SELECT COUNT(*) FROM tblProducts WHERE period > 0 AND period < ?;
+        SELECT COUNT(*) FROM tblProducts WHERE WHERE FK_tblProducts_tblOrigins = ? AND (period > 0 AND period < ?);
     """,
 
-    "select_products_count_period_team_name": """
+    "select_products_count_origin_team_name_period": """
         SELECT COUNT(*) AS number FROM tblProducts AS p 
         WHERE  
+            FK_tblProducts_tblOrigins = ? AND 
             FK_tblProducts_tblItems = (SELECT ID_tblItem FROM tblItems AS i WHERE i.team = ? AND i.name = ?) AND
             (p.period > 0 AND p.period < ?);
     """,
@@ -65,8 +67,8 @@ sql_products_queries = {
     # --->
     "insert_product": """
         INSERT INTO tblProducts (
-            FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems,
-            period, code, description, measurer, full_code, FK_tblProducts_tblOrigins
+            FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins,
+            period, code, description, measurer, full_code
         ) 
         VALUES ( ?, ?, ?, ?, ?, ?, ?, ?);
     """,
@@ -74,8 +76,8 @@ sql_products_queries = {
     "update_product_id": """
         UPDATE tblProducts 
         SET 
-            FK_tblProducts_tblCatalogs = ?, FK_tblProducts_tblItems = ?,
-            period = ?, code = ?, description = ?, measurer = ?, full_code = ?, FK_tblProducts_tblOrigins = ?
+            FK_tblProducts_tblCatalogs = ?, FK_tblProducts_tblItems = ?, FK_tblProducts_tblOrigins = ?,
+            period = ?, code = ?, description = ?, measurer = ?, full_code = ?
         WHERE ID_tblProduct = ?;
     """,
 }
