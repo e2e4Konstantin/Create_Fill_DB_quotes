@@ -320,7 +320,7 @@ def transfer_raw_items(
     ulog = f"Обновлено {len(updated_success)} {item_name}."
     none_log = f"Непонятных записей: {row_count - (len(updated_success) + len(inserted_success))}."
     ic(alog, ilog, ulog, none_log)
-    # удалить из item записи период которых меньше чем максимальный период
+    # удалить item записи период которых меньше чем максимальный период
     delete_last_period_product_row(db, origin_id=catalog_id, team=directory_name, name=item_name)
 
 

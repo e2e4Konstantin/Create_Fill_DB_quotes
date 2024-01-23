@@ -10,13 +10,9 @@ from tools import (
     create_tables_indexes, fill_directory_origins, fill_directory_catalog_items, insert_root_record_to_catalog,
     read_csv_to_raw_table, transfer_raw_quotes_to_catalog, transfer_raw_data_to_quotes,
     transfer_raw_data_to_catalog, transfer_raw_data_to_materials, create_index_resources_raw_data,
-    transfer_raw_data_to_machines, transfer_raw_data_to_equipments
+    transfer_raw_data_to_machines, transfer_raw_data_to_equipments, transfer_raw_pnwc_resources_to_catalog,
+    transfer_raw_data_to_pnwc_resources, delete_raw_tables
 )
-
-# from tools import (
-#     delete_raw_tables, transfer_raw_pom_resources_to_catalog,
-#     transfer_raw_data_to_pom_resources
-# )
 
 PlacePath = namedtuple("PlacePath", ["data_path", "db_path"])
 
@@ -31,7 +27,7 @@ places = {
     ),
 }
 db_name = "Normative.sqlite3"
-now = "home"  # office  # home
+now = "office"  # office  # home
 
 
 def _creat_new_db(db_file_name: str):
@@ -52,21 +48,21 @@ if __name__ == '__main__':
     version = f"SQLite: {sqlite3.sqlite_version}\nPython: {sys.version}"
     db_name = os.path.join(places[now].db_path, db_name)
 
-    period = 67
-    catalog_data = os.path.join(places[now].data_path, "TABLES_67.csv")
-    quotes_data = os.path.join(places[now].data_path, "WORK_PROCESS_67.csv")
-    materials_data = os.path.join(places[now].data_path, "1_глава_67_доп.csv")
-    machines_data = os.path.join(places[now].data_path, "2_глава_67_доп.csv")
-    equipments_data = os.path.join(places[now].data_path, "13_глава_34_доп.csv")
-    # pom_catalog = os.path.join(places[now].data_path, "Каталог_НЦКР_Временный_каталог_Март_2022_Ресурсы_ТСН.csv")
-    # pom_resource = os.path.join(places[now].data_path, "Данные_НЦКР_Временный_каталог_НЦКР_2023_4_кв.csv")
-    #
-    # period = 68
-    # catalog_data = os.path.join(places[now].data_path, "TABLES_68.csv")
-    # quotes_data = os.path.join(places[now].data_path, "WORK_PROCESS_68.csv")
-    # materials_data = os.path.join(places[now].data_path, "1_глава_68_доп.csv")
-    # machines_data = os.path.join(places[now].data_path, "2_глава_68_доп.csv")
-    # equipments_data = os.path.join(places[now].data_path, "13_глава_35_доп.csv")
+    # period = 67
+    # catalog_data = os.path.join(places[now].data_path, "TABLES_67.csv")
+    # quotes_data = os.path.join(places[now].data_path, "WORK_PROCESS_67.csv")
+    # materials_data = os.path.join(places[now].data_path, "1_глава_67_доп.csv")
+    # machines_data = os.path.join(places[now].data_path, "2_глава_67_доп.csv")
+    # equipments_data = os.path.join(places[now].data_path, "13_глава_34_доп.csv")
+    # pnwc_catalog = os.path.join(places[now].data_path, "Каталог_НЦКР_Временный_каталог_Март_2022_Ресурсы_ТСН.csv")
+    # pnwc_resource = os.path.join(places[now].data_path, "Данные_НЦКР_Временный_каталог_НЦКР_2023_4_кв.csv")
+
+    period = 68
+    catalog_data = os.path.join(places[now].data_path, "TABLES_68.csv")
+    quotes_data = os.path.join(places[now].data_path, "WORK_PROCESS_68.csv")
+    materials_data = os.path.join(places[now].data_path, "1_глава_68_доп.csv")
+    machines_data = os.path.join(places[now].data_path, "2_глава_68_доп.csv")
+    equipments_data = os.path.join(places[now].data_path, "13_глава_35_доп.csv")
 
     ic(version, db_name, period)
     _creat_new_db(db_name)
@@ -106,16 +102,16 @@ if __name__ == '__main__':
     # ----------------------- > Данные Оборудование
     transfer_raw_data_to_equipments(db_name, catalog_name=TON_CATALOG)
 
-    # --- > Ресурсы НЦКР
-    # --------------------- > Каталог НЦКР
-    # ic(pom_catalog)
+    # # --- > Ресурсы НЦКР
+    # # --------------------- > Каталог НЦКР
+    # ic(pnwc_catalog)
     # period = 0
-    # # read_csv_to_raw_table(db_name, pom_catalog, period)
-    # # transfer_raw_pom_resources_to_catalog(db_name)
+    # read_csv_to_raw_table(db_name, pnwc_catalog, period)
+    # transfer_raw_pnwc_resources_to_catalog(db_name, catalog_name=PNWC_CATALOG)
     # # ----------------------- > Данные Ресурсы НЦКР
-    # read_csv_to_raw_table(db_name, pom_resource, period, new_column_name=['N', 'NPP', 'Шифр новый действующий', 'Уточненное наименование по данным мониторинга'])
-    # transfer_raw_data_to_pom_resources(db_name)
-
-    # # delete_raw_tables(db_name)
+    # read_csv_to_raw_table(db_name, pnwc_resource, period, new_column_name=['N', 'NPP', 'Шифр новый действующий', 'Уточненное наименование по данным мониторинга'])
+    # transfer_raw_data_to_pnwc_resources(db_name, catalog_name=PNWC_CATALOG)
     #
+    delete_raw_tables(db_name)
+
     #

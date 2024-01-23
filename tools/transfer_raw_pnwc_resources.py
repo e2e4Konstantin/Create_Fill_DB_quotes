@@ -1,7 +1,7 @@
 import sqlite3
 from icecream import ic
 
-from config import dbTolls
+from config import dbTolls, PNWC_CATALOG
 
 from files_features import output_message_exit
 from tools.code_tolls import clear_code, text_cleaning, get_integer_value
@@ -14,28 +14,29 @@ from tools.shared_features import (
 )
 
 
-def _make_data_from_raw_pom_resource(
-        db: dbTolls, raw_pom_resource: sqlite3.Row, pom_resource_item_id: int
+def _make_data_from_raw_pnwc_resource(
+        db: dbTolls, origin_id: int, raw_resource: sqlite3.Row, item_id: int
 ) -> tuple | None:
     """ Получает строку из таблицы tblRawData с ресурсами ПСМ и id типа записи для оборудования.
         Ищет в Каталоге родительскую запись по шифру и периоду.
         Выбирает и готовит нужные данные.
-        Возвращает кортеж с данными для вставки в таблицу tblProducts.
-    """
-    raw_period = get_integer_value(raw_pom_resource["PERIOD"])
-    raw_code = clear_code(raw_pom_resource['CODE'])
+        Возвращает кортеж с данными для вставки в таблицу tblProducts. """
+    raw_code = clear_code(raw_resource['CODE'])
     parent_code: str = raw_code.split('-')[0]
-    holder_id = get_catalog_id_by_period_code(db=db, period=raw_period, code=parent_code)
+    # получить указатель на родительскую запись каталога
+    holder_id = get_catalog_id_by_origin_code(db, origin=origin_id, code=parent_code)
     if holder_id is None:
         return None
-    description = text_cleaning(raw_pom_resource['TITLE']).capitalize()
-    measurer = text_cleaning(raw_pom_resource['MEASURE']).strip()
-    # FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, period, code, description, measurer, full_code
-    data = (holder_id, pom_resource_item_id, raw_period, raw_code, description, measurer, None)
+    raw_period = get_integer_value(raw_resource["PERIOD"])
+    description = text_cleaning(raw_resource['TITLE']).capitalize()
+    measurer = text_cleaning(raw_resource['MEASURE']).strip()
+    # FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins,
+    # period, code, description, measurer, full_code
+    data = (holder_id, item_id, origin_id, raw_period, raw_code, description, measurer, None)
     return data
 
 
-def _get_raw_data_pom_resources(db: dbTolls, pattern: str) -> list[sqlite3.Row] | None:
+def _get_raw_data_pnwc_resources(db: dbTolls, pattern: str) -> list[sqlite3.Row] | None:
     """ Выбрать все ... из сырой таблицы без элементов каталога. """
     raw_pom_resources = db.go_select(sql_raw_queries["select_rwd_resources"], (pattern, ))
     if not raw_pom_resources:
@@ -45,45 +46,48 @@ def _get_raw_data_pom_resources(db: dbTolls, pattern: str) -> list[sqlite3.Row] 
     return raw_pom_resources
 
 
-def transfer_raw_data_to_pom_resources(db_filename: str):
-    """ Записывает ... из сырой таблицы tblRawData в рабочую таблицу tblProducts.
-        В рабочей таблице tblProducts ищется ... с таким же шифром, если такая есть то машина обновляется,
+def transfer_raw_data_to_pnwc_resources(db_filename: str, catalog_name: str):
+    """ Записывает ресурсы из сырой таблицы tblRawData в рабочую таблицу tblProducts.
+        В рабочей таблице tblProducts ищется ресурс с таким же шифром, если такая есть то машина обновляется,
         если не найдена, то вставляется новая машина.
     """
     with dbTolls(db_filename) as db:
         resource_pattern = r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$"
-        raw_resources = _get_raw_data_pom_resources(db, resource_pattern)
+        raw_resources = _get_raw_data_pnwc_resources(db, resource_pattern)
         if raw_resources is None:
             return None
-        team = "units"
-        inserted_success, updated_success = [], []
-        origin_id = get_origin_id(db, origin_name='НЦКР')
+        directory = "units"
+        ic()
+        catalog_id = get_origin_id(db, origin_name=catalog_name)
+
         for row in raw_resources:
             raw_code = clear_code(row['CODE'])
             match raw_code.split('.')[0]:
                 case '71':
-                    name = "material"
+                    item_name = "material"
                 case '72':
-                    name = "machine"
+                    item_name = "machine"
                 case '73':
-                    name = "equipment"
+                    item_name = "equipment"
                 case _:
-                    name = "material"
-            equipment_item_id = get_directory_id(db, directory_team=team, item_name=name)
-            data_line = _make_data_from_raw_pom_resource(db, row, equipment_item_id) + (origin_id,)
-            raw_period = get_integer_value(row['PERIOD'])
-            equipment = get_product_row_by_code(db=db, product_code=raw_code)
-            if equipment:
-                if raw_period >= equipment['period'] and equipment_item_id == equipment['FK_tblProducts_tblItems']:
-                    count_updated = update_product(db, data_line + (equipment['ID_tblProduct'],))
+                    item_name = "material"
+            # ic(catalog_name, item_name, raw_code)
+            item_id = get_directory_id(db, directory_team=directory, item_name=item_name)
+            inserted_success, updated_success = [], []
+            data = _make_data_from_raw_pnwc_resource(db, catalog_id, row, item_id)
+            raw_code, raw_period = data[4], data[3]
+            product = get_product_by_code(db=db, origin_id=catalog_id, product_code=raw_code)
+            if product:
+                if raw_period >= product['period'] and item_id == product['FK_tblProducts_tblItems']:
+                    count_updated = update_product(db, data + (product['ID_tblProduct'],))
                     if count_updated:
                         updated_success.append((id, raw_code))
                 else:
                     output_message_exit(
-                        f"Ошибка обновления Оборудования: {raw_code!r} или item_type не совпадает {equipment_item_id}",
-                        f"период Расценки {equipment['period']} старше загружаемого {raw_period}")
+                        f"Ошибка обновления Ресурса: {raw_code!r} или item_type не совпадает {item_id=!r}",
+                        f"период Продукта {product['period']} старше загружаемого {raw_period}")
             else:
-                inserted_id = insert_product(db, data_line)
+                inserted_id = insert_product(db, data)
                 if inserted_id:
                     inserted_success.append((id, raw_code))
         row_count = len(raw_resources)
@@ -93,8 +97,8 @@ def transfer_raw_data_to_pom_resources(db_filename: str):
         none_log = f"Непонятных записей: {row_count - (len(updated_success) + len(inserted_success))}."
         ic(alog, ilog, ulog, none_log)
         db.go_execute(sql_raw_queries["delete_index_raw_data"])
-    # удалить из Машин записи период которых меньше чем максимальный период
-    delete_last_period_product_row(db_filename, team=team, name=name)
+        # удалить item записи период которых меньше чем максимальный период
+        delete_last_period_product_row(db, origin_id=catalog_id, team=directory, name=item_name)
 
 
 if __name__ == '__main__':
@@ -108,10 +112,8 @@ if __name__ == '__main__':
     pom_resource = os.path.join(data_path, "Данные_НЦКР_Временный_каталог_НЦКР_2023_4_кв.csv")
     ic(db_name)
 
-
-
     read_csv_to_raw_table(
         db_name, pom_resource, set_period=0,
         new_column_name=['N', 'NPP', 'Шифр новый действующий', 'Уточненное наименование по данным мониторинга']
     )
-    transfer_raw_data_to_pom_resources(db_name)
+    transfer_raw_data_to_pnwc_resources(db_name, catalog_name=PNWC_CATALOG)
