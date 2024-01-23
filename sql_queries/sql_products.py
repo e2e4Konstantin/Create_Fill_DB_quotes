@@ -25,10 +25,9 @@ sql_products_queries = {
         SELECT ID_tblProduct FROM tblProducts WHERE FK_tblProducts_tblOrigins = ? AND code = ?;
     """,
 
-    # "select_product_id_period_code": """
-    #     SELECT ID_tblProduct FROM tblProducts
-    #     WHERE period = ? AND code = ?;
-    # """,
+    "select_product_all_origin_code": """
+        SELECT * FROM tblProducts WHERE code = ?;
+    """,
 
     "select_products_origin_code": """
         SELECT * FROM tblProducts WHERE FK_tblProducts_tblOrigins = ? AND code = ?;

@@ -4,10 +4,11 @@ from config import dbTolls
 from sql_queries import sql_attributes_queries, sql_raw_queries, sql_products_queries
 from files_features import output_message_exit
 from tools.code_tolls import clear_code, text_cleaning, get_integer_value
-from tools.shared_features import get_raw_data
+from tools.shared_features import get_raw_data, get_product_all_catalog_by_code
 
 
-def _make_data_from_raw_attribute(db: dbTolls, raw_attribute: sqlite3.Row) -> tuple:
+
+def _make_data_from_raw_attribute(db: dbTolls, raw_attribute: sqlite3.Row) -> tuple | None:
     """ Получает строку из таблицы tblRawData с импортированным атрибутом.
         Выбирает нужные данные, находит в расценках запись владельца атрибута.
         Возвращает кортеж с данными для вставки в таблицу Атрибутов tblAttributes.
@@ -16,12 +17,10 @@ def _make_data_from_raw_attribute(db: dbTolls, raw_attribute: sqlite3.Row) -> tu
     raw_period = get_integer_value(raw_attribute["PERIOD"])
     raw_name = text_cleaning(raw_attribute['ATTRIBUTE_TITLE']).capitalize()
     raw_value = text_cleaning(raw_attribute['VALUE'])
-
-    # Найти product с шифром raw_cod в таблице tblProducts
-    product = db.go_select(sql_products_queries["select_products_code"], (raw_code,))[0]
-    if product:
-        product_period = product['period']
-        product_id = product['ID_tblProduct']
+    holder_product = get_product_all_catalog_by_code(db=db, product_code=raw_code)
+    if holder_product:
+        product_period = holder_product['period']
+        product_id = holder_product['ID_tblProduct']
         if raw_period == product_period:
             return product_id, raw_name, raw_value
         else:
@@ -31,7 +30,7 @@ def _make_data_from_raw_attribute(db: dbTolls, raw_attribute: sqlite3.Row) -> tu
     else:
         output_message_exit(f"для Атрибута {tuple(raw_attribute)} не найдена запись Владельца",
                             f"шифр {raw_code!r}")
-    return ()
+    return None
 
 
 def _delete_attribute(db: dbTolls, id_attribute: int) -> int:
@@ -50,8 +49,10 @@ def _insert_attribute(db: dbTolls, data: tuple) -> int:
 
 
 def _get_attribute_id(db: dbTolls, attribute_data: tuple[int, str]) -> int:
-    """ Ищет в таблице Атрибутов атрибут по id Расценки и названию атрибута."""
-    attributes_cursor = db.go_execute(sql_attributes_queries["select_attributes_id_name"], attribute_data)
+    """ Ищет в таблице Атрибутов атрибут по id владельца и названию атрибута."""
+    attributes_cursor = db.go_execute(
+        sql_attributes_queries["select_attributes_product_id_name"], attribute_data
+    )
     attribute_row = attributes_cursor.fetchone() if attributes_cursor else None
     if attribute_row:
         return attribute_row['ID_Attribute']
@@ -59,15 +60,12 @@ def _get_attribute_id(db: dbTolls, attribute_data: tuple[int, str]) -> int:
 
 
 
-def transfer_raw_table_to_attributes(db_filename: str):
+def transfer_raw_data_to_attributes(db_filename: str):
     """ Записывает атрибуты из сырой таблицы в рабочую tblAttributes.
-        Атрибуты которые надо добавить предварительно загружены в tblRawData.
-        В таблице tblProducts ищется расценка с шифром который указан для Атрибута.
-    """
+        В таблице tblProducts ищется расценка с шифром который указан для Атрибута. """
     with dbTolls(db_filename) as db:
         raw_attributes = get_raw_data(db)
-        inserted_attributes = []
-        deleted_attributes = []
+        inserted_attributes, deleted_attributes = [], []
         for row in raw_attributes:
             # ic(tuple(row))
             data = _make_data_from_raw_attribute(db, row)
@@ -100,30 +98,3 @@ def transfer_raw_table_to_attributes(db_filename: str):
 
 
 
-
-
-if __name__ == '__main__':
-    import os
-    from tools.create_tables import _create_attributes_environment
-    from tools import read_csv_to_raw_table
-
-    data_path = r"F:\Kazak\GoogleDrive\NIAC\parameterisation\Split\csv"
-    db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
-
-    # data_path = r"C:\Users\kazak.ke\Documents\Задачи\Парсинг_параметризация\csv"
-    # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
-    period = 68
-
-    db_name = os.path.join(db_path, "Normative.sqlite3")
-    attributes_data = os.path.join(data_path, "Оборудование_13_68_split_attributes.csv") # Расценки_4_68_split_attributes   /// Расценки_3_68_split_attributes // Материалы_1_13_split_attributes
-
-    ic(db_name)
-    ic(attributes_data)
-    with dbTolls(db_name) as db:
-        _create_attributes_environment(db)
-
-    # прочитать из csv файла данные для Атрибутов в таблицу tblRawData для периода period
-    read_csv_to_raw_table(db_name, attributes_data, period=68)
-
-    # заполнить Атрибуты данными из таблицы tblRawData
-    # transfer_raw_table_to_attributes(db_name)

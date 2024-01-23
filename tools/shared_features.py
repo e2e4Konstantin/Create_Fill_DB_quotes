@@ -207,8 +207,16 @@ def insert_product(db: dbTolls, data) -> int | None:
     return None
 
 
+def get_product_all_catalog_by_code(db: dbTolls, product_code: str) -> sqlite3.Row | None:
+    """ Получает id из tblProducts у которой каталог и шифр равен параметрам. """
+    products = db.go_select(sql_products_queries["select_product_all_origin_code"], (product_code,))
+    if products:
+        return products[0]
+    return None
+
+
 def get_product_by_code(db: dbTolls, origin_id: int, product_code: str) -> sqlite3.Row | None:
-    """ Получает строку из tblProducts у которой шифр равен product_code. """
+    """ Получает строку из tblProducts у которой каталог и шифр равен параметрам. """
     products = db.go_select(sql_products_queries["select_products_origin_code"], (origin_id, product_code))
     if products:
         return products[0]

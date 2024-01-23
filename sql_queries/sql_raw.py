@@ -10,6 +10,7 @@ sql_raw_queries = {
 
     # --- > Получение данных ----------------------------------------------------------------------
     "select_rwd_all": """SELECT * FROM tblRawData;""",
+
     "select_rwd_code_regexp": """
         SELECT * FROM tblRawData WHERE PRESSMARK REGEXP ?;
     """,
