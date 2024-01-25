@@ -67,4 +67,65 @@ sql_options_queries = {
             ORDER BY r.code;
     """,
 
+
+# --- > История изменения таблицы Параметров -----------------------------------
+    "create_table_history_options": """
+        CREATE TABLE IF NOT EXISTS _tblHistoryOptions (
+            _rowid          INTEGER,
+            ID_Option    INTEGER,
+            FK_tblOptions_tblProducts INTEGER, 
+            name            TEXT,
+            left_border     REAL, 
+            right_border	REAL,              
+            measurer        TEXT, 	           
+            step	        TEXT,              
+            type            INTEGER DEFAULT 0, 
+            last_update     INTEGER,          
+            _version        INTEGER NOT NULL,
+            _updated        INTEGER NOT NULL,
+            _mask           INTEGER NOT NULL
+        );
+        """,
+
+    "create_index_history_options": """
+        CREATE INDEX IF NOT EXISTS idxHistoryOptions ON _tblHistoryOptions (_rowid);
+    """,
+
+    "create_trigger_history_options_insert": """
+        CREATE TRIGGER IF NOT EXISTS tgrHistoryOptionsInsert
+        AFTER INSERT ON tblOptions
+        BEGIN
+            INSERT INTO _tblHistoryOptions (
+                _rowid, ID_Option, FK_tblOptions_tblProducts, 
+                name, left_border, right_border, measurer, step, type, last_update, 
+                _version, _updated, _mask 
+            )
+            VALUES (
+                new.rowid, new.ID_Option, new.FK_tblOptions_tblProducts, 
+                new.name, new.left_border, new.right_border, 
+                new.measurer, new.step, new.type, new.last_update,
+                1, unixepoch('now'), 0
+            );
+        END;
+    """,
+
+    "create_trigger_history_options_delete": """
+        CREATE TRIGGER tgrHistoryOptionsDelete
+        AFTER DELETE ON tblOptions
+        BEGIN
+            INSERT INTO _tblHistoryOptions (
+                _rowid, ID_Option, FK_tblOptions_tblProducts, 
+                name, left_border, right_border, measurer, step, type, last_update, 
+                _version, _updated, _mask 
+            )
+            VALUES (
+                old.rowid, old.ID_Option, old.FK_tblOptions_tblProducts, 
+                old.name, old.left_border, old.right_border,
+                old.measurer, old.step, old.type, old.last_update,
+                 
+                (SELECT COALESCE(MAX(_version), 0) FROM _tblHistoryOptions WHERE _rowid = old.rowid) + 1,
+                unixepoch('now'), -1
+            );
+        END;
+    """,
 }
