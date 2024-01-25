@@ -241,6 +241,7 @@ sql_products_creates = {
                 i.title AS product_type,
                 c.code AS parent_code,
                 p.code AS code,
+                p.period AS period,
                 p.description AS title,
                 p.measurer AS measurer
             FROM tblProducts p 

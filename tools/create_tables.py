@@ -83,6 +83,13 @@ def _create_attributes_environment(db: dbTolls):
     db.go_execute(sql_attributes_queries["create_index_attributes"])
     db.go_execute(sql_attributes_queries["create_view_attributes"])
 
+    db.go_execute(sql_attributes_queries["create_table_history_attributes"])
+    db.go_execute(sql_attributes_queries["create_index_history_attributes"])
+    db.go_execute(sql_attributes_queries["create_trigger_history_attributes_insert"])
+    db.go_execute(sql_attributes_queries["create_trigger_history_attributes_delete"])
+    db.go_execute(sql_attributes_queries["create_trigger_history_products_update"])
+
+
 
 def _create_options_environment(db: dbTolls):
     """ Инфраструктура для Параметров. """

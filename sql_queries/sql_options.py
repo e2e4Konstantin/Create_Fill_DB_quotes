@@ -32,7 +32,7 @@ sql_options_queries = {
         CREATE TABLE IF NOT EXISTS tblOptions
             (
                 ID_Option                   INTEGER PRIMARY KEY NOT NULL,
-                FK_tblOptions_tblProducts   INTEGER NOT NULL, -- id родительской расценки 
+                FK_tblOptions_tblProducts   INTEGER NOT NULL,   -- id владельца 
                 name                        TEXT NOT NULL,      -- название параметра
                 left_border	                REAL,               -- от
                 right_border	            REAL,               -- до
@@ -54,7 +54,8 @@ sql_options_queries = {
     "create_view_options": """
         CREATE VIEW viewOptions AS
             SELECT
-                q.code AS 'шифр', 
+                r.code AS 'шифр',
+                r.period AS 'период', 
                 o.name AS 'параметр',
                 o.left_border AS 'от',
                 o.right_border AS 'до',
@@ -62,8 +63,8 @@ sql_options_queries = {
                 o.step AS 'шаг',
                 o.type AS 'тип'
             FROM tblOptions o
-            LEFT JOIN tblProducts AS q ON q.ID_tblProduct = o.FK_tblOptions_tblProducts
-            ORDER BY q.code;
+            LEFT JOIN tblProducts AS r ON r.ID_tblProduct = o.FK_tblOptions_tblProducts
+            ORDER BY r.code;
     """,
 
 }

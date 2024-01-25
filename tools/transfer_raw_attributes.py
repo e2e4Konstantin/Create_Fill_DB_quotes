@@ -1,17 +1,17 @@
 import sqlite3
 from icecream import ic
-from config import dbTolls
-from sql_queries import sql_attributes_queries, sql_raw_queries, sql_products_queries
+from config import dbTolls, PNWC_CATALOG
+from sql_queries import sql_attributes_queries, sql_raw_queries, sql_products_queries, sql_origins
 from files_features import output_message_exit
 from tools.code_tolls import clear_code, text_cleaning, get_integer_value
 from tools.shared_features import get_raw_data, get_product_all_catalog_by_code
 
 
-
-def _make_data_from_raw_attribute(db: dbTolls, raw_attribute: sqlite3.Row) -> tuple | None:
+def _make_data_from_raw_attribute(db: dbTolls, raw_attribute: sqlite3.Row, pnwc_catalog_id: int) -> tuple | None:
     """ Получает строку из таблицы tblRawData с импортированным атрибутом.
         Выбирает нужные данные, находит в расценках запись владельца атрибута.
         Возвращает кортеж с данными для вставки в таблицу Атрибутов tblAttributes.
+        Если владелец параметра из каталога НЦКР, то период не проверяется.
     """
     raw_code = clear_code(raw_attribute["PRESSMARK"])
     raw_period = get_integer_value(raw_attribute["PERIOD"])
@@ -19,14 +19,16 @@ def _make_data_from_raw_attribute(db: dbTolls, raw_attribute: sqlite3.Row) -> tu
     raw_value = text_cleaning(raw_attribute['VALUE'])
     holder_product = get_product_all_catalog_by_code(db=db, product_code=raw_code)
     if holder_product:
-        product_period = holder_product['period']
         product_id = holder_product['ID_tblProduct']
-        if raw_period == product_period:
-            return product_id, raw_name, raw_value
-        else:
-            output_message_exit(
-                f"Ошибка загрузки Атрибута для продукта с шифром: {raw_code!r}",
-                f"период Атрибута {raw_period} не равен текущему периоду владельца {product_period} ")
+        return product_id, raw_name, raw_value
+        # product_period = holder_product['period']
+        # if (raw_period == product_period or
+        #         holder_product['FK_tblProducts_tblOrigins'] == pnwc_catalog_id):
+        #     return product_id, raw_name, raw_value
+        # else:
+        #     output_message_exit(
+        #         f"Ошибка загрузки Атрибута для продукта с шифром: {raw_code!r}",
+        #         f"период Атрибута {raw_period} не равен текущему периоду владельца {product_period} ")
     else:
         output_message_exit(f"для Атрибута {tuple(raw_attribute)} не найдена запись Владельца",
                             f"шифр {raw_code!r}")
@@ -59,16 +61,16 @@ def _get_attribute_id(db: dbTolls, attribute_data: tuple[int, str]) -> int:
     return 0
 
 
-
 def transfer_raw_data_to_attributes(db_filename: str):
     """ Записывает атрибуты из сырой таблицы в рабочую tblAttributes.
         В таблице tblProducts ищется расценка с шифром который указан для Атрибута. """
     with dbTolls(db_filename) as db:
         raw_attributes = get_raw_data(db)
         inserted_attributes, deleted_attributes = [], []
+        pnwc_catalog_id = db.get_row_id(sql_origins['select_origin_name'], (PNWC_CATALOG,))
         for row in raw_attributes:
             # ic(tuple(row))
-            data = _make_data_from_raw_attribute(db, row)
+            data = _make_data_from_raw_attribute(db, row, pnwc_catalog_id)
             # ищем в таблице атрибутов совпадающий атрибут
             same_id = _get_attribute_id(db, data[:2])
             if same_id > 0:
@@ -87,14 +89,7 @@ def transfer_raw_data_to_attributes(db_filename: str):
         print(len(deleted_attributes))
         mda = []
         for x in deleted_attributes:
-            p = db.go_select(sql_products_queries["select_products_id"], (x[0], ))[0]
+            p = db.go_select(sql_products_queries["select_products_id"], (x[0],))[0]
             mda.append((x[0], p['code'], *x[1:]))
         ic(mda)
-        # for i in mda:
-        #     print(i)
-
-
-
-
-
 

@@ -33,7 +33,7 @@ def _creat_new_db(db_file_name: str):
 if __name__ == '__main__':
     version = f"SQLite: {sqlite3.sqlite_version}\nPython: {sys.version}"
     now = "office"  # office  # home
-    db_name, data_path = work_place(now)
+    db_name, data_path, param_path = work_place(now)
 
     # period = 67
     # catalog_data = os.path.join(data_path, "TABLES_67.csv")
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     # # --- > Ресурсы НЦКР
     # # --------------------- > Каталог НЦКР
     # ic(pnwc_catalog)
-    # period = 0
+    # period = 55
     # read_csv_to_raw_table(db_name, pnwc_catalog, period)
     # transfer_raw_pnwc_resources_to_catalog(db_name, catalog_name=PNWC_CATALOG)
     # # ----------------------- > Данные Ресурсы НЦКР
