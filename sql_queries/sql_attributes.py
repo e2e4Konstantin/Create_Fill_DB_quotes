@@ -33,6 +33,7 @@ sql_attributes_queries = {
     "delete_table_attributes": """DROP TABLE IF EXISTS tblAttributes;""",
     "delete_index_attributes": """DROP INDEX IF EXISTS idxAttributes;""",
     "delete_view_attributes": """DROP VIEW IF EXISTS viewAttributes;""",
+    "delete_table_history_attributes": """DROP TABLE IF EXISTS _tblHistoryAttributes;""",
 
     "insert_attribute": """
         INSERT INTO tblAttributes (FK_tblAttributes_tblProducts, name, value) VALUES (?, ?, ?);
@@ -102,7 +103,7 @@ sql_attributes_queries = {
         END;
     """,
 
-    "create_trigger_history_products_update": """
+    "create_trigger_history_attributes_update": """
         CREATE TRIGGER IF NOT EXISTS tgrHistoryAttributesUpdate
         AFTER UPDATE ON tblAttributes
         FOR EACH ROW

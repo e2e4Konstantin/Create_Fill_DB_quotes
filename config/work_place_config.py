@@ -16,7 +16,7 @@ def work_place(point_name: str) -> PlacePath:
         "home": PlacePath(
             db_file=os.path.join(r"F:\Kazak\GoogleDrive\Python_projects\DB", db_name),
             data_path=r"F:\Kazak\GoogleDrive\NIAC\АИС_Выгрузка\csv",
-            param_path=r"F:\Kazak\GoogleDrive\NIAC\parameterisation\Split\csv"
+            param_path=r"F:\Kazak\GoogleDrive\NIAC\Задачи\4_параметризация\SRC\Split\csv"
         ),
     }
     return places[point_name]

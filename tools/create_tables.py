@@ -78,6 +78,7 @@ def _create_attributes_environment(db: dbTolls):
     db.go_execute(sql_attributes_queries["delete_table_attributes"])
     db.go_execute(sql_attributes_queries["delete_index_attributes"])
     db.go_execute(sql_attributes_queries["delete_view_attributes"])
+    db.go_execute(sql_attributes_queries["delete_table_history_attributes"])
 
     db.go_execute(sql_attributes_queries["create_table_attributes"])
     db.go_execute(sql_attributes_queries["create_index_attributes"])
@@ -87,8 +88,7 @@ def _create_attributes_environment(db: dbTolls):
     db.go_execute(sql_attributes_queries["create_index_history_attributes"])
     db.go_execute(sql_attributes_queries["create_trigger_history_attributes_insert"])
     db.go_execute(sql_attributes_queries["create_trigger_history_attributes_delete"])
-    db.go_execute(sql_attributes_queries["create_trigger_history_products_update"])
-
+    db.go_execute(sql_attributes_queries["create_trigger_history_attributes_update"])
 
 
 def _create_options_environment(db: dbTolls):
@@ -96,10 +96,17 @@ def _create_options_environment(db: dbTolls):
     db.go_execute(sql_options_queries["delete_table_options"])
     db.go_execute(sql_options_queries["delete_index_options"])
     db.go_execute(sql_options_queries["delete_view_options"])
+    db.go_execute(sql_options_queries["delete_table_history_options"])
 
     db.go_execute(sql_options_queries["create_table_options"])
     db.go_execute(sql_options_queries["create_index_options"])
     db.go_execute(sql_options_queries["create_view_options"])
+
+    db.go_execute(sql_options_queries["create_table_history_options"])
+    db.go_execute(sql_options_queries["create_index_history_options"])
+    db.go_execute(sql_options_queries["create_trigger_history_options_insert"])
+    db.go_execute(sql_options_queries["create_trigger_history_options_delete"])
+    db.go_execute(sql_options_queries["create_trigger_history_options_update"])
 
 
 # def _create_quotes_chains_environment(db: dbTolls):
@@ -119,21 +126,6 @@ def _create_options_environment(db: dbTolls):
 #     db.go_execute(sql_quotes_chain_create["create_trigger_history_quotes_chain_update"])
 
 
-# def _create_resources_environment(db: dbTolls):
-#     """ Создать инфраструктуру для Ресурсов. Главы 1, 2, 13. Таблицы, индексы и триггеры. """
-#     db.go_execute(sql_resources_create["delete_table_quotes_chains"])
-#     db.go_execute(sql_resources_create["delete_index_quotes_chains"])
-#     db.go_execute(sql_resources_create["delete_quotes_history_quotes_chains"])
-#     db.go_execute(sql_resources_create["delete_index_history_quotes_chains"])
-#
-#     db.go_execute(sql_resources_create["create_table_resources"])
-#     db.go_execute(sql_resources_create["create_index_resources"])
-#     db.go_execute(sql_resources_create["create_table_history_resource"])
-#     db.go_execute(sql_resources_create["create_index_history_resources"])
-#
-#     db.go_execute(sql_resources_create["create_trigger_history_resources_insert"])
-#     db.go_execute(sql_resources_create["create_trigger_history_resources_delete"])
-#     db.go_execute(sql_resources_create["create_trigger_history_resources_update"])
 
 
 def create_tables_indexes(db_file_name: str):

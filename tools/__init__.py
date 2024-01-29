@@ -18,4 +18,5 @@ from tools.transfer_raw_pnwc_resources_to_catalog import transfer_raw_pnwc_resou
 from tools.transfer_raw_pnwc_resources import transfer_raw_data_to_pnwc_resources
 
 from tools.transfer_raw_attributes import transfer_raw_data_to_attributes
+from tools.transfer_raw_options import transfer_raw_data_to_options
 
