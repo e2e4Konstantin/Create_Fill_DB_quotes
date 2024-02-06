@@ -10,7 +10,9 @@ sql_purchasing_storage_costs_queries = {
             -- таблица для % Заготовительно-складских расходов (%ЗСР)
             (
                 ID_tblStorageCosts      INTEGER PRIMARY KEY NOT NULL,
-                percent_storage_costs   REAL NOT NULL DEFAULT 0.0, -- Процент ЗСР
+                percent_storage_costs   REAL NOT NULL DEFAULT 0.0 
+                                        CHECK(percent_storage_costs >= 0 AND 
+                                            percent_storage_costs <= 100), -- Процент ЗСР
                 name                    TEXT NOT NULL,  -- Наименование		
                 description             TEXT NOT NULL,  -- подробное описание
                 last_update             INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')),	
@@ -22,18 +24,19 @@ sql_purchasing_storage_costs_queries = {
         CREATE UNIQUE INDEX IF NOT EXISTS idxStorageCosts ON tblStorageCosts (name);
     """,
 
+    # -----------------------------------------------------------------------------------------------------------------
     "create_table_history_storage_costs": """
         CREATE TABLE IF NOT EXISTS _tblHistoryStorageCosts (
-        -- таблица для истории %ЗСР
-            _rowid        INTEGER,
-            ID_tblStorageCosts INTEGER,
-            percent_storage_costs REAL, 
-            name TEXT,
-            description TEXT,
-            last_update INTEGER,          
-            _version INTEGER NOT NULL,
-            _updated INTEGER NOT NULL,
-            _mask INTEGER NOT NULL
+        -- таблица для хранения истории %ЗСР
+            _rowid                  INTEGER,
+            ID_tblStorageCosts      INTEGER,
+            percent_storage_costs   REAL, 
+            name                    TEXT,
+            description             TEXT,
+            last_update             INTEGER,          
+            _version                INTEGER NOT NULL,
+            _updated                INTEGER NOT NULL,
+            _mask                   INTEGER NOT NULL
         );
         """,
 
@@ -46,10 +49,14 @@ sql_purchasing_storage_costs_queries = {
         AFTER INSERT ON tblStorageCosts
         BEGIN
             INSERT INTO _tblHistoryStorageCosts (
-                _rowid, ID_tblStorageCosts, percent_storage_costs, name, description, last_update, _version, _updated, _mask
+                _rowid, ID_tblStorageCosts, 
+                percent_storage_costs, name, description, last_update, 
+                _version, _updated, _mask
             )
             VALUES (
-                new.rowid, new.ID_tblStorageCosts, new.percent_storage_costs, new.name, new.description, new.last_update, 1, unixepoch('now'), 0
+                new.rowid, new.ID_tblStorageCosts, 
+                new.percent_storage_costs, new.name, new.description, 
+                new.last_update, 1, unixepoch('now'), 0
             );
         END;
     """,
@@ -59,10 +66,14 @@ sql_purchasing_storage_costs_queries = {
         AFTER DELETE ON tblStorageCosts
         BEGIN
             INSERT INTO _tblHistoryStorageCosts (
-                _rowid, ID_tblStorageCosts, percent_storage_costs, name, description, last_update, _version, _updated, _mask
+                _rowid, ID_tblStorageCosts, 
+                percent_storage_costs, name, description, 
+                last_update, _version, _updated, _mask
             )
             VALUES (
-                old.rowid, old.ID_tblStorageCosts, old.percent_storage_costs, old.name, old.description, old.last_update,
+                old.rowid, old.ID_tblStorageCosts, 
+                old.percent_storage_costs, old.name, 
+                old.description, old.last_update,
                 (SELECT COALESCE(MAX(_version), 0) FROM _tblHistoryStorageCosts WHERE _rowid = old.rowid) + 1,
                 UNIXEPOCH('now'), -1
             );
@@ -75,8 +86,17 @@ sql_purchasing_storage_costs_queries = {
         AFTER UPDATE ON tblStorageCosts
         FOR EACH ROW
         BEGIN
+            -- обновление цены %ЗСР в таблице tblPropertiesMachines
+            UPDATE tblPropertiesMachines 
+            SET storage_costs = new.percent_storage_costs 
+            WHERE FK_tblPropertiesMachine_tblStorageCosts = new.ID_tblStorageCosts; 
+
+            
+            -- History        
             INSERT INTO _tblHistoryStorageCosts (
-                _rowid, ID_tblStorageCosts, percent_storage_costs, name, description, last_update, _version, _updated, _mask 
+                _rowid, ID_tblStorageCosts, 
+                percent_storage_costs, name, description, last_update, 
+                _version, _updated, _mask 
             )
             SELECT 
                 old.rowid,
@@ -100,5 +120,8 @@ sql_purchasing_storage_costs_queries = {
                 old.last_update != new.last_update;
         END;
     """,
+
+
+
 
 }
