@@ -3,7 +3,9 @@ from icecream import ic
 from pathlib import Path
 from config import dbTolls
 
+from excel_features import read_csv_to_df
 from files_features import output_message_exit
+
 
 
 def read_csv_to_raw_table(
@@ -12,7 +14,7 @@ def read_csv_to_raw_table(
     """ Читает данные из csv файла в df. Добавляет столбец 'период'.
      Записывает df в таблицу tblRawDat БД. """
     try:
-        df = pd.read_csv(csv_file_name, delimiter=";", index_col=False, encoding="utf8", dtype=pd.StringDtype())
+        df = read_csv_to_df(csv_file_name)
         if new_column_name is not None:
             df.columns = new_column_name + df.columns.to_numpy().tolist()[len(new_column_name):]
         df['PERIOD'] = set_period

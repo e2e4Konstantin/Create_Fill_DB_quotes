@@ -1,6 +1,6 @@
 from icecream import ic
 
-from config import dbTolls, items_catalog
+from config import dbTolls, items_catalog, src_periods_holder
 from sql_queries import sql_items_creates, sql_items_queries, sql_origins
 
 from config import TON_CATALOG, PNWC_CATALOG, POM_CATALOG
@@ -41,6 +41,19 @@ def fill_directory_origins(db_file_name: str):
             inserted_id = db.go_insert(sql_origins['insert_origin'], origin, message_item)
 
 
+def fill_directory_periods(db_file_name: str) -> int:
+    """ Заполняет справочники Периодов. """
+    with dbTolls(db_file_name) as db:
+        message_item = "заполнение справочников для таблицы Периодов."
+        for item in src_periods_holder:
+            inserted_id = db.go_insert(
+                query=sql_items_creates["insert_item"], src_data=item, message=message_item
+            )
+    return 0
+
+
+
+
 if __name__ == '__main__':
     import os
 
@@ -48,5 +61,6 @@ if __name__ == '__main__':
     # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
     db_name = os.path.join(db_path, "Normative.sqlite3")
 
-    fill_directory_catalog_items(db_name)
-    fill_directory_origins(db_name)
+    # fill_directory_catalog_items(db_name)
+    # fill_directory_origins(db_name)
+    fill_directory_periods(db_name)

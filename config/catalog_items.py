@@ -1,6 +1,7 @@
 import re
 from dataclasses import dataclass
 from icecream import ic
+from config.const import TON_CATALOG, PNWC_CATALOG, POM_CATALOG
 
 # иерархия элементов каталога
 # chain_items = ('Catalog', 'Chapter', 'Collection', 'Section', 'Subsection', 'Table',)
@@ -80,6 +81,27 @@ items_catalog: list[str: ItemCatalogDirectory] = [
     )
     for x in src_catalog_items
 ]
+
+
+#
+# ------------------ Справочники Периодов ----------------------------
+#
+dir_period_holders = 'periods_holder'
+dir_period_types = 'periods_type'
+src_periods_holder = (
+    (dir_period_holders, 'TON', 'ТСН', None, None, None),
+    (dir_period_holders, 'equipments', 'оборудование', None, None, None),
+    (dir_period_holders, 'monitoring', 'мониторинг', None, None, None),
+
+    (dir_period_types, 'supplement', 'дополнение', None, None, None),
+    (dir_period_types, 'index', 'индекс', None, None, None),
+)
+
+
+#
+# ---------------------------------------------------------------------
+#
+
 
 Physical_Property = (
     ('Directory', 'Measures', 'Измерения'),

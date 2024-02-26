@@ -19,4 +19,4 @@ from tools.transfer_raw_pnwc_resources import transfer_raw_data_to_pnwc_resource
 
 from tools.transfer_raw_attributes import transfer_raw_data_to_attributes
 from tools.transfer_raw_options import transfer_raw_data_to_options
-
+from tools.shared import load_df_to_db_table

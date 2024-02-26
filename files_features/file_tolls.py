@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 
 from files_features.message import output_message_exit
@@ -28,3 +29,10 @@ def construct_abs_file_name(path: str, file_name: str) -> str:
     if not os.path.isdir(path):
         output_message_exit(f"папка не найдена", f"{path!r}")
     return os.path.join(path, file_name)
+
+def create_abspath_file(path: str=None, file_name: str=None) -> str | None:
+    """ Создает абсолютный маршрут к файлу. Если путь не указан то берется место запуска."""
+    if file_name:
+        path = pathlib.Path(path).resolve() if path else pathlib.Path(__file__).parent.resolve()
+        return pathlib.Path.joinpath(path, file_name).__str__()
+    return None
