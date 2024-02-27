@@ -44,7 +44,7 @@ sql_properties_materials_queries = {
                 pm.net_weight AS 'нетто',
                 pm.gross_weight AS 'брутто',
                 pm.basic_estimated_cost AS [базовая сметная стоимость],
-                pm.transport_cost_factor AS [Коэффицтент пересчета транспортных затарат],
+                pm.transport_cost_factor AS [Коэффициент пересчета транспортных затрат],
 
                 st.percent_storage_costs AS [ЗСР],
 
