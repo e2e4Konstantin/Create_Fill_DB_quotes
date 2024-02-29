@@ -1,10 +1,17 @@
 setup.py
 config/__init__.py
-config/catalog_items.py
 config/const.py
 config/db_config.py
+config/directories_items.py
 config/directory_config.py
+config/file_location_config.py
+config/paths_config.py
+config/src_data_config.py
 config/work_place_config.py
+download_data/__init__.py
+download_data/data_source_paths.py
+excel_features/__init__.py
+excel_features/read_excel.py
 files_features/__init__.py
 files_features/console_colors.py
 files_features/file_tolls.py
@@ -21,6 +28,7 @@ sql_queries/sql_directory.py
 sql_queries/sql_materials_properties.py
 sql_queries/sql_options.py
 sql_queries/sql_origins.py
+sql_queries/sql_periods.py
 sql_queries/sql_products.py
 sql_queries/sql_purchasing_storage_costs.py
 sql_queries/sql_quotes_chains.py
@@ -43,3 +51,7 @@ tools/transfer_raw_options.py
 tools/transfer_raw_pnwc_resources.py
 tools/transfer_raw_pnwc_resources_to_catalog.py
 tools/transfer_raw_quotes.py
+tools/period/__init__.py
+tools/period/load_raw_period.py
+tools/shared/__init__.py
+tools/shared/load_df_to_db_table.py

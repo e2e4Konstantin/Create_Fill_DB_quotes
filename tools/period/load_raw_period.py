@@ -5,8 +5,8 @@ from excel_features import read_excel_to_df
 from tools import load_df_to_db_table
 
 
-def _load_raw_periods(excel_file_name: str, sheet_name: str, db_full_file_name: str) -> int:
-    """Заполняет таблицу tblRawData данными из excel файла со страницы sheet_name. """
+def _load_raw_data_periods(excel_file_name: str, sheet_name: str, db_full_file_name: str) -> int:
+    """ Заполняет таблицу tblRawData данными из excel файла со страницы sheet_name данными выгрузки периодов. """
     df: DataFrame = read_excel_to_df(excel_file_name, sheet_name)
     # df.to_clipboard()
     return load_df_to_db_table(df, db_full_file_name, "tblRawData")

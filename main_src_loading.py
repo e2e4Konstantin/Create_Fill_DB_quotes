@@ -16,7 +16,7 @@ from tools import (
 )
 
 
-def _creat_new_db(db_file_name: str):
+def _create_new_db(db_file_name: str):
     if os.path.isfile(db_file_name):
         os.unlink(db_file_name)  # удаляем файл БД если такой есть
     create_tables_indexes(db_file_name)  # создать таблицы, индексы, триггеры
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     equipments_data = os.path.join(data_path, "13_глава_35_доп.csv")
 
     ic(version, db_name, period)
-    _creat_new_db(db_name)
+    _create_new_db(db_name)
 
     # --- > Расценки
     # --------------------- > Каталог
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     # transfer_raw_pnwc_resources_to_catalog(db_name, catalog_name=PNWC_CATALOG)
     # # ----------------------- > Данные Ресурсы НЦКР
     # read_csv_to_raw_table(db_name, pnwc_resource, period, new_column_name=['N', 'NPP', 'Шифр новый действующий', 'Уточненное наименование по данным мониторинга'])
-    transfer_raw_data_to_pnwc_resources(db_name, catalog_name=PNWC_CATALOG)
+    # transfer_raw_data_to_pnwc_resources(db_name, catalog_name=PNWC_CATALOG)
 
     delete_raw_tables(db_name)
 

@@ -43,6 +43,11 @@ def fill_directory_origins(db_file_name: str):
 
 def fill_directory_periods(db_file_name: str) -> int:
     """ Заполняет справочники Периодов. """
+    # INSERT INTO tblItems (team, name, title, ID_parent, re_pattern, re_prefix) VALUES ( ?, ?, ?, ?, ?, ?);
+    # SELECT ID_parent, start_date, end_date, additive_num, index_num, type, description, holder FROM tblTest;
+    # update tblTest set type='Индекс'  where type='Индекс';
+    # update tblTest set type='Дополнение'  where type='Дополнение ';
+
     with dbTolls(db_file_name) as db:
         message_item = "заполнение справочников для таблицы Периодов."
         for item in src_periods_holder:

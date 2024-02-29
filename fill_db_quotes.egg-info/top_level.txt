@@ -1,4 +1,6 @@
 config
+download_data
+excel_features
 files_features
 sql_queries
 tools

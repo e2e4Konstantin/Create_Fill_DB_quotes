@@ -80,7 +80,7 @@ period_directories = [
     (dir_period_holders, 'monitoring', 'мониторинг', None, None, None),
 ]
 
-src_catalog_items += periods_directory
+src_catalog_items += period_directories
 
 
 @dataclass

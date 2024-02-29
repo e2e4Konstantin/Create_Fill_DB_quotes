@@ -25,11 +25,15 @@ sql_items_queries = {
 }
 
 sql_items_creates = {
-    "delete_table_items": """DROP TABLE IF EXISTS tblItems;""",
-    "delete_index_items": """DROP INDEX IF EXISTS idxItems;""",
+    "delete_table_items": """--sql 
+        DROP TABLE IF EXISTS tblItems;""",
+    "delete_index_items": """--sql 
+        DROP INDEX IF EXISTS idxItems;""",
 
-    "delete_table_items_history": """DROP TABLE IF EXISTS _tblHistoryItems;""",
-    "delete_index_items_history": """DROP INDEX IF EXISTS idxHistoryItems;""",
+    "delete_table_items_history": """--sql
+        DROP TABLE IF EXISTS _tblHistoryItems;""",
+    "delete_index_items_history": """--sql
+        DROP INDEX IF EXISTS idxHistoryItems;""",
 
     # --- > Таблица для хранения справочников ---------------------
     # названия справочников
@@ -37,7 +41,7 @@ sql_items_creates = {
     #  в справочнике 'unit' хранятся категории для базовой таблицы Расценок, Материалов, Машин и Оборудования
     #  поле team определяет название справочника
     #  можно задать иерархию объектов справочника заполнив колонку ID_parent
-    "create_table_items": """
+    "create_table_items": """--sql
         CREATE TABLE IF NOT EXISTS tblItems (
                 ID_tblItem  INTEGER PRIMARY KEY NOT NULL,
                 team        TEXT NOT NULL,                              -- название справочника
@@ -51,11 +55,11 @@ sql_items_creates = {
         );
     """,
 
-    "create_index_items": """
+    "create_index_items": """--sql
         CREATE UNIQUE INDEX IF NOT EXISTS idxItems ON tblItems (team, name);
     """,
 
-    "insert_item": """
+    "insert_item": """--sql
         INSERT INTO tblItems (team, name, title, ID_parent, re_pattern, re_prefix) VALUES ( ?, ?, ?, ?, ?, ?);
     """,
 
@@ -70,7 +74,7 @@ sql_items_creates = {
     # 64: re_prefix
     # 128: last_update
     # _mask равная -1 показывает что запись была удалена.
-    "create_table_history_items": """
+    "create_table_history_items": """--sql
         CREATE TABLE IF NOT EXISTS _tblHistoryItems (
             _rowid      INTEGER,
             ID_tblItem  INTEGER,
@@ -87,11 +91,11 @@ sql_items_creates = {
         );
         """,
 
-    "create_index_history_items": """
+    "create_index_history_items": """--sql
         CREATE INDEX IF NOT EXISTS idxHistoryItems ON _tblHistoryItems (_rowid);
     """,
 
-    "create_trigger_history_items_insert": """
+    "create_trigger_history_items_insert": """--sql
         CREATE TRIGGER IF NOT EXISTS tgrHistoryItemsInsert
         AFTER INSERT ON tblItems
         BEGIN
@@ -107,7 +111,7 @@ sql_items_creates = {
         END;
     """,
 
-    "create_trigger_history_items_delete": """
+    "create_trigger_history_items_delete": """--sql
         CREATE TRIGGER tgrHistoryItemsDelete
         AFTER DELETE ON tblItems
         BEGIN
@@ -124,7 +128,7 @@ sql_items_creates = {
         END;
     """,
 
-    "create_trigger_history_items_update": """
+    "create_trigger_history_items_update": """--sql
         CREATE TRIGGER IF NOT EXISTS tgrHistoryItemsUpdate
         AFTER UPDATE ON tblItems
         FOR EACH ROW
