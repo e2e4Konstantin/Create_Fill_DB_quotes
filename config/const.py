@@ -1,9 +1,9 @@
-TON_CATALOG = "ТСН"     # TERRITORIAL OUTLAY NORMATIVE
-PNWC_CATALOG = "НЦКР"   # PRICE NORMATIVE FOR WORK COMPLEXES
-POM_CATALOG = "ПСМ"     # PROJECT OUTLAY MODUL
+TON_ORIGIN = "ТСН"     # TERRITORIAL OUTLAY NORMATIVE
+PNWC_ORIGIN = "НЦКР"   # PRICE NORMATIVE FOR WORK COMPLEXES
+POM_ORIGIN = "ПСМ"     # PROJECT OUTLAY MODULE
+
+EQUIPMENTS_ORIGIN = "оборудование"
+MONITORING_ORIGIN = "мониторинг"
+
 
 LOCATIONS = ("home", "office")
-
-# ТСН   - Территориальные сметные нормативы
-# ПСМ   - Проектно сметный модуль
-# НЦКР  - Нормативы цен на комплекс работ

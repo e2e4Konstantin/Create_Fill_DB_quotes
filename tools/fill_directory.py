@@ -1,15 +1,16 @@
 from icecream import ic
 
-from config import dbTolls, items_catalog, src_periods_holder
+from config import dbTolls, items_catalog, period_directories, origin_items
 from sql_queries import sql_items_creates, sql_items_queries, sql_origins
 
-from config import TON_CATALOG, PNWC_CATALOG, POM_CATALOG
 
 
 def fill_directory_catalog_items(db_file_name: str):
     """ Заполняет справочник элементов каталога. """
     with dbTolls(db_file_name) as db:
-        message_item = "вставка записи в справочник объектов каталога."
+        db.go_execute(sql_items_queries["delete_all_data_items"])
+
+        message_item = "вставка записей в справочник объектов каталога."
         item = items_catalog[0]
         main_data = (item.team, item.name, item.title, None, item.re_pattern, None)
         main_id = db.go_insert(
@@ -29,43 +30,20 @@ def fill_directory_catalog_items(db_file_name: str):
 
 
 def fill_directory_origins(db_file_name: str):
-    """ Заполняет справочник происхождения tblOrigins. """
+    """ Заполняет справочник происхождения tblOrigins. (владельцев данных) """
     with dbTolls(db_file_name) as db:
         message_item = "вставка данных в справочник Происхождения продуктов."
-        origin_items = (
-            (TON_CATALOG, 'Территориальные сметные нормативы'),
-            (PNWC_CATALOG, 'Нормативы Цен на Комплексы Работ'),
-            (POM_CATALOG, 'Проектно Сметные Модули')
-        )
+
+        db.go_execute(sql_origins["delete_all_data_origins"])
         for origin in origin_items:
             inserted_id = db.go_insert(sql_origins['insert_origin'], origin, message_item)
 
 
-def fill_directory_periods(db_file_name: str) -> int:
-    """ Заполняет справочники Периодов. """
-    # INSERT INTO tblItems (team, name, title, ID_parent, re_pattern, re_prefix) VALUES ( ?, ?, ?, ?, ?, ?);
-    # SELECT ID_parent, start_date, end_date, additive_num, index_num, type, description, holder FROM tblTest;
-    # update tblTest set type='Индекс'  where type='Индекс';
-    # update tblTest set type='Дополнение'  where type='Дополнение ';
-
-    with dbTolls(db_file_name) as db:
-        message_item = "заполнение справочников для таблицы Периодов."
-        for item in src_periods_holder:
-            inserted_id = db.go_insert(
-                query=sql_items_creates["insert_item"], src_data=item, message=message_item
-            )
-    return 0
-
-
-
-
 if __name__ == '__main__':
-    import os
+    from data_path import set_data_location
 
-    db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
-    # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
-    db_name = os.path.join(db_path, "Normative.sqlite3")
+    location = "home"
+    di = set_data_location(location)
 
-    # fill_directory_catalog_items(db_name)
-    # fill_directory_origins(db_name)
-    fill_directory_periods(db_name)
+    fill_directory_catalog_items(di.db_file)
+    fill_directory_origins(di.db_file)

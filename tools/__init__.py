@@ -3,7 +3,7 @@ from tools.create_tables import create_index_resources_raw_data
 
 from tools.fill_directory import fill_directory_catalog_items, fill_directory_origins
 
-from tools.code_tolls import clear_code, get_float_value, get_integer_value
+from tools.shared.code_tolls import clear_code, get_float_value, get_integer_value
 
 from tools.read_csv import read_csv_to_raw_table
 from tools.insert_root_row_catalog import insert_root_record_to_catalog
@@ -19,4 +19,4 @@ from tools.transfer_raw_pnwc_resources import transfer_raw_data_to_pnwc_resource
 
 from tools.transfer_raw_attributes import transfer_raw_data_to_attributes
 from tools.transfer_raw_options import transfer_raw_data_to_options
-from tools.shared import load_df_to_db_table
+from tools.shared.load_df_to_db_table import load_df_to_db_table

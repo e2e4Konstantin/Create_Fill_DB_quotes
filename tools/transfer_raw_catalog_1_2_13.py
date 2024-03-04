@@ -6,8 +6,8 @@ from sql_queries import (
     sql_items_queries, sql_raw_queries, sql_catalog_queries, sql_origins
 )
 from files_features import output_message, output_message_exit
-from tools.code_tolls import clear_code, title_catalog_extraction, get_integer_value
-from tools.shared_features import (
+from tools.shared.code_tolls import clear_code, title_catalog_extraction, get_integer_value
+from tools.shared.shared_features import (
     get_sorted_directory_items, get_catalog_id_by_origin_code,
     delete_catalog_old_period_for_parent_code, get_catalog_row_by_code, get_origin_id, get_origin_row_by_id
 )

@@ -1,13 +1,13 @@
 import sqlite3
 from icecream import ic
 
-from config import dbTolls, PNWC_CATALOG
+from config import dbTolls, PNWC_ORIGIN
 
 from files_features import output_message_exit
-from tools.code_tolls import clear_code, text_cleaning, get_integer_value
+from tools.shared.code_tolls import clear_code, text_cleaning, get_integer_value
 from sql_queries import sql_raw_queries
 
-from tools.shared_features import (
+from tools.shared.shared_features import (
     update_product, insert_product, get_parent_catalog_id,
     get_product_by_code, delete_last_period_product_row, get_directory_id,
     get_catalog_id_by_origin_code, get_origin_id
@@ -116,4 +116,4 @@ if __name__ == '__main__':
         db_name, pom_resource, set_period=0,
         new_column_name=['N', 'NPP', 'Шифр новый действующий', 'Уточненное наименование по данным мониторинга']
     )
-    transfer_raw_data_to_pnwc_resources(db_name, catalog_name=PNWC_CATALOG)
+    transfer_raw_data_to_pnwc_resources(db_name, catalog_name=PNWC_ORIGIN)

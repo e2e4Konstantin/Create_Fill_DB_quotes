@@ -1,6 +1,9 @@
 sql_origins = {
     "delete_table_origins": """DROP TABLE IF EXISTS tblOrigins;""",
     "delete_index_origins": """DROP INDEX IF EXISTS idxOrigins;""",
+    "delete_all_data_origins": """--sql
+        DELETE FROM tblOrigins;""",
+
 
     # --- > справочник Источников происхождения данных в таблице tblProducts
     # --- > ТСН, ПСМ, НЦКР
@@ -30,4 +33,3 @@ sql_origins = {
         SELECT * FROM tblOrigins WHERE ID_tblOrigin = ?;
     """,
 }
-

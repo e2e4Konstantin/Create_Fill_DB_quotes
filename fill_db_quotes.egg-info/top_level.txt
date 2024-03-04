@@ -1,5 +1,5 @@
 config
-download_data
+data_path
 excel_features
 files_features
 sql_queries

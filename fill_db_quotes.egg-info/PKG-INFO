@@ -2,4 +2,5 @@ Metadata-Version: 2.1
 Name: fill-db-quotes
 Version: 0.1.0
 Summary: Creating a strict database Normative by SQLite3
+Author: Konstantin Kazak
 Author-email: e2e4suchok@gmail.com

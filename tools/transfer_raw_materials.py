@@ -4,9 +4,9 @@ from icecream import ic
 from config import dbTolls, teams
 from sql_queries import sql_raw_queries, sql_products_queries, sql_items_queries, sql_catalog_queries
 from files_features import output_message, output_message_exit
-from tools.code_tolls import clear_code, text_cleaning, get_integer_value
+from tools.shared.code_tolls import clear_code, text_cleaning, get_integer_value
 
-from tools.shared_features import (
+from tools.shared.shared_features import (
     get_parent_catalog_id, update_product, insert_product,
     get_product_by_code, delete_last_period_product_row, get_directory_id, get_origin_id, transfer_raw_items
 )
@@ -68,4 +68,3 @@ if __name__ == '__main__':
     # read_csv_to_raw_table(db_name, materials_data, 67)
     # transfer_raw_data_to_catalog(db_name, directory='materials', main_code='1')
     transfer_raw_data_to_materials(db_name)
-

@@ -1,7 +1,8 @@
 import re
 from dataclasses import dataclass
 from icecream import ic
-from config.const import TON_CATALOG, PNWC_CATALOG, POM_CATALOG
+
+from config.const import TON_ORIGIN, PNWC_ORIGIN, POM_ORIGIN, EQUIPMENTS_ORIGIN, MONITORING_ORIGIN
 
 # иерархия элементов каталога
 # chain_items = ('Catalog', 'Chapter', 'Collection', 'Section', 'Subsection', 'Table',)
@@ -10,7 +11,7 @@ from config.const import TON_CATALOG, PNWC_CATALOG, POM_CATALOG
 # названия Справочников
 teams = (
     'main', 'units', 'quotes', 'materials', 'machines', 'equipments',
-    'pnwc_materials', 'pnwc_machines', 'pnwc_equipments', 'periods_type', 'periods_holder'
+    'pnwc_materials', 'pnwc_machines', 'pnwc_equipments',
 )
 
 # team, name, title, ID_parent, re_pattern, re_prefix
@@ -64,20 +65,19 @@ src_catalog_items = [
 # Справочники для таблицы Периодов
 # team, name, title, ID_parent, re_pattern, re_prefix
 #
-
-#
 # ------------------ Справочники Периодов ----------------------------
 #
-dir_period_holders = 'periods_holder'
-dir_period_types = 'periods_type'
+# dir_period_holders = 'periods_holder'
+dir_period_categories = 'periods_category'
 
 period_directories = [
-    (dir_period_types, 'supplement', 'дополнение', None, None, None),
-    (dir_period_types, 'index', 'индекс', None, None, None),
+    (dir_period_categories, 'supplement', 'дополнение', None, None, None),
+    (dir_period_categories, 'index', 'индекс', None, None, None),
+    (dir_period_categories, 'special', 'специальный', None, None, None),
 
-    (dir_period_holders, 'ton', 'ТСН', None, None, None),
-    (dir_period_holders, 'equipments', 'оборудование', None, None, None),
-    (dir_period_holders, 'monitoring', 'мониторинг', None, None, None),
+    # (dir_period_holders, 'ton', 'ТСН', None, None, None),
+    # (dir_period_holders, 'equipments', 'оборудование', None, None, None),
+    # (dir_period_holders, 'monitoring', 'мониторинг', None, None, None),
 ]
 
 src_catalog_items += period_directories
@@ -105,7 +105,13 @@ items_catalog: list[str: ItemCatalogDirectory] = [
     for x in src_catalog_items
 ]
 
-
+origin_items = (
+            (TON_ORIGIN, 'Территориальные сметные нормативы'),
+            (PNWC_ORIGIN, 'Нормативы Цен на Комплексы Работ'),
+            (POM_ORIGIN, 'Проектно Сметные Модули'),
+            (EQUIPMENTS_ORIGIN, "Оборудование"),
+            (MONITORING_ORIGIN, "Мониторинг цен для расчета индексов")
+        )
 
 #
 # ---------------------------------------------------------------------
@@ -131,3 +137,5 @@ if __name__ == "__main__":
 
     for data in items_catalog:
         ic(data)
+    for origin in origin_items:
+        ic(origin)

@@ -2,7 +2,7 @@ from icecream import ic
 from config import dbTolls
 from sql_queries import sql_items_queries, sql_catalog_queries
 from files_features import output_message_exit
-from tools.shared_features import get_origin_id
+from tools.shared.shared_features import get_origin_id
 
 
 def update_catalog_parent_himself(db: dbTolls, id: int) -> int | None:

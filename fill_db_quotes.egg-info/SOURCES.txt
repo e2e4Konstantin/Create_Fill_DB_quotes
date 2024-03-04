@@ -1,3 +1,4 @@
+README.md
 setup.py
 config/__init__.py
 config/const.py
@@ -5,11 +6,8 @@ config/db_config.py
 config/directories_items.py
 config/directory_config.py
 config/file_location_config.py
-config/paths_config.py
-config/src_data_config.py
-config/work_place_config.py
-download_data/__init__.py
-download_data/data_source_paths.py
+data_path/__init__.py
+data_path/work_place_config.py
 excel_features/__init__.py
 excel_features/read_excel.py
 files_features/__init__.py
@@ -40,7 +38,6 @@ tools/create_tables.py
 tools/fill_directory.py
 tools/insert_root_row_catalog.py
 tools/read_csv.py
-tools/shared_features.py
 tools/transfer_raw_attributes.py
 tools/transfer_raw_catalog_1_2_13.py
 tools/transfer_raw_catalog_quotes.py
@@ -51,7 +48,3 @@ tools/transfer_raw_options.py
 tools/transfer_raw_pnwc_resources.py
 tools/transfer_raw_pnwc_resources_to_catalog.py
 tools/transfer_raw_quotes.py
-tools/period/__init__.py
-tools/period/load_raw_period.py
-tools/shared/__init__.py
-tools/shared/load_df_to_db_table.py

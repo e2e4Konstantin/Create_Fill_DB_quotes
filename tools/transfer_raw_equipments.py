@@ -4,10 +4,10 @@ from icecream import ic
 from config import dbTolls
 
 from files_features import output_message_exit
-from tools.code_tolls import clear_code, text_cleaning, get_integer_value
+from tools.shared.code_tolls import clear_code, text_cleaning, get_integer_value
 from sql_queries import sql_raw_queries
 
-from tools.shared_features import (
+from tools.shared.shared_features import (
     update_product, insert_product, get_parent_catalog_id,
     get_product_by_code, delete_last_period_product_row, get_directory_id, get_origin_id, transfer_raw_items
 )

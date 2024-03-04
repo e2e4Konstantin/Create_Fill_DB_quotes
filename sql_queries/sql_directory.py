@@ -1,5 +1,8 @@
 
 sql_items_queries = {
+    "delete_all_data_items": """--sql
+        DELETE FROM tblItems;""",
+
     "select_items":  """SELECT * FROM tblItems;""",
     "select_items_id_team_name": """
         SELECT ID_tblItem FROM tblItems WHERE team IS ? and name IS ?;
@@ -25,9 +28,9 @@ sql_items_queries = {
 }
 
 sql_items_creates = {
-    "delete_table_items": """--sql 
+    "delete_table_items": """--sql
         DROP TABLE IF EXISTS tblItems;""",
-    "delete_index_items": """--sql 
+    "delete_index_items": """--sql
         DROP INDEX IF EXISTS idxItems;""",
 
     "delete_table_items_history": """--sql

@@ -1,12 +1,12 @@
 import sqlite3
 
 from icecream import ic
-from config import dbTolls, DirectoryItem, PNWC_CATALOG
+from config import dbTolls, DirectoryItem, PNWC_ORIGIN
 from sql_queries import sql_items_queries
 from files_features import output_message, output_message_exit
-from tools.code_tolls import clear_code, get_integer_value
+from tools.shared.code_tolls import clear_code, get_integer_value
 
-from tools.shared_features import (
+from tools.shared.shared_features import (
     get_sorted_directory_items, get_catalog_id_by_origin_code, get_catalog_row_by_code,
     get_raw_data_items, update_catalog, insert_raw_catalog, get_origin_id, get_origin_row_by_id
 )
@@ -122,4 +122,4 @@ if __name__ == '__main__':
 
     period = 0
     read_csv_to_raw_table(db_name, pom_catalog, period)
-    transfer_raw_pnwc_resources_to_catalog(db_name, catalog_name=PNWC_CATALOG)
+    transfer_raw_pnwc_resources_to_catalog(db_name, catalog_name=PNWC_ORIGIN)

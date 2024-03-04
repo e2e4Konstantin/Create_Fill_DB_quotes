@@ -1,6 +1,5 @@
 from config.db_config import dbControl, dbTolls
-from config.directories_items import teams, items_catalog
+from config.directories_items import teams, items_catalog, period_directories, origin_items
 from config.directory_config import DirectoryItem
-from config.const import TON_CATALOG, PNWC_CATALOG, POM_CATALOG, LOCATIONS
-from config.work_place_config import work_place
-from config.file_location_config import FileLocation
+from config.const import TON_ORIGIN, PNWC_ORIGIN, POM_ORIGIN, EQUIPMENTS_ORIGIN, MONITORING_ORIGIN, LOCATIONS
+from config.file_location_config import FileLocation, Period, LocalPath, LocalData, FileDataInfo

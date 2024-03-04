@@ -1,10 +1,10 @@
 import sqlite3
 from icecream import ic
-from config import dbTolls, PNWC_CATALOG, TON_CATALOG
+from config import dbTolls, PNWC_ORIGIN, TON_ORIGIN
 from sql_queries import sql_attributes_queries, sql_raw_queries, sql_products_queries
 from files_features import output_message_exit
-from tools.code_tolls import clear_code, text_cleaning, get_integer_value
-from tools.shared_features import get_raw_data, get_origin_id
+from tools.shared.code_tolls import clear_code, text_cleaning, get_integer_value
+from tools.shared.shared_features import get_raw_data, get_origin_id
 
 
 def _make_data_from_raw_attribute(db: dbTolls, raw_attribute: sqlite3.Row, catalogs_id: tuple[int, int]) -> tuple:
@@ -68,8 +68,8 @@ def transfer_raw_data_to_attributes(db_filename: str):
     """
     with dbTolls(db_filename) as db:
         raw_attributes = get_raw_data(db)
-        ton_catalog_id = get_origin_id(db, origin_name=TON_CATALOG)
-        pnwc_catalog_id = get_origin_id(db, origin_name=PNWC_CATALOG)
+        ton_catalog_id = get_origin_id(db, origin_name=TON_ORIGIN)
+        pnwc_catalog_id = get_origin_id(db, origin_name=PNWC_ORIGIN)
         inserted_attributes = []
         deleted_attributes = []
         for row in raw_attributes:
