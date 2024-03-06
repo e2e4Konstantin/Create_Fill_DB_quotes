@@ -14,3 +14,7 @@ setup(
 
     packages=find_packages()
 )
+
+# https://stackoverflow.com/questions/71080546/what-is-the-preferred-way-to-develop-a-python-package-without-using-setup-py
+# https://packaging.python.org/en/latest/guides/modernize-setup-py-project/
+# https://pip.pypa.io/en/latest/reference/build-system/pyproject-toml/

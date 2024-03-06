@@ -23,7 +23,8 @@ class FileLocation:
 class Period:
     """Класс для ввода периодов."""
 
-    holders = {"тсн": "ton", "оборудование": "equipments", "мониторинг": "monitoring"}
+    holders = {"тсн": "ton", "оборудование": "equipments",
+               "мониторинг": "monitoring"}
     categories = {
         "дополнение": "supplement",
         "индекс": "index",
@@ -39,23 +40,38 @@ class Period:
         self.index_number = index_number  # номер индекса
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}:\tдержатель: {self.holder!r} категория: {self.category} дополнение: {self.supplement_number} индекс: {self.index_number}"
+        return f"{self.__class__.__name__}: раздел: {self.holder!r} категория: {self.category} дополнение: {self.supplement_number} индекс: {self.index_number}"
+
+    def get_data(self) -> tuple[str, str, str, str]:
+        return self.holder, self.category, self.supplement_number, self.index_number
 
 
-FileDataInfo = namedtuple(typename="FileDataInfo", field_names=['location', 'period'])
-FileDataInfo.__annotations__ = {'location': FileLocation, 'period': Period }
 
-LocalPath = namedtuple("LocalPath", ["db_file", "data_path", "param_path", "periods_path"])
+
+FileDataInfo = namedtuple(typename="FileDataInfo", field_names=[
+                          'file_location', 'period'])
+FileDataInfo.__annotations__ = {'location': FileLocation, 'period': Period}
+
+LocalPath = namedtuple(
+    "LocalPath", ["db_file", "data_path", "param_path", "periods_path"])
 
 
 class LocalData:
     db_file: str = None
     periods: dict[str: Period] = {}
-    src_data: dict[str: FileLocation] = {}
+    src_data: dict[str: FileDataInfo] = {} # src_data['catalog_68_dop'].file_location
     src_periods_data: str = None
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}:\nБД: {self.db_file!r},\nпериоды: {len(self.periods)}, данные: {len(self.src_data)},\nисходные периоды:{self.src_periods_data!r}"
+
+
+    def get_data(self, data_name: str) -> tuple[str, tuple[str, str, str, str]] | None:
+        """Создает кортеж с полным именем файла и данными периода. """
+        file = self.src_data[data_name].file_location.location
+        period = self.src_data[data_name].period.get_data()
+        return file, period
+
 
 if __name__ == "__main__":
     location = "office"

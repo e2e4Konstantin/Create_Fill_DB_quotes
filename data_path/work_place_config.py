@@ -34,12 +34,10 @@ def set_data_location(work_location_name: str) -> LocalData:
     data.src_periods_data = local_paths[work_location_name].periods_path
     # 68 Period
     data.periods["tsn_period_68_dop"] = Period("тсн", "дополнение", 68, 196)
-    data.periods["eqp_period_35_dop"] = Period(
-        "оборудование", "дополнение", 35, 3)
+    data.periods["eqp_period_35_dop"] = Period("оборудование", "дополнение", 35, 3)
     # 67 Period
     data.periods["tsn_period_67_dop"] = Period("тсн", "дополнение", 67, 195)
-    data.periods["eqp_period_34_dop"] = Period(
-        "оборудование", "дополнение", 34, 40)
+    data.periods["eqp_period_34_dop"] = Period("оборудование", "дополнение", 34, 40)
     # 68 data
     data.src_data["catalog_68_dop"] = FileDataInfo(FileLocation(
         "TABLES_68.csv", data_local_path), data.periods["tsn_period_67_dop"])
