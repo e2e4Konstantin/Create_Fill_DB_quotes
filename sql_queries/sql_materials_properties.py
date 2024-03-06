@@ -4,7 +4,7 @@ sql_properties_materials_queries = {
 
     "create_table_properties_materials": """--sql
         CREATE TABLE IF NOT EXISTS tblPropertiesMaterials
-        -- таблица для свойств Материалы Глава 1.
+        -- таблица Свойства Материалов Глава 1.
         (
             ID_tblPropertiesMaterial                  INTEGER PRIMARY KEY NOT NULL,
             FK_tblPropertiesMaterials_tblProducts     INTEGER NOT NULL,   -- id машины / родителя

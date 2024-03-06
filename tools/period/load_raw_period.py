@@ -4,7 +4,7 @@ from pandas import DataFrame
 from icecream import ic
 from config import dbTolls
 from excel_features import read_excel_to_df, read_csv_to_df
-from tools import load_df_to_db_table
+from tools.shared.load_df_to_db_table import load_df_to_db_table
 from config import LocalData, TON_ORIGIN
 from tools.shared.shared_features import get_origin_id, get_directory_id, get_period_by_title
 from tools.shared.code_tolls import text_cleaning, get_integer_value, date_parse
@@ -19,9 +19,9 @@ def _load_xlsx_raw_data_periods(excel_file_name: str, sheet_name: str, db_full_f
     return load_df_to_db_table(df, db_full_file_name, "tblRawData")
 
 
-def _load_csv_raw_data_periods(csv_file_name: str, db_full_file_name: str) -> int:
+def _load_csv_raw_data_periods(csv_file_name: str, db_full_file_name: str, delimiter: str = ";") -> int:
     """ Заполняет таблицу tblRawData данными из csv файла  данными выгрузки периодов. """
-    df: DataFrame = read_csv_to_df(csv_file_name)
+    df: DataFrame = read_csv_to_df(csv_file_name, delimiter)
     # df.to_clipboard()
     result = load_df_to_db_table(df, db_full_file_name, "tblRawData")
     return result
@@ -49,12 +49,13 @@ def _insert_period(db: dbTolls, data) -> int | None:
 def _make_data_from_raw_supplement_ton(db: dbTolls, origin_id: int, category_id: int, raw_period: sqlite3.Row) -> tuple | None:
     """ Готовит данные 'ТСН Период Дополнение' для вставки в таблицу tblPeriods.
         Получает строку с исходными данными из таблицы tblRawData. Возвращает кортеж с данными для вставки. """
-    # ['Начало', 'Тип периода', 'Статус', 'Окончание', 'Наименование', 'Индексный период', 'Комментарий',
-    # 'Предыдущий период', 'Родительский период']
-    title = text_cleaning(raw_period['Наименование'])
+    # [id, date_start, period_type, date_end, title, is_infl_rate,cmt, created_on, created_by, modified_on, 
+    # modified_by, parent_id, previous_id, base_type_code, deleted_on]
+    
+    title = text_cleaning(raw_period['title'])
     supplement_num = get_integer_value(title.split()[1])
     index_num = 0
-    date_start = date_parse(text_cleaning(raw_period['Начало']))
+    date_start = date_parse(text_cleaning(raw_period['date_start']))
     comment = text_cleaning(raw_period['Комментарий'])
     ID_parent = None
     # title, supplement_num, index_num, date_start, comment, ID_parent,
@@ -92,7 +93,8 @@ def _make_data_from_index_ton(db: dbTolls, origin_id: int, category_id: int, raw
 def _periods_supplement_parsing(db_file: str):
     """ Запись периодов категории 'Дополнение' из tblRawData в боевую таблицу периодов. Для ТСН."""
     with dbTolls(db_file) as db:
-        supplements_ton = _get_raw_data_by_pattern(db, column_name="[Наименование]", pattern="^\s*Дополнение\s+\d+\s*$")
+        supplements_ton = _get_raw_data_by_pattern(
+            db, column_name="[title]", pattern="^\s*Дополнение\s+\d+\s*$")
         ic(len(supplements_ton))
         if supplements_ton is None:
             return None
@@ -136,17 +138,18 @@ def _index_periods_parsing(db_file: str):
 
 def parsing_raw_data_periods(data_paths: LocalData):
     """ 0: Success"""
-    # csv_periods_file = data_paths.src_periods_data
+    csv_periods_file = data_paths.src_periods_data
     db_file = data_paths.db_file
-    # result = _load_csv_raw_data_periods(csv_periods_file, db_file)
-    # message = f"Данные по периодам прочитаны в tblRawData из файла {csv_periods_file!r}: {result=}"
-    # ic(message)
+    result = _load_csv_raw_data_periods(csv_periods_file, db_file, delimiter=",")
+    message = f"Данные по периодам прочитаны в tblRawData из файла {csv_periods_file!r}: {result=}"
+    ic(message)
+
     # !!!!!!!!!!!!
     with dbTolls(db_file) as db:
         db.go_execute(sql_periods_queries["delete_all_data_periods"])
 
     _periods_supplement_parsing(db_file)
-    _index_periods_parsing(db_file)
+    # _index_periods_parsing(db_file)
 
 
     # select * from tblRawData where [Наименование] REGEXP '^\s*\d+\s+индекс/дополнение\s+\d+\s+\(.+\)\s*$';            #
@@ -156,7 +159,7 @@ def parsing_raw_data_periods(data_paths: LocalData):
 if __name__ == '__main__':
     from data_path import set_data_location
 
-    location = "home"
+    location = "office"
     di = set_data_location(location)
     # print(di)
     r = parsing_raw_data_periods(di)

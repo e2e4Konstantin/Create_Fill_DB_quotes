@@ -33,7 +33,6 @@ sql_queries/sql_quotes_chains.py
 sql_queries/sql_raw.py
 sql_queries/sql_resources_properties.py
 tools/__init__.py
-tools/code_tolls.py
 tools/create_tables.py
 tools/fill_directory.py
 tools/insert_root_row_catalog.py

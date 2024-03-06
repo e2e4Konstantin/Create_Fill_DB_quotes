@@ -39,13 +39,13 @@ sql_periods_queries = {
         FOREIGN KEY (FK_Origin_tblOrigins_tblPeriods) REFERENCES tblOrigins (ID_tblOrigin),
         FOREIGN KEY (FK_Category_tblItems_tblPeriods) REFERENCES tblItems (ID_tblItem),
 
-        UNIQUE (supplement_num, index_num, title, FK_Category_tblItems_tblPeriods, FK_Origin_tblOrigins_tblPeriods)
+        UNIQUE (supplement_num, index_num, title, FK_Origin_tblOrigins_tblPeriods, FK_Category_tblItems_tblPeriods)
     );
     """,
 
     "create_index_periods": """--sql
         CREATE UNIQUE INDEX IF NOT EXISTS idxPeriods ON tblPeriods (
-            FK_Holder_tblItems_tblPeriods, FK_Category_tblItems_tblPeriods, supplement_num, index_num
+            FK_Origin_tblOrigins_tblPeriods, FK_Category_tblItems_tblPeriods, supplement_num, index_num
         );
     """,
 
