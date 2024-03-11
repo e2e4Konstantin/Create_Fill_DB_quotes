@@ -3,8 +3,9 @@ import re
 from pandas import DataFrame
 from icecream import ic
 from config import dbTolls
-from excel_features import read_excel_to_df, read_csv_to_df
-from tools.shared.load_df_to_db_table import load_df_to_db_table
+
+from tools.shared.excel_df_raw_table_transfer import load_csv_to_raw_table
+
 from config import LocalData, TON_ORIGIN
 from tools.shared.shared_features import (
     get_origin_id,
@@ -16,29 +17,10 @@ from sql_queries import sql_periods_queries
 from files_features import output_message
 
 
-def _load_xlsx_raw_data_periods(
-    excel_file_name: str, sheet_name: str, db_full_file_name: str
-) -> int:
-    """Заполняет таблицу tblRawData данными из excel файла со страницы sheet_name данными выгрузки периодов."""
-    df: DataFrame = read_excel_to_df(excel_file_name, sheet_name)
-    # df.to_clipboard()
-    return load_df_to_db_table(df, db_full_file_name, "tblRawData")
-
-
-def _load_csv_raw_data_periods(
-    csv_file_name: str, db_full_file_name: str, delimiter: str = ";"
-) -> int:
-    """Заполняет таблицу tblRawData данными из csv файла  данными выгрузки периодов."""
-    df: DataFrame = read_csv_to_df(csv_file_name, delimiter)
-    # df.to_clipboard()
-    result = load_df_to_db_table(df, db_full_file_name, "tblRawData")
-    return result
-
-
 def _get_raw_data_by_pattern(
     db: dbTolls, column_name: str, pattern: str
 ) -> list[sqlite3.Row] | None:
-    """Выбрать записи по столбцу column_name в соответствии с (re) паттерном из сырой таблицы."""
+    """Выбрать записи по столбцу column_name в соответствии с (re) паттерном из таблицы tblRawData."""
     query = f"SELECT * FROM tblRawData WHERE {column_name} REGEXP ?;"
     raw_lines = db.go_select(query, (pattern,))
     if not raw_lines:
@@ -53,8 +35,7 @@ def _get_raw_data_by_pattern(
 def _insert_period(db: dbTolls, data) -> int | None:
     """Получает кортеж с данными периода для вставки в таблицу tblPeriods."""
     message = f"INSERT tblPeriods: {data!r}"
-    inserted_id = db.go_insert(
-        sql_periods_queries["insert_period"], data, message)
+    inserted_id = db.go_insert(sql_periods_queries["insert_period"], data, message)
     if inserted_id:
         return inserted_id
     output_message(f"период: {data}", f"не добавлен в tblPeriods")
@@ -152,25 +133,15 @@ def _ton_supplement_periods_parsing(db_file: str):
             db, directory_team="periods_category", item_name="supplement"
         )
         ic(ton_origin_id, category_id)
-        # inserted_success, insert_fail = [], []
         for supplement in supplements_ton:
             data = _make_data_from_raw_supplement_ton(
                 db, ton_origin_id, category_id, supplement
             )
-            # ic(data)
             period_id = _insert_period(db, data)
-            # if period_id:
-            #     inserted_success.append((period_id, data))
-            # else:
-            #     insert_fail.append(data)
-        db.go_execute(
-            sql_periods_queries["update_periods_supplement_parent"], (
-                ton_origin_id, category_id)
-        )
     return 0
 
 
-def _ton_index_periods_parsing(db_file: str):
+def _ton_index_periods_parsing(db_file: str) -> int:
     """Запись периодов ТСН категории 'Индекс' из tblRawData в боевую таблицу периодов."""
     with dbTolls(db_file) as db:
         pattern = "^\s*\d+\s+индекс\/дополнение\s+\d+\s+\(.+\)\s*$"
@@ -185,27 +156,55 @@ def _ton_index_periods_parsing(db_file: str):
             db, directory_team="periods_category", item_name="index"
         )
         ic(ton_origin_id, category_id)
-
         for index in indexes_ton:
-            data = _make_data_from_index_ton(
-                db, ton_origin_id, category_id, index)
+            data = _make_data_from_index_ton(db, ton_origin_id, category_id, index)
             period_id = _insert_period(db, data)
+    return 0
+
+def _ton_update_periods(db_file: str) -> int:
+    """ Обновляет данные периодов:
+            получает id справочников
+            для Дополнений - родительское дополнение,
+            для Индексов - родительский индекс,
+            для Дополнений - предыдущий (последний) индексный период.
+    """
+    with dbTolls(db_file) as db:
+        ton_origin_id = get_origin_id(db, origin_name=TON_ORIGIN)
+        dir_name = "periods_category"
+        category_supplement_id = get_directory_id(
+            db, directory_team=dir_name, item_name="supplement"
+        )
+        category_index_id = get_directory_id(
+            db, directory_team=dir_name, item_name="index"
+        )
         db.go_execute(
-            sql_periods_queries["update_periods_index_parent"], (
-                ton_origin_id, category_id)
+            sql_periods_queries["update_periods_supplement_parent"],
+            {"id_origin": ton_origin_id, "id_item": category_supplement_id}
+        )
+        db.go_execute(
+            sql_periods_queries["update_periods_index_parent"],
+             {"id_origin": ton_origin_id, "id_item": category_index_id}
+        )
+        db.go_execute(
+            sql_periods_queries["update_periods_index_num_by_max"],
+            {
+                "id_origin": ton_origin_id,
+                "id_item_index": category_index_id,
+                "id_item_supplement": category_supplement_id
+            }
         )
     return 0
 
 
+
 def parsing_raw_periods(data_paths: LocalData):
-    """ Читает данные о периодах из выгруженного файла из основной базы.
+    """Читает данные о периодах из выгруженного файла из основной базы.
         Удаляет все данные из таблицы периодов.
         Загружает периоды типа "Дополнение" и "Индексы" для раздела ТСН.
     0: Success"""
     csv_periods_file = data_paths.src_periods_data
     db_file = data_paths.db_file
-    result = _load_csv_raw_data_periods(
-        csv_periods_file, db_file, delimiter=",")
+    result = load_csv_to_raw_table(csv_periods_file, db_file, delimiter=",")
     message = f"Данные по периодам прочитаны в tblRawData из файла {csv_periods_file!r}: {result=}"
     ic(message)
     # Удалить все периоды !!!!!!!!!!!!
@@ -213,6 +212,7 @@ def parsing_raw_periods(data_paths: LocalData):
         db.go_execute(sql_periods_queries["delete_all_data_periods"])
     _ton_supplement_periods_parsing(db_file)
     _ton_index_periods_parsing(db_file)
+    _ton_update_periods(db_file)
     return 0
 
 

@@ -8,7 +8,7 @@ from tools.shared.excel_df_raw_table_transfer import load_csv_to_raw_table
 def parsing_raw_quotes(data_paths: LocalData) -> int:
     """заполнить каталог расценок и сами расценки"""
     file, period = data_paths.get_data('catalog_67_dop')
-    load_csv_to_raw_table(csv_file=file, LocalData.db_file, delimiter = ";")
+    load_csv_to_raw_table(csv_file=file, db_file=data_paths.db_file, delimiter = ";")
     return 0
 
     # period = 67

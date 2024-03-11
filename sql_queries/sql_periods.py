@@ -13,19 +13,60 @@ sql_periods_queries = {
 
     "update_periods_supplement_parent": """--sql
         -- Для дополнений ТСН устанавливает ID родительской записи где номер дополнения меньше на 1
+        -- named style parameter: {"id_origin": 1, "id_item": 27}, 27 - supplement
         UPDATE tblPeriods
-            SET ID_parent = p.ID_tblPeriod
-            FROM (SELECT ID_tblPeriod, supplement_num FROM tblPeriods WHERE FK_Origin_tblOrigins_tblPeriods=? AND FK_Category_tblItems_tblPeriods=?) AS p
-            WHERE p.supplement_num = tblPeriods.supplement_num - 1;
+        SET ID_parent = p.ID_tblPeriod
+        FROM (
+            SELECT ID_tblPeriod, supplement_num
+            FROM tblPeriods
+            WHERE
+                FK_Origin_tblOrigins_tblPeriods = :id_origin AND
+                FK_Category_tblItems_tblPeriods = :id_item
+        ) AS p
+        WHERE
+            p.supplement_num = tblPeriods.supplement_num - 1 AND
+            tblPeriods.FK_Origin_tblOrigins_tblPeriods = :id_origin AND
+            tblPeriods.FK_Category_tblItems_tblPeriods = :id_item;
         """,
 
-        "update_periods_index_parent": """--sql
+    "update_periods_index_parent": """--sql
         -- Для индексов ТСН, устанавливает ID родительской записи на ту, где номер индекса меньше на 1.
+        -- named style parameter: {"id_origin": 1, "id_item": 28}, 28 - index
         UPDATE tblPeriods
-            SET ID_parent = p.ID_tblPeriod
-            FROM (select ID_tblPeriod, index_num from tblPeriods where FK_Origin_tblOrigins_tblPeriods=? AND  FK_Category_tblItems_tblPeriods=?) AS p
-            WHERE p.index_num = tblPeriods.index_num - 1;
+        SET ID_parent = p.ID_tblPeriod
+        FROM (
+            SELECT ID_tblPeriod, index_num
+            FROM tblPeriods
+            WHERE
+                FK_Origin_tblOrigins_tblPeriods = :id_origin AND
+                FK_Category_tblItems_tblPeriods = :id_item
+        ) AS p
+        WHERE
+            p.index_num = tblPeriods.index_num - 1 AND
+            FK_Origin_tblOrigins_tblPeriods = :id_origin AND
+            FK_Category_tblItems_tblPeriods = :id_item;
         """,
+
+    "update_periods_index_num_by_max": """--sql
+        -- Для дополнений ТСН устанавливает номер индекса
+        -- на максимальный из группы индексов предыдущего дополнения
+        -- named style parameter:
+        -- {"id_origin": 1, "id_item_index": 28, "id_item_supplement": 27}
+        UPDATE tblPeriods
+        SET index_num = p.max_num
+        FROM (
+            SELECT max(u.index_num) as max_num, u.supplement_num
+            FROM tblPeriods u
+            WHERE
+                u.FK_Origin_tblOrigins_tblPeriods = :id_origin AND
+                u.FK_Category_tblItems_tblPeriods = :id_item_index
+            GROUP BY u.supplement_num
+        ) AS p
+        WHERE
+            p.supplement_num = tblPeriods.supplement_num - 1 AND
+            tblPeriods.FK_Origin_tblOrigins_tblPeriods = :id_origin AND
+            tblPeriods.FK_Category_tblItems_tblPeriods = :id_item_supplement;
+    """,
 
     "delete_table_periods": """DROP TABLE IF EXISTS tblPeriods;""",
     "delete_index_periods": """DROP INDEX IF EXISTS idxPeriods;""",
@@ -74,11 +115,14 @@ sql_periods_queries = {
                 p.index_num AS [Индекс],
                 p.title AS [Название],
                 p.date_start AS [Начало],
-                p.ID_parent AS [id родителя]
+                p.ID_parent AS [id родителя],
+                s.title AS [родитель]
             FROM tblPeriods AS p
             LEFT JOIN tblOrigins AS o ON o.ID_tblOrigin = p.FK_Origin_tblOrigins_tblPeriods
             LEFT JOIN tblItems AS i ON i.ID_tblItem = p.FK_Category_tblItems_tblPeriods
-            ORDER BY i.title, i.title, p.supplement_num DESC, p.index_num DESC;
+            LEFT JOIN tblPeriods AS s ON s.ID_tblPeriod = p.ID_parent
+            ORDER BY p.supplement_num DESC, p.index_num DESC;
+            --p.date_start DES
     """,
 
     "select_period_by_title": """--sql

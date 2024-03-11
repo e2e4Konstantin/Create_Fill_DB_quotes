@@ -120,8 +120,8 @@ def get_integer_value(value: str) -> int:
 def date_parse(value: str):
     """  Конвертирует строку в формат даты. """
     try:
-        t = parser.parse(value, parser.parserinfo(dayfirst=True))
-        return t.strftime("%Y-%m-%d")
+        t = parser.parse(value)
+        return t.strftime(r"%Y-%m-%d")
     except:
         return None
 
@@ -132,6 +132,13 @@ if __name__ == "__main__":
     from icecream import ic
 
     ic(date_parse('15.10.2024'))
+    date = '2024-01-11 00:00:00'
+    res = f"{date!r}: {date_parse(date)}"
+    ic(res)
+
+    date = '2024-02-27 00:00:00'
+    res = f"{date!r}: {date_parse(date)}"
+    ic(res)
 
     # item_prefix = r'^\s*Глава\s*((\d+)\.)*'
     # x_title = 'Глава 1. Средние сметные цены на материалы, изделия и конструкции'

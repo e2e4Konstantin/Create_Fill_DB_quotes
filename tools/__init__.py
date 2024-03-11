@@ -2,7 +2,7 @@
 from tools.create.create_fill_directories import db_create_fill_directory
 from tools.periods.load_raw_periods import parsing_raw_periods
 
-from tools.shared.read_csv import read_csv_to_raw_table
+
 
 
 # from tools.shared.load_df_to_db_table import load_df_to_db_table

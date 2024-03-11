@@ -8,7 +8,7 @@ from files_features import create_abspath_file
 def set_data_location(work_location_name: str) -> LocalData:
     """ Формирует ссылки на данные в зависимости от места работы. """
     db_file_name = "Normative.sqlite3"
-    src_periods_file_name = "period_table.csv"  # "periods.csv"
+    src_periods_file_name = "period_export_table.csv"  # "periods.csv"
     local_paths = {
         "office": LocalPath(
             db_file=create_abspath_file(
