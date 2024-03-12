@@ -11,12 +11,10 @@ def set_data_location(work_location_name: str) -> LocalData:
     src_periods_file_name = "period_export_table.csv"  # "periods.csv"
     local_paths = {
         "office": LocalPath(
-            db_file=create_abspath_file(
-                r"C:\Users\kazak.ke\Documents\PythonProjects\DB", db_file_name),
+            db_file=create_abspath_file(r"C:\Users\kazak.ke\Documents\PythonProjects\DB", db_file_name),
             data_path=r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\csv",
             param_path=r"C:\Users\kazak.ke\Documents\Задачи\Парсинг_параметризация\csv",
-            periods_path=create_abspath_file(
-                r"C:\Users\kazak.ke\Documents\PythonProjects\Create_Fill_DB_quotes\output", src_periods_file_name)
+            periods_path=create_abspath_file(r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Периоды", src_periods_file_name)
         ),
         "home": LocalPath(
             db_file=create_abspath_file(

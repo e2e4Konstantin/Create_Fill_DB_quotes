@@ -15,7 +15,7 @@ from data_path import set_data_location
 
 if __name__ == '__main__':
     # version = f"SQLite: {sqlite3.sqlite_version}\nPython: {sys.version}"
-    location = "home" # office  # home
+    location = "office" # office  # home
     local_path = set_data_location(location)
     ic(location, local_path.db_file)
 

@@ -35,7 +35,8 @@ def _get_raw_data_by_pattern(
 def _insert_period(db: dbTolls, data) -> int | None:
     """Получает кортеж с данными периода для вставки в таблицу tblPeriods."""
     message = f"INSERT tblPeriods: {data!r}"
-    inserted_id = db.go_insert(sql_periods_queries["insert_period"], data, message)
+    inserted_id = db.go_insert(
+        sql_periods_queries["insert_period"], data, message)
     if inserted_id:
         return inserted_id
     output_message(f"период: {data}", f"не добавлен в tblPeriods")
@@ -157,9 +158,11 @@ def _ton_index_periods_parsing(db_file: str) -> int:
         )
         ic(ton_origin_id, category_id)
         for index in indexes_ton:
-            data = _make_data_from_index_ton(db, ton_origin_id, category_id, index)
+            data = _make_data_from_index_ton(
+                db, ton_origin_id, category_id, index)
             period_id = _insert_period(db, data)
     return 0
+
 
 def _ton_update_periods(db_file: str) -> int:
     """ Обновляет данные периодов:
@@ -183,7 +186,7 @@ def _ton_update_periods(db_file: str) -> int:
         )
         db.go_execute(
             sql_periods_queries["update_periods_index_parent"],
-             {"id_origin": ton_origin_id, "id_item": category_index_id}
+            {"id_origin": ton_origin_id, "id_item": category_index_id}
         )
         db.go_execute(
             sql_periods_queries["update_periods_index_num_by_max"],
@@ -194,7 +197,6 @@ def _ton_update_periods(db_file: str) -> int:
             }
         )
     return 0
-
 
 
 def parsing_raw_periods(data_paths: LocalData):

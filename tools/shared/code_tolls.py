@@ -53,17 +53,17 @@ def text_cleaning(text: str) -> str | None:
     return None
 
 
-def split_code(src_code: str) -> tuple:
+def split_code(src_code: str) -> tuple[str, ...] | None:
     """ Разбивает шифр на части. '4.1-2-10' -> ('4', '1', '2', '10')"""
-    if src_code:
-        return tuple([x for x in re.split('[.-]', src_code) if x])
-    return tuple()
-    # return tuple(re.split('[.-]', src_code)) if src_code else tuple()
+    # if src_code:
+    #     return tuple([x for x in re.split('[.-]', src_code) if x])
+    # return tuple()
+    return tuple([x for x in re.split('[.-]', src_code) if x]) if src_code else None
 
 
-def split_code_int(src_code: str):
+def split_code_int(src_code: str) -> tuple[int, ...] | None:
     """ Разбивает шифр на части из чисел. '4.1-2-10' -> (4, 1, 2, 10)"""
-    return tuple(map(int, re.split('[.-]', src_code))) if src_code else tuple()
+    return tuple(map(int, re.split('[.-]', src_code))) if src_code else None
 
 
 def identify_item(src_code: str) -> tuple:
@@ -117,7 +117,7 @@ def get_integer_value(value: str) -> int:
     return int(value) if isint(value) else 0
 
 
-def date_parse(value: str):
+def date_parse(value: str) -> str | None:
     """  Конвертирует строку в формат даты. """
     try:
         t = parser.parse(value)
@@ -126,19 +126,52 @@ def date_parse(value: str):
         return None
 
 
+def convert_code_to_number(src_code: str) -> int | None:
+    """ Преобразует шифр в число. '4.1-2-10' -> 41300000000 
+        sys.maxsize = 9223372036854775807
+    """
+    if src_code and isinstance(src_code, str):
+        MAX_FACTOR = 10**10
+        splitted_code = split_code_int(src_code)
+        result = 0
+        for position, number in enumerate(splitted_code):
+            ml = MAX_FACTOR/(100**position)
+            result += number * ml
+        return int(result) if result > 0 else None
+    return None
 
+
+# def convert_number_to_code(number: int) -> str | None:
+#     """ Преобразует число d шифр. 41300000000 ==> '4.1-2-10' """
+#     if number and isinstance(number, int):
+#         MAX_FACTOR = 10**10
+#     return None
 
 if __name__ == "__main__":
     from icecream import ic
 
-    ic(date_parse('15.10.2024'))
-    date = '2024-01-11 00:00:00'
-    res = f"{date!r}: {date_parse(date)}"
-    ic(res)
+    codes = ('55.11-22-33-77-99', '1.1-2-8', '2', '4.1-2-10')
+    for s in codes:
+        x = convert_code_to_number(s)
+        out = f"{s:18} ==> {x:15}"
+        ic(out)
 
-    date = '2024-02-27 00:00:00'
-    res = f"{date!r}: {date_parse(date)}"
-    ic(res)
+    # x = split_code_int('5.1-2-8')
+    # ic(x)
+
+    # x = split_code_int('5.1-1-1-0-1')
+    # ic(x)
+    
+
+
+    # ic(date_parse('15.10.2024'))
+    # date = '2024-01-11 00:00:00'
+    # res = f"{date!r}: {date_parse(date)}"
+    # ic(res)
+
+    # date = '2024-02-27 00:00:00'
+    # res = f"{date!r}: {date_parse(date)}"
+    # ic(res)
 
     # item_prefix = r'^\s*Глава\s*((\d+)\.)*'
     # x_title = 'Глава 1. Средние сметные цены на материалы, изделия и конструкции'
