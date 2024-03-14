@@ -96,11 +96,11 @@ sql_catalog_queries = {
 
 
     # -- >  INSERT ----------------------------------------------------------------------
-    "insert_catalog": """
+    "insert_catalog": """--sql
         INSERT INTO tblCatalogs (
-            FK_tblCatalogs_tblOrigins, ID_parent, period, code, description, FK_tblCatalogs_tblItems
+            FK_tblCatalogs_tblOrigins, ID_parent, period, code, description, FK_tblCatalogs_tblItems, digit_code
         ) 
-        VALUES (?, ?, ?, ?, ?, ?);
+        VALUES (?, ?, ?, ?, ?, ?, ?);
     """,
 
     # -- >  UPDATE ----------------------------------------------------------------------
@@ -134,7 +134,7 @@ sql_catalog_creates = {
     "delete_table_catalog_history": """DROP TABLE IF EXISTS _tblHistoryCatalogs;""",
     "delete_index_catalog_history": """DROP INDEX IF EXISTS idxHistoryCatalogs;""",
 
-    "create_table_catalogs": """
+    "create_table_catalogs": """--sql
         CREATE TABLE IF NOT EXISTS tblCatalogs
             (
                 ID_tblCatalog               INTEGER PRIMARY KEY NOT NULL,
@@ -144,6 +144,7 @@ sql_catalog_creates = {
                 code	 	  TEXT NOT NULL,                -- шифр элемента каталога    								
                 description	  TEXT NOT NULL,                -- описание
                 FK_tblCatalogs_tblItems INTEGER NOT NULL,   -- тип элемента каталога
+                digit_code    INTEGER NOT NULL,
                 last_update INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')),	
                 FOREIGN KEY (FK_tblCatalogs_tblItems) REFERENCES tblItems (ID_tblItem),
                 UNIQUE (FK_tblCatalogs_tblOrigins, code)
@@ -152,11 +153,11 @@ sql_catalog_creates = {
 
     "create_index_catalog": """
         CREATE UNIQUE INDEX IF NOT EXISTS idxCatalogs ON tblCatalogs (
-            FK_tblCatalogs_tblOrigins, code, period, FK_tblCatalogs_tblItems 
+            FK_tblCatalogs_tblOrigins, code, period, FK_tblCatalogs_tblItems, digit_code
         );
     """,
 
-    "create_table_history_catalog": """
+    "create_table_history_catalog": """--sql
         CREATE TABLE IF NOT EXISTS _tblHistoryCatalogs (
             _rowid        INTEGER,
             ID_tblCatalog INTEGER,
@@ -166,6 +167,7 @@ sql_catalog_creates = {
             code          TEXT,
             description   TEXT,
             FK_tblCatalogs_tblItems INTEGER,
+            digit_code    INTEGER,
             last_update   INTEGER,          
             _version      INTEGER NOT NULL,
             _updated      INTEGER NOT NULL,
@@ -173,48 +175,48 @@ sql_catalog_creates = {
         );
         """,
 
-    "create_index_history_catalog": """
+    "create_index_history_catalog": """--sql
         CREATE INDEX IF NOT EXISTS idxHistoryCatalogs ON _tblHistoryCatalogs (_rowid);
     """,
 
-    "create_trigger_history_catalog_insert": """
+    "create_trigger_history_catalog_insert": """--sql
         CREATE TRIGGER IF NOT EXISTS tgrHistoryCatalogsInsert
         AFTER INSERT ON tblCatalogs
         BEGIN
             INSERT INTO _tblHistoryCatalogs (
                 _rowid, ID_tblCatalog, FK_tblCatalogs_tblOrigins, 
-                ID_parent, period, code, description, FK_tblCatalogs_tblItems, last_update, 
+                ID_parent, period, code, description, FK_tblCatalogs_tblItems, digit_code, last_update, 
                 _version, _updated, _mask 
             )
             VALUES (
                 new.rowid, new.ID_tblCatalog, new.FK_tblCatalogs_tblOrigins, 
                 new.ID_parent, new.period, new.code, new.description, 
-                new.FK_tblCatalogs_tblItems, new.last_update, 
+                new.FK_tblCatalogs_tblItems, new.digit_code, new.last_update, 
                 1, unixepoch('now'), 0
             );
         END;
     """,
 
-    "create_trigger_history_catalog_delete": """
+    "create_trigger_history_catalog_delete": """--sql
         CREATE TRIGGER tgrHistoryCatalogsDelete
         AFTER DELETE ON tblCatalogs
         BEGIN
             INSERT INTO _tblHistoryCatalogs (
                 _rowid, ID_tblCatalog, FK_tblCatalogs_tblOrigins, 
-                ID_parent, period, code, description, FK_tblCatalogs_tblItems, last_update, 
+                ID_parent, period, code, description, FK_tblCatalogs_tblItems, digit_code, last_update, 
                 _version, _updated, _mask 
             )
             VALUES (
                 old.rowid, old.ID_tblCatalog, old.FK_tblCatalogs_tblOrigins, 
                 old.ID_parent, old.period, old.code, old.description,
-                old.FK_tblCatalogs_tblItems, old.last_update,
+                old.FK_tblCatalogs_tblItems, old.digit_code, old.last_update,
                 (SELECT COALESCE(MAX(_version), 0) FROM _tblHistoryCatalogs WHERE _rowid = old.rowid) + 1,
                 unixepoch('now'), -1
             );
         END;
     """,
 
-    "create_trigger_history_catalog_update": """
+    "create_trigger_history_catalog_update": """--sql
         CREATE TRIGGER IF NOT EXISTS tgrHistoryCatalogsUpdate
         AFTER UPDATE ON tblCatalogs
         FOR EACH ROW
@@ -222,7 +224,7 @@ sql_catalog_creates = {
             INSERT INTO _tblHistoryCatalogs (
                 _rowid, ID_tblCatalog, FK_tblCatalogs_tblOrigins, 
                 ID_parent, period, code, description, 
-                FK_tblCatalogs_tblItems, last_update, _version, _updated, _mask 
+                FK_tblCatalogs_tblItems, digit_code, last_update, _version, _updated, _mask 
             )
             SELECT 
                 old.rowid,
@@ -233,6 +235,7 @@ sql_catalog_creates = {
                 CASE WHEN old.code != new.code THEN new.code ELSE null END,
                 CASE WHEN old.description != new.description THEN new.description ELSE null END,
                 CASE WHEN old.FK_tblCatalogs_tblItems != new.FK_tblCatalogs_tblItems THEN new.FK_tblCatalogs_tblItems ELSE null END,
+                CASE WHEN old.digit_code != new.digit_code THEN new.digit_code ELSE null END,
                 CASE WHEN old.last_update != new.last_update THEN new.last_update ELSE null END,
                 (SELECT MAX(_version) FROM _tblHistoryCatalogs WHERE _rowid = old.rowid) + 1, 
                 unixepoch('now'),
@@ -243,7 +246,8 @@ sql_catalog_creates = {
                 (CASE WHEN old.code != new.code then 16 else 0 END) +
                 (CASE WHEN old.description != new.description then 32 else 0 END) +
                 (CASE WHEN old.FK_tblCatalogs_tblItems != new.FK_tblCatalogs_tblItems then 64 else 0 END) +
-                (CASE WHEN old.last_update != new.last_update then 128 else 0 END)
+                (CASE WHEN old.digit_code != new.digit_code then 128 else 0 END) +
+                (CASE WHEN old.last_update != new.last_update then 256 else 0 END)
             WHERE 
                 old.ID_tblCatalog != new.ID_tblCatalog OR
                 old.FK_tblCatalogs_tblOrigins != new.FK_tblCatalogs_tblOrigins OR
@@ -251,18 +255,20 @@ sql_catalog_creates = {
                 old.period != new.period OR
                 old.code != new.code OR
                 old.description != new.description OR
-                old.FK_tblCatalogs_tblItems != new.FK_tblCatalogs_tblItems OR   
+                old.FK_tblCatalogs_tblItems != new.FK_tblCatalogs_tblItems OR 
+                old.digit_code != new.digit_code OR
                 old.last_update != new.last_update;
         END;
     """,
 
-    "create_view_catalog": """
+    "create_view_catalog": """--sql
         CREATE VIEW viewCatalog AS
             SELECT
                 o.name AS 'источник',
                 m.period AS 'период',
                 i.title AS 'тип', 
                 m.code AS 'шифр', 
+                m.digit_code AS 'числ.шифр', 
                 m.description AS 'описание',
             
                 (SELECT i.title
@@ -280,8 +286,8 @@ sql_catalog_creates = {
                 
             FROM tblCatalogs m 
             LEFT JOIN tblOrigins AS o ON o.ID_tblOrigin = m.FK_tblCatalogs_tblOrigins
-            LEFT JOIN tblItems AS i ON i.ID_tblItem = m.FK_tblCatalogs_tblItems;
-            --ORDER BY m.code
+            LEFT JOIN tblItems AS i ON i.ID_tblItem = m.FK_tblCatalogs_tblItems
+            ORDER BY m.digit_code;
     """,
 
 }

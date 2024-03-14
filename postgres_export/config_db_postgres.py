@@ -6,17 +6,19 @@ import traceback
 from typing import Optional, Type
 from types import TracebackType
 
+from postgres_export.pg_config import AccessData, db_access
 
 class PostgresDB:
     """PostgreSQL class."""
-    def __init__(self):
-        self.host = '192.168.23.3'
-        self.username = 'read_larix'
-        self.password = 'read_larix'
-        self.port = 5432
-        self.dbname = 'normativ'
+    def __init__(self, data: AccessData ):
+        self.host = data.host
+        self.username = data.user
+        self.password = data.password
+        self.port = data.port
+        self.dbname = data.dbname
         self.connection = None
         self.cursor = None
+        self.LIMIT = 10
 
     def connect(self):
         """Connect to a database."""
@@ -99,9 +101,10 @@ class PostgresDB:
 if __name__ == "__main__":
     from icecream import ic
 
-    with PostgresDB() as (con, cur):
-        ic(con)
-        ic(cur.execute('SELECT 1+1;'))
+    with PostgresDB(db_access['vlad']) as db:
+        ic(db.connection)
+        ic(db.cursor.execute('SELECT 1+1;'))
         sql = "COPY (SELECT * FROM larix.period p LIMIT 10) TO STDOUT WITH CSV DELIMITER ';';"
+
         with open("test.csv", "w", encoding='utf-8') as file:
-            cur.copy_expert(sql, file)
+            db.cursor.copy_expert(sql, file)

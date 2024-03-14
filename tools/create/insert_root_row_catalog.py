@@ -27,12 +27,12 @@ def insert_root_record_to_catalog(db_filename: str, catalog: str, code: str, per
             ic(log)
             return None
         origin_id = get_origin_id(db, origin_name=catalog)
-        # FK_tblCatalogs_tblOrigins, ID_parent, period, code, description, FK_tblCatalogs_tblItems
-        data = (origin_id, 1, period, code, description, item_id)
+        # FK_tblCatalogs_tblOrigins, ID_parent, period, code, description, FK_tblCatalogs_tblItems, digit_code
+        data = (origin_id, 1, period, code, description, item_id, 1)
         message = f"вставка корневой записи в Каталог' {code}"
         inserted_id = db.go_insert(sql_catalog_queries["insert_catalog"], data, message)
-        _update_catalog_parent_himself(db, inserted_id)
         if inserted_id:
+            _update_catalog_parent_himself(db, inserted_id)
             log = f"добавлена запись в каталог {catalog}: {description!r} id: {inserted_id}"
             ic(log)
             return inserted_id

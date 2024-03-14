@@ -15,17 +15,21 @@ pg_sql_queries = {
         ORDER BY gwp.pressmark_sort LIMIT 10;
     """,
 
-    "q1": """--sql 
+    "q_test_1": """--sql 
         SELECT p.id AS period_id from larix.period p WHERE p.title = {0};
     """,
 
-    "q2": """--sql
-            COPY (
-                SELECT gwp.* 
-                FROM larix.group_work_process AS gwp 
-                WHERE gwp.deleted = 0 AND gwp.period = {period_id}%s 
-                ORDER BY gwp.pressmark_sort LIMIT 10
-            ) TO STDOUT WITH CSV DELIMITER ';'
+    "q_test_2": """--sql
+        COPY (
+            SELECT gwp.* 
+            FROM larix.group_work_process AS gwp 
+            WHERE gwp.deleted = 0 AND gwp.period = {period_id}%s 
+            ORDER BY gwp.pressmark_sort LIMIT 10
+        ) TO STDOUT WITH CSV DELIMITER ';'
+    """,
+
+    "": """--sql
+        SELECT 1+1 AS sum;
     """,
 }
 

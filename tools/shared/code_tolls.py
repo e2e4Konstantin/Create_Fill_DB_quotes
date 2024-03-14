@@ -126,34 +126,31 @@ def date_parse(value: str) -> str | None:
         return None
 
 
-def convert_code_to_number(src_code: str) -> int | None:
-    """ Преобразует шифр в число. '4.1-2-10' -> 41300000000 
+
+import itertools
+
+def code_to_number_2_digits(src_code: str) -> int | None:
+    """ Преобразует шифр в число. '4.1-2-77' -> 4010277000000 
         sys.maxsize = 9223372036854775807
     """
     if src_code and isinstance(src_code, str):
-        MAX_FACTOR = 10**10
+        factors = (10**12, 10**10, 10**8, 10**6, 10**4, 100, 1)
         splitted_code = split_code_int(src_code)
-        result = 0
-        for position, number in enumerate(splitted_code):
-            ml = MAX_FACTOR/(100**position)
-            result += number * ml
-        return int(result) if result > 0 else None
+        pairs = list(itertools.zip_longest(splitted_code, factors, fillvalue=0))
+        return sum(map(lambda x: x[0]*x[1], pairs))
     return None
 
 
-# def convert_number_to_code(number: int) -> str | None:
-#     """ Преобразует число d шифр. 41300000000 ==> '4.1-2-10' """
-#     if number and isinstance(number, int):
-#         MAX_FACTOR = 10**10
-#     return None
+
 
 if __name__ == "__main__":
     from icecream import ic
 
-    codes = ('55.11-22-33-77-99', '1.1-2-8', '2', '4.1-2-10')
+    codes = ('55.11-22-33-77-88-44', '1.1-2-8', '2', '4.1-2-77')
+    
     for s in codes:
-        x = convert_code_to_number(s)
-        out = f"{s:18} ==> {x:15}"
+        x = code_to_number_2_digits(s)
+        out = f"{s:22} ==> {x:22}"
         ic(out)
 
     # x = split_code_int('5.1-2-8')

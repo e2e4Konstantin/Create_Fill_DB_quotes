@@ -2,7 +2,7 @@
 # import sys
 # import sqlite3
 from icecream import ic
-
+s
 from tools import db_create_fill_directory, parsing_raw_periods
 # from tools import (read_csv_to_raw_table, transfer_raw_quotes_to_catalog, transfer_raw_data_to_quotes,
 #     transfer_raw_data_to_catalog, transfer_raw_data_to_materials, create_index_resources_raw_data,
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     db_create_fill_directory(local_path.db_file)    # Создать таблицы и заполнить справочники
     parsing_raw_periods(local_path)                 # заполнить периоды
 
-    parsing_raw_quotes(local_path)                  # заполнить каталог расценок и сами расценки
+    # parsing_raw_quotes(local_path)                  # заполнить каталог расценок и сами расценки
 
     # # --- > Расценки
     # # --------------------- > Каталог
