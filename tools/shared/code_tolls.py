@@ -129,7 +129,7 @@ def date_parse(value: str) -> str | None:
 
 import itertools
 
-def code_to_number_2_digits(src_code: str) -> int | None:
+def code_to_number_2_digits(src_code: str) -> int:
     """ Преобразует шифр в число. '4.1-2-77' -> 4010277000000 
         sys.maxsize = 9223372036854775807
     """
@@ -138,7 +138,7 @@ def code_to_number_2_digits(src_code: str) -> int | None:
         splitted_code = split_code_int(src_code)
         pairs = list(itertools.zip_longest(splitted_code, factors, fillvalue=0))
         return sum(map(lambda x: x[0]*x[1], pairs))
-    return None
+    return 1
 
 
 

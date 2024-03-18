@@ -104,11 +104,11 @@ sql_catalog_queries = {
     """,
 
     # -- >  UPDATE ----------------------------------------------------------------------
-    "update_catalog_id": """
+    "update_catalog_id": """--sql
         UPDATE tblCatalogs 
         SET (
-            FK_tblCatalogs_tblOrigins, ID_parent, period, code, description, FK_tblCatalogs_tblItems
-        ) = (?, ?, ?, ?, ?, ?) 
+            FK_tblCatalogs_tblOrigins, ID_parent, period, code, description, FK_tblCatalogs_tblItems, digit_code
+        ) = (?, ?, ?, ?, ?, ?, ?) 
         WHERE ID_tblCatalog = ?;
     """,
 
@@ -144,14 +144,14 @@ sql_catalog_creates = {
                 code	 	  TEXT NOT NULL,                -- шифр элемента каталога    								
                 description	  TEXT NOT NULL,                -- описание
                 FK_tblCatalogs_tblItems INTEGER NOT NULL,   -- тип элемента каталога
-                digit_code    INTEGER NOT NULL,
-                last_update INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')),	
+                digit_code    INTEGER NOT NULL,             -- шифр преобразованный в число
+                last_update INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')), -- время обновления
                 FOREIGN KEY (FK_tblCatalogs_tblItems) REFERENCES tblItems (ID_tblItem),
                 UNIQUE (FK_tblCatalogs_tblOrigins, code)
             );
         """,
 
-    "create_index_catalog": """
+    "create_index_catalog": """--sql
         CREATE UNIQUE INDEX IF NOT EXISTS idxCatalogs ON tblCatalogs (
             FK_tblCatalogs_tblOrigins, code, period, FK_tblCatalogs_tblItems, digit_code
         );

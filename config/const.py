@@ -5,5 +5,7 @@ POM_ORIGIN = "ПСМ"     # PROJECT OUTLAY MODULE
 EQUIPMENTS_ORIGIN = "оборудование"
 MONITORING_ORIGIN = "мониторинг"
 
-
 LOCATIONS = ("home", "office")
+
+CONFIG_FILE_NAME = 'quote_parsing.json'
+DB_FILE_NAME = 'Normative.sqlite3'

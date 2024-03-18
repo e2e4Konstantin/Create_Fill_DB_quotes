@@ -3,6 +3,16 @@
 
 # ---> Периоды -----------------------------------------------------------------------
 sql_periods_queries = {
+    "get_periods_supplement_index_num": """--sql
+        -- получить список периодов от n < дополнений < m и k < индексов < l
+        SELECT p.ID_tblPeriod AS id, p.title AS title, p.basic_database_id AS basic_id
+        FROM tblPeriods AS p
+        WHERE p.supplement_num >= ? AND p.supplement_num <= ? AND p.index_num >= ? AND p.index_num <= ?
+        ORDER BY p.supplement_num DESC, p.index_num DESC;
+    """,
+
+
+
     "insert_period": """--sql
         INSERT INTO tblPeriods (
             title, supplement_num, index_num, date_start, comment, ID_parent,
@@ -91,7 +101,7 @@ sql_periods_queries = {
         ID_parent                       INTEGER REFERENCES tblPeriods (ID_tblPeriod), -- родительский период
         FK_Origin_tblOrigins_tblPeriods INTEGER NOT NULL,   -- id источника/владельца для которых ведутся периоды (ТСН, Оборудование, Мониторинг)
         FK_Category_tblItems_tblPeriods INTEGER NOT NULL,   -- id типа периода (Дополнение, Индекс)
-        basic_database_id               INTEGER,            -- id основной бд (по которой ведется основная деятельность)
+        basic_database_id               INTEGER,            -- id основной бд (Postgres Normative)
         last_update                     INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')),
         FOREIGN KEY (FK_Origin_tblOrigins_tblPeriods) REFERENCES tblOrigins (ID_tblOrigin),
         FOREIGN KEY (FK_Category_tblItems_tblPeriods) REFERENCES tblItems (ID_tblItem),
