@@ -3,12 +3,25 @@
 
 # ---> Периоды -----------------------------------------------------------------------
 sql_periods_queries = {
-    "get_periods_supplement_index_num": """--sql
-        -- получить список периодов от n < дополнений < m и k < индексов < l
-        SELECT p.ID_tblPeriod AS id, p.title AS title, p.basic_database_id AS basic_id
+    # "get_periods_supplement_index_num": """--sql
+    #     -- получить список периодов от n < дополнений < m и k < индексов < l
+    #     SELECT p.ID_tblPeriod AS id, p.title AS title, p.basic_database_id AS basic_id
+    #     FROM tblPeriods AS p
+    #     WHERE p.supplement_num >= ? AND p.supplement_num <= ? AND p.index_num >= ? AND p.index_num <= ?
+    #     ORDER BY p.supplement_num DESC, p.index_num DESC;
+    # """,
+
+    "get_periods_supplement_num": """--sql
+        -- получить список периодов для заданного каталога и тпа периода в диапазоне n < дополнений < m
+        SELECT p.ID_tblPeriod AS id, p.title AS title, p.basic_database_id AS basic_id 
         FROM tblPeriods AS p
-        WHERE p.supplement_num >= ? AND p.supplement_num <= ? AND p.index_num >= ? AND p.index_num <= ?
-        ORDER BY p.supplement_num DESC, p.index_num DESC;
+        WHERE 
+        p.FK_Origin_tblOrigins_tblPeriods = ? AND 
+        p.FK_Category_tblItems_tblPeriods = ? AND 
+        p.supplement_num >= ? AND p.supplement_num <= ?
+        ORDER BY p.supplement_num DESC
+
+        
     """,
 
 

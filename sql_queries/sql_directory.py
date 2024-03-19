@@ -1,7 +1,6 @@
 
 sql_items_queries = {
-    "delete_all_data_items": """--sql
-        DELETE FROM tblItems;""",
+    "delete_all_data_items": """DELETE FROM tblItems;""",
 
     "select_items":  """SELECT * FROM tblItems;""",
     "select_items_id_team_name": """
@@ -12,8 +11,8 @@ sql_items_queries = {
         SELECT * FROM tblItems WHERE team IS ? and name IS ?;
     """,
 
-    "select_item_id_team_name": """
-        SELECT ID_tblItem FROM tblItems WHERE team IS ? and name IS ?;
+    "select_item_id_team_name": """--sql 
+        SELECT i.ID_tblItem FROM tblItems AS i WHERE i.team = ? AND  i.title = ?
     """,
 
     "select_items_team": """

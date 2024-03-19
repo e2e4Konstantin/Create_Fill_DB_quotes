@@ -1,1 +1,0 @@
-from data_path.work_place_config import set_data_location

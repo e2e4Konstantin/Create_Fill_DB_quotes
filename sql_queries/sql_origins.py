@@ -1,8 +1,12 @@
 sql_origins = {
+    "select_id_name_origins": """--sql
+        SELECT o.ID_tblOrigin FROM tblOrigins AS o WHERE o.name = ?;
+    """,
+
+
     "delete_table_origins": """DROP TABLE IF EXISTS tblOrigins;""",
     "delete_index_origins": """DROP INDEX IF EXISTS idxOrigins;""",
-    "delete_all_data_origins": """--sql
-        DELETE FROM tblOrigins;""",
+    "delete_all_data_origins": """DELETE FROM tblOrigins;""",
 
 
     # --- > справочник Источников происхождения данных в таблице tblProducts

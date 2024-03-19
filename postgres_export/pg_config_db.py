@@ -92,7 +92,7 @@ class PostgresDB:
                 self.cursor.execute(query, args)
                 records = self.cursor.fetchall()
             except psycopg2.DatabaseError as e:
-                traceback.print_exc(e)
+                print(e)
                 raise e
         return records if records else None
 

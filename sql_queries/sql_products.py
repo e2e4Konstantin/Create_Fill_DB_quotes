@@ -67,7 +67,7 @@ sql_products_queries = {
     "insert_product": """
         INSERT INTO tblProducts (
             FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins,
-            period, code, description, measurer, full_code
+            period, code, description, measurer, digit_code
         ) 
         VALUES ( ?, ?, ?, ?, ?, ?, ?, ?);
     """,
@@ -76,7 +76,7 @@ sql_products_queries = {
         UPDATE tblProducts 
         SET 
             FK_tblProducts_tblCatalogs = ?, FK_tblProducts_tblItems = ?, FK_tblProducts_tblOrigins = ?,
-            period = ?, code = ?, description = ?, measurer = ?, full_code = ?
+            period = ?, code = ?, description = ?, measurer = ?, digit_code = ?
         WHERE ID_tblProduct = ?;
     """,
 }
@@ -92,7 +92,7 @@ sql_products_creates = {
 
 
     # --- > Базовая таблица для хранения Расценок, Материалов, Машин и Оборудования ----
-    "create_table_products": """
+    "create_table_products": """--sql
         CREATE TABLE IF NOT EXISTS tblProducts
             (
                 ID_tblProduct               INTEGER PRIMARY KEY NOT NULL,
@@ -104,7 +104,7 @@ sql_products_creates = {
                 code	 	TEXT NOT NULL,		-- шифр					
                 description TEXT NOT NULL,      -- описание
                 measurer    TEXT,               -- единица измерения
-                full_code   TEXT,               -- полный шифр    
+                digit_code  INTEGER NOT NULL,   -- шифр преобразованный в число    
                 --
                 last_update INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')),	
                 
@@ -120,7 +120,7 @@ sql_products_creates = {
     """,
 
     # --- > История базовой таблицы -----------------------------------------------------
-    "create_table_history_products": """
+    "create_table_history_products": """--sql
         CREATE TABLE IF NOT EXISTS _tblHistoryProducts (
             _rowid        INTEGER,
             ID_tblProduct INTEGER,
@@ -131,7 +131,7 @@ sql_products_creates = {
             code	 	  TEXT,
             description	  TEXT,
             measurer      TEXT,
-            full_code     TEXT,
+            digit_code    INTEGER,
             last_update   INTEGER,          
             _version      INTEGER NOT NULL,
             _updated      INTEGER NOT NULL,
@@ -151,13 +151,13 @@ sql_products_creates = {
             INSERT INTO _tblHistoryProducts (
                 _rowid, ID_tblProduct, 
                 FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins, 
-                period, code, description, measurer, full_code, last_update,
+                period, code, description, measurer, digit_code, last_update,
                 _version, _updated, _mask 
             )
             VALUES (
                 new.rowid, new.ID_tblProduct, 
                 new.FK_tblProducts_tblCatalogs, new.FK_tblProducts_tblItems, new.FK_tblProducts_tblOrigins, 
-                new.period, new.code, new.description, new.measurer, new.full_code, new.last_update, 
+                new.period, new.code, new.description, new.measurer, new.digit_code, new.last_update, 
                 1, unixepoch('now'), 0
             );
         END;
@@ -170,13 +170,13 @@ sql_products_creates = {
             INSERT INTO _tblHistoryProducts (
                 _rowid, ID_tblProduct, 
                 FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins,
-                period, code, description, measurer, full_code, last_update,
+                period, code, description, measurer, digit_code, last_update,
                 _version, _updated, _mask
             )
             VALUES (
                 old.rowid, old.ID_tblProduct, 
                 old.FK_tblProducts_tblCatalogs, old.FK_tblProducts_tblItems, old.FK_tblProducts_tblOrigins, 
-                old.period, old.code, old.description, old.measurer, old.full_code, old.last_update, 
+                old.period, old.code, old.description, old.measurer, old.digit_code, old.last_update, 
                 (SELECT COALESCE(MAX(_version), 0) FROM _tblHistoryProducts WHERE _rowid = old.rowid) + 1,
                 unixepoch('now'), -1
             );
@@ -191,7 +191,7 @@ sql_products_creates = {
             INSERT INTO _tblHistoryProducts (
                 _rowid, ID_tblProduct, 
                 FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins, 
-                period, code, description, measurer, full_code, last_update,
+                period, code, description, measurer, digit_code, last_update,
                 _version, _updated, _mask
             )
             SELECT 
@@ -204,7 +204,7 @@ sql_products_creates = {
                 CASE WHEN old.code != new.code THEN new.code ELSE null END,
                 CASE WHEN old.description != new.description THEN new.description ELSE null END,
                 CASE WHEN old.measurer != new.measurer THEN new.measurer ELSE null END,
-                CASE WHEN old.full_code != new.full_code THEN new.full_code ELSE null END,
+                CASE WHEN old.digit_code != new.digit_code THEN new.digit_code ELSE null END,
                 CASE WHEN old.last_update != new.last_update THEN new.last_update ELSE null END,
                 
                 (SELECT MAX(_version) FROM _tblHistoryProducts WHERE _rowid = old.rowid) + 1,
@@ -218,7 +218,7 @@ sql_products_creates = {
                 (CASE WHEN old.code != new.code then 32 else 0 END) +
                 (CASE WHEN old.description != new.description then 64 else 0 END) +
                 (CASE WHEN old.measurer != new.measurer then 128 else 0 END) +
-                (CASE WHEN old.full_code != new.full_code then 256 else 0 END) +
+                (CASE WHEN old.digit_code != new.digit_code then 256 else 0 END) +
                 (CASE WHEN old.last_update != new.last_update then 512 else 0 END)
             WHERE 
                 old.ID_tblProduct != new.ID_tblProduct OR
@@ -229,7 +229,7 @@ sql_products_creates = {
                 old.code != new.code OR
                 old.description != new.description OR
                 old.measurer != new.measurer OR
-                old.full_code != new.full_code OR
+                old.digit_code != new.digit_code OR
                 old.last_update != new.last_update;
         END;
     """,

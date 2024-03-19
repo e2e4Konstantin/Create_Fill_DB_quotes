@@ -11,8 +11,26 @@ pg_sql_queries = {
         SELECT gwp.* 
         FROM larix.group_work_process AS gwp 
         WHERE gwp.deleted = 0 AND gwp.period = %(period_id)s 
-        ORDER BY gwp.pressmark_sort;
+        ORDER BY gwp.pressmark_sort
+        LIMIT 10;
     """,
+
+    "get_work_process_for_period_id": """--sql
+        SELECT 
+            p.title AS period_name, wp.id, gwp.pressmark AS gwp_pressmark, wp.pressmark,
+	        wp.title, uom.title AS unit_measure, wp.PERIOD AS period_id, wp.group_work_process
+        FROM larix.work_process wp
+        --
+        INNER JOIN larix.period p on p.id=wp.period
+        INNER JOIN larix.group_work_process gwp on gwp.id=wp.GROUP_WORK_PROCESS AND gwp.period=wp.period
+        INNER JOIN larix.unit_of_measure uom on uom.id=wp.unit_of_measure
+        --
+        WHERE wp.deleted = 0 AND wp.period = %(period_id)s
+        ORDER BY wp.pressmark_sort
+        LIMIT 10;
+    """,
+
+
 
 
     # -------------- test -----------------------
