@@ -20,10 +20,7 @@ sql_periods_queries = {
         p.FK_Category_tblItems_tblPeriods = ? AND 
         p.supplement_num >= ? AND p.supplement_num <= ?
         ORDER BY p.supplement_num DESC
-
-        
     """,
-
 
 
     "insert_period": """--sql

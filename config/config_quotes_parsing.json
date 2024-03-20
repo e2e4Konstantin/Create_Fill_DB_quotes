@@ -5,7 +5,7 @@
         "config_path": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\Create_Fill_DB_quotes\\config",
         "db_path": "F:\\Kazak\\GoogleDrive\\Python_projects\\DB"
     },
-    "last_date": "19-03-2024 17:07:07",
+    "last_date": "20-03-2024 09:51:18",
     "office": {
         "config_path": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\Create_Fill_DB_quotes\\config",
         "db_path": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\DB",
@@ -15,39 +15,24 @@
     },
     "periods_data": [
         {
-            "basic_id": 167085727,
-            "id": 72,
-            "quotes_csv_file": "Quotes_Дополнение_72_id_167085727.csv",
-            "title": "Дополнение 72"
-        },
-        {
-            "basic_id": 166954793,
-            "id": 71,
-            "quotes_csv_file": "Quotes_Дополнение_71_id_166954793.csv",
-            "title": "Дополнение 71"
-        },
-        {
-            "basic_id": 152472566,
-            "id": 68,
-            "quotes_csv_file": "Quotes_Дополнение_70_id_152472566.csv",
-            "title": "Дополнение 70"
-        },
-        {
             "basic_id": 151427079,
             "id": 67,
-            "quotes_csv_file": "Quotes_Дополнение_69_id_151427079.csv",
+            "quotes_catalog_csv_file": "Catalog_Дополнение_69_id_151427079.csv",
+            "quotes_data_csv_file": "Quotes_Дополнение_69_id_151427079.csv",
             "title": "Дополнение 69"
         },
         {
             "basic_id": 150719989,
             "id": 66,
-            "quotes_csv_file": "Quotes_Дополнение_68_id_150719989.csv",
+            "quotes_catalog_csv_file": "Catalog_Дополнение_68_id_150719989.csv",
+            "quotes_data_csv_file": "Quotes_Дополнение_68_id_150719989.csv",
             "title": "Дополнение 68"
         },
         {
             "basic_id": 149000015,
             "id": 70,
-            "quotes_csv_file": "Quotes_Дополнение_67_id_149000015.csv",
+            "quotes_catalog_csv_file": "Catalog_Дополнение_67_id_149000015.csv",
+            "quotes_data_csv_file": "Quotes_Дополнение_67_id_149000015.csv",
             "title": "Дополнение 67"
         }
     ]

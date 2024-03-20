@@ -1,5 +1,13 @@
 pg_sql_queries = {
 
+    "get_all_period_table": """--sql
+        COPY (SELECT p.* FROM larix.period AS p) TO STDOUT WITH CSV HEADER DELIMITER ';';
+    """,
+
+    "get_all_periods": """--sql
+        SELECT p.* FROM larix.period AS p;
+    """,
+
     "get_period_id": """--sql 
         -- получить id периода с указанным Названием (title)
         --{'period_title': 'Дополнение 67'}
@@ -11,8 +19,7 @@ pg_sql_queries = {
         SELECT gwp.* 
         FROM larix.group_work_process AS gwp 
         WHERE gwp.deleted = 0 AND gwp.period = %(period_id)s 
-        ORDER BY gwp.pressmark_sort
-        LIMIT 10;
+        ORDER BY gwp.pressmark_sort;
     """,
 
     "get_work_process_for_period_id": """--sql
@@ -26,17 +33,11 @@ pg_sql_queries = {
         INNER JOIN larix.unit_of_measure uom on uom.id=wp.unit_of_measure
         --
         WHERE wp.deleted = 0 AND wp.period = %(period_id)s
-        ORDER BY wp.pressmark_sort
-        LIMIT 10;
+        ORDER BY wp.pressmark_sort;
     """,
-
-
 
 
     # -------------- test -----------------------
-    "query_to_": """--sql
-        COPY (SELECT * FROM larix.period p LIMIT 10) TO STDOUT WITH CSV DELIMITER ';';
-    """,
 
     "q_test_1": """--sql 
         SELECT p.id AS period_id from larix.period p WHERE p.title = {0};

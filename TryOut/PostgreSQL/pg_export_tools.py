@@ -14,21 +14,6 @@ from postgres_export.pg_config import AccessData, db_access
 from tools.periods.get_periods import get_supplement_periods
 
 
-def export_table_periods(location: str, pgr_access: AccessData):
-    """ Сохраняет таблицу larix.period в CSV файл. """
-    csv_file_name = "period_export_table.csv"
-    data_paths: LocalData = get_data_location(location)
-    csv_file = create_abspath_file(data_paths.periods_path, csv_file_name)
-
-    with PostgresDB(pgr_access) as db:
-        query = pg_sql_queries["get_all_periods"]
-        _query_to_csv(db, csv_file, query)
-
-        # query = pg_sql_queries["get_all_period_table"]
-        # with open(csv_file, "w", encoding='utf-8') as file:
-        #     db.cursor.copy_expert(query, file)
-
-
 def _query_to_csv(db: PostgresDB, csv_file_name: str, query: str, params=None) -> int:
     """ Получает выборку из БД и сохраняет ее в csv файл. """
     # df = pd.read_sql_query(
@@ -91,6 +76,49 @@ def build_file_name(period_info: dict[str: any], path: str, file_tail: str) -> s
 
 
 
+def export_catalog_for_range_periods(
+        my_location: str,
+        pgr_access: AccessData, 
+        supplement_min: int, supplement_max: int
+    ) -> int:
+    """ Выгружает данные каталога в CSV файлы для каждого периода отдельно. """
+    data_paths: LocalData = get_data_location(my_location)
+    catalog_path = data_paths.quote_catalog_path
+
+    exported_periods = get_min_max_periods(
+        data_paths.db_file, supplement_min, supplement_max)
+
+    for period in exported_periods:
+        csv_file = build_file_name(period, catalog_path, file_tail='Catalog.csv')
+        r = export_catalog_to_csv_for_period_id(pgr_access, period['basic_id'], csv_file)
+        # ic(r)
+        period['catalog_csv_file'] = Path(csv_file).name
+    data_paths = data_paths._replace(periods_data=exported_periods)
+    save_data_location(data_paths)
+    # ic(exported_periods)
+
+
+def export_quotes_for_range_periods(
+    my_location: str,
+    pgr_access: AccessData,
+    supplement_min: int, supplement_max: int
+) -> int:
+    """ Выгружает данные по расценкам в CSV файлы для каждого периода отдельно. """
+    data_paths: LocalData = get_data_location(my_location)
+    quote_path = data_paths.quote_data_path
+    
+    periods_band = get_supplement_periods(
+        data_paths.db_file, supplement_min, supplement_max)
+
+    for period in periods_band:
+        quote_csv_file = build_file_name(period, quote_path, file_tail='Quotes.csv')
+        export_quotes_to_csv_for_period_id(pgr_access, period['basic_id'], quote_csv_file)
+        period['quotes_csv_file'] = Path(quote_csv_file).name
+
+    data_paths = data_paths._replace(periods_data=periods_band)
+    save_data_location(data_paths)
+
+
 def export_quotes_for_range_periods(
     location: str, pgr_access: AccessData, supplement_min: int, supplement_max: int
     ) -> int:
@@ -129,15 +157,13 @@ def export_quotes_for_range_periods(
 
 if __name__ == "__main__":
     location = "office"
+    # export_catalog_for_range_periods(location, db_access['normative'],
+    #                                 supplement_min=67, supplement_max=72)
 
-    # Выгрузить таблицу периодов
-    export_table_periods(location, db_access['normative'])
-    # Выгрузить данные: каталог расценок и расценки для указанных периодов
     export_quotes_for_range_periods(
         location, db_access['normative'],
         supplement_min=67, supplement_max=69)
     
-    # ==> Test 
     # {'period_id': 167085727}
     # period_id = 149000015
     # query = pg_sql_queries["get_work_process_for_period_id"]
