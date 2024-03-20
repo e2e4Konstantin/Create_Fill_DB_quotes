@@ -130,7 +130,7 @@ def date_parse(value: str) -> str | None:
 import itertools
 
 def code_to_number_2_digits(src_code: str) -> int:
-    """ Преобразует шифр в число. '4.1-2-77' -> 4010277000000 
+    """ Преобразует шифр в число. '4.1-2-77' -> 4010277000000
         sys.maxsize = 9223372036854775807
     """
     if src_code and isinstance(src_code, str):
@@ -146,8 +146,8 @@ def code_to_number_2_digits(src_code: str) -> int:
 if __name__ == "__main__":
     from icecream import ic
 
-    codes = ('55.11-22-33-77-88-44', '1.1-2-8', '2', '4.1-2-77')
-    
+    codes = ('55.11-22-33-77-88-44', '1.1-2-8', '2', '4.1-2-77', '0.0')
+
     for s in codes:
         x = code_to_number_2_digits(s)
         out = f"{s:22} ==> {x:22}"
@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
     # x = split_code_int('5.1-1-1-0-1')
     # ic(x)
-    
+
 
 
     # ic(date_parse('15.10.2024'))

@@ -11,7 +11,7 @@ sql_origins = {
 
     # --- > справочник Источников происхождения данных в таблице tblProducts
     # --- > ТСН, ПСМ, НЦКР
-    "create_table_origins": """
+    "create_table_origins": """--sql
         CREATE TABLE IF NOT EXISTS tblOrigins (
                 ID_tblOrigin    INTEGER PRIMARY KEY NOT NULL,
                 name            TEXT NOT NULL,                              -- название
@@ -33,7 +33,7 @@ sql_origins = {
         SELECT ID_tblOrigin FROM tblOrigins WHERE name = ?;
     """,
 
-    "select_origin_id": """
+    "select_origin_id": """--sql
         SELECT * FROM tblOrigins WHERE ID_tblOrigin = ?;
     """,
 }

@@ -1,7 +1,7 @@
 import sqlite3
 import pandas as pd
 from icecream import ic
-from config import dbTolls, items_catalog, DirectoryItem, MAIN_RECORD_CODE
+from config import dbTolls, items_catalog, DirectoryItem
 from sql_queries import (
     sql_items_queries, sql_raw_queries, sql_catalog_queries
 )
@@ -34,18 +34,18 @@ def _make_data_from_raw_quotes_catalog(
         """
     # ic(tuple(row))
     # в Каталоге ищем родителя
-    raw_parent_code = raw_catalog_row["parent_pressmark"]
+    raw_parent_code = raw_catalog_row["PARENT_PRESSMARK"]
     if raw_parent_code is None:
-        # делаем ссылку на корневую запись каталога
-        raw_parent_code = MAIN_RECORD_CODE
-        parent_id = get_catalog_id_by_origin_code(
-            db=db, origin=origin_id, code=raw_parent_code)
+        # catalog_name = get_origin_row_by_id(db, origin_id)["name"]
+
+        # SELECT ID_tblCatalog FROM tblCatalogs WHERE FK_tblCatalogs_tblOrigins = ? AND code = ?;
+        parent_id = get_catalog_id_by_origin_code(db=db, origin=origin_id, code=raw_parent_code)
+
+
     else:
         parent_code = clear_code(raw_parent_code)
         parent_id = get_catalog_id_by_origin_code(db=db, origin=origin_id, code=parent_code)
     if parent_id and str(item.id):
-# !!!!!
-
         period = get_integer_value(raw_catalog_row["PERIOD"])
         code = clear_code(raw_catalog_row["PRESSMARK"])
         description = title_catalog_extraction(raw_catalog_row["TITLE"], item.re_prefix)
@@ -71,7 +71,8 @@ def _save_raw_item_catalog_quotes(
         if not raw_item_data:
             return None
         for row in raw_item_data:
-            raw_code = clear_code(row["pressmark"])
+            raw_code = clear_code(row["PRESSMARK"])
+            raw_period_id = period_id
 
             pure_data = _make_data_from_raw_quotes_catalog(
                 db, origin_id, row, item)

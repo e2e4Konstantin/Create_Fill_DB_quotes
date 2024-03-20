@@ -11,8 +11,8 @@ sql_items_queries = {
         SELECT * FROM tblItems WHERE team IS ? and name IS ?;
     """,
 
-    "select_item_id_team_name": """--sql 
-        SELECT i.ID_tblItem FROM tblItems AS i WHERE i.team = ? AND  i.title = ?
+    "select_item_id_team_name": """--sql
+        SELECT i.ID_tblItem FROM tblItems AS i WHERE i.team = ? AND  i.name = ?
     """,
 
     "select_items_team": """

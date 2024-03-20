@@ -4,25 +4,25 @@
 from icecream import ic
 
 from tools import db_create_fill_directory, parsing_raw_periods
+from tools.quotes.parsing_raw_quotes import parsing_quotes
 # from tools import (read_csv_to_raw_table, transfer_raw_quotes_to_catalog, transfer_raw_data_to_quotes,
 #     transfer_raw_data_to_catalog, transfer_raw_data_to_materials, create_index_resources_raw_data,
 #     transfer_raw_data_to_machines, transfer_raw_data_to_equipments, transfer_raw_pnwc_resources_to_catalog,
 #     transfer_raw_data_to_pnwc_resources, delete_raw_tables
 # )
 
-from data_path import set_data_location
-
+from config import dbTolls, LocalData, get_data_location
 
 if __name__ == '__main__':
     # version = f"SQLite: {sqlite3.sqlite_version}\nPython: {sys.version}"
     location = "office" # office  # home
-    local_path = set_data_location(location)
+    local_path = get_data_location(location)
     ic(location, local_path.db_file)
 
     db_create_fill_directory(local_path.db_file)    # Создать таблицы и заполнить справочники
     parsing_raw_periods(local_path)                 # заполнить периоды
 
-    parsing_raw_quotes(local_path)                  # заполнить каталог расценок и сами расценки
+    # parsing_quotes(local_path)                  # заполнить каталог расценок и сами расценки
 
     # # --- > Расценки
     # # --------------------- > Каталог

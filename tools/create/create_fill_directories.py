@@ -1,5 +1,5 @@
 import os
-from config import TON_ORIGIN, PNWC_ORIGIN
+from config import MAIN_RECORD_CODE, TON_ORIGIN, PNWC_ORIGIN
 from tools.create.create_tables import create_tables_indexes
 from tools.create.fill_directory import fill_directory_origins, fill_directory_catalog_items
 from tools.create.insert_root_row_catalog import insert_root_record_to_catalog
@@ -16,11 +16,11 @@ def db_create_fill_directory(db_file: str) -> int:
     fill_directory_origins(db_file)
     fill_directory_catalog_items(db_file)
     insert_root_record_to_catalog(
-        db_file, catalog=TON_ORIGIN, code=TON_ORIGIN,
+        db_file, catalog=TON_ORIGIN, code=MAIN_RECORD_CODE,
         period=0, description='Справочник нормативов ТСН'
     )
     insert_root_record_to_catalog(
-        db_file, catalog=PNWC_ORIGIN, code=PNWC_ORIGIN,
+        db_file, catalog=PNWC_ORIGIN, code=MAIN_RECORD_CODE,
         period=0, description='Справочник ресурсов НЦКР'
     )
     return 0

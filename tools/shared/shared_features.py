@@ -28,7 +28,11 @@ def insert_raw_catalog(db: dbTolls, raw_catalog_data: tuple) -> int | None:
 
 
 def get_raw_data_items(db: dbTolls, item: DirectoryItem) -> list[sqlite3.Row] | None:
-    """ Выбрать все записи из сырой таблицы у которых шифр соответствует паттерну для item типа записей. """
+    """ Выбрать все записи из таблицы tblRawData у которых
+        шифр соответствует паттерну для item типа записей.
+        Добавляет столбец [parent_pressmark].
+
+    """
     raw_cursor = db.go_execute(sql_raw_queries["select_rwd_code_regexp"], (item.re_pattern,))
     results = raw_cursor.fetchall() if raw_cursor else None
     if not results:
@@ -284,7 +288,7 @@ def get_origin_id(db: dbTolls, origin_name: str) -> int | None:
 
 
 def get_origin_row_by_id(db: dbTolls, origin_id: int) -> sqlite3.Row | None:
-    """ Получает запись элемента происхождения (учета данных) с id origin_id. """
+    """ Получает запись элемента происхождения (учета данных)  с указанным id. """
     if origin_id is None or origin_id == 0:
         return None
     origin_row = db.go_select(sql_origins["select_origin_id"], (origin_id,))

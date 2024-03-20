@@ -50,6 +50,7 @@ def _load_df_to_db_table(df: pd.DataFrame, db_file: str, table_name: str) -> int
             con=db.connection,
             if_exists="replace",
             index=False,
+            chunksize=100,
             method="multi",
         )  # dtype=pandas.StringDtype(),
 

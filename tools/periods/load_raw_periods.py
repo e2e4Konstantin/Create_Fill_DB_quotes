@@ -204,7 +204,7 @@ def parsing_raw_periods(data_paths: LocalData):
         Удаляет все данные из таблицы периодов.
         Загружает периоды типа "Дополнение" и "Индексы" для раздела ТСН.
     0: Success"""
-    csv_periods_file = data_paths.src_periods_data
+    csv_periods_file = data_paths.periods_file
     db_file = data_paths.db_file
     result = load_csv_to_raw_table(csv_periods_file, db_file, delimiter=",")
     message = f"Данные по периодам прочитаны в tblRawData из файла {csv_periods_file!r}: {result=}"
@@ -219,8 +219,9 @@ def parsing_raw_periods(data_paths: LocalData):
 
 
 if __name__ == "__main__":
-    from data_path import set_data_location
+    from config import get_data_location
 
-    location = "home"  # office
-    di = set_data_location(location)
-    r = parsing_raw_periods(di)
+    location = "office"  # office home
+    local_path = get_data_location(location)
+
+    parsing_raw_periods(local_path)

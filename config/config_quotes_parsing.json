@@ -1,11 +1,12 @@
 {
     "config_file_name": "config_quotes_parsing.json",
     "db_file_name": "Normative.sqlite3",
+    "periods_file_name": "period_export_table.csv",
     "home": {
         "config_path": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\Create_Fill_DB_quotes\\config",
         "db_path": "F:\\Kazak\\GoogleDrive\\Python_projects\\DB"
     },
-    "last_date": "20-03-2024 09:51:18",
+    "last_date": "20-03-2024 12:02:07",
     "office": {
         "config_path": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\Create_Fill_DB_quotes\\config",
         "db_path": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\DB",
@@ -17,22 +18,28 @@
         {
             "basic_id": 151427079,
             "id": 67,
+            "index": 201,
             "quotes_catalog_csv_file": "Catalog_Дополнение_69_id_151427079.csv",
             "quotes_data_csv_file": "Quotes_Дополнение_69_id_151427079.csv",
+            "supplement": 69,
             "title": "Дополнение 69"
         },
         {
             "basic_id": 150719989,
             "id": 66,
+            "index": 198,
             "quotes_catalog_csv_file": "Catalog_Дополнение_68_id_150719989.csv",
             "quotes_data_csv_file": "Quotes_Дополнение_68_id_150719989.csv",
+            "supplement": 68,
             "title": "Дополнение 68"
         },
         {
             "basic_id": 149000015,
             "id": 70,
+            "index": 195,
             "quotes_catalog_csv_file": "Catalog_Дополнение_67_id_149000015.csv",
             "quotes_data_csv_file": "Quotes_Дополнение_67_id_149000015.csv",
+            "supplement": 67,
             "title": "Дополнение 67"
         }
     ]

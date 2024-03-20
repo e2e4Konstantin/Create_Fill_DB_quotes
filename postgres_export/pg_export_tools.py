@@ -16,10 +16,9 @@ from tools.periods.get_periods import get_supplement_periods
 
 def export_table_periods(location: str, pgr_access: AccessData):
     """ Сохраняет таблицу larix.period в CSV файл. """
-    csv_file_name = "period_export_table.csv"
-    data_paths: LocalData = get_data_location(location)
-    csv_file = create_abspath_file(data_paths.periods_path, csv_file_name)
 
+    data_paths: LocalData = get_data_location(location)
+    csv_file = data_paths.periods_file
     with PostgresDB(pgr_access) as db:
         query = pg_sql_queries["get_all_periods"]
         _query_to_csv(db, csv_file, query)
@@ -39,7 +38,7 @@ def _query_to_csv(db: PostgresDB, csv_file_name: str, query: str, params=None) -
         df.columns = results[0].keys()
         df.to_csv(csv_file_name, mode='w', encoding='utf-8', header=True, index=False)
         return 0
-    return 1    
+    return 1
 
 
 def get_period_id_by_name(pgr_access: AccessData, period_title: str) -> int | None:
@@ -63,7 +62,7 @@ def export_catalog_to_csv_for_period_id(pgr_access: AccessData, period_id: int, 
             query = pg_sql_queries["get_group_work_process_for_period_id"]
             query_parameter = {'period_id': period_id}
             result = _query_to_csv(db, csv_file, query, query_parameter)
-            return result 
+            return result
     return 1
 
 
@@ -94,7 +93,7 @@ def build_file_name(period_info: dict[str: any], path: str, file_tail: str) -> s
 def export_quotes_for_range_periods(
     location: str, pgr_access: AccessData, supplement_min: int, supplement_max: int
     ) -> int:
-    """ Выгружает данные по расценкам и дереву в CSV файлы для каждого периода отдельно. 
+    """ Выгружает данные по расценкам и дереву в CSV файлы для каждого периода отдельно.
         Отдельно файл Каталога и файл с Данными по расценкам.
         Получает данные по периодам Дополнений в заданном диапазоне.
         Для каждого периода выгружает файл с каталогом и файл с расценками.
@@ -122,22 +121,18 @@ def export_quotes_for_range_periods(
 
 
 
-
-
-
-
-
 if __name__ == "__main__":
     location = "office"
 
     # Выгрузить таблицу периодов
     export_table_periods(location, db_access['normative'])
+
     # Выгрузить данные: каталог расценок и расценки для указанных периодов
-    export_quotes_for_range_periods(
-        location, db_access['normative'],
-        supplement_min=67, supplement_max=69)
-    
-    # ==> Test 
+    # export_quotes_for_range_periods(
+    #     location, db_access['normative'],
+    #     supplement_min=67, supplement_max=69)
+
+    # ==> Test
     # {'period_id': 167085727}
     # period_id = 149000015
     # query = pg_sql_queries["get_work_process_for_period_id"]

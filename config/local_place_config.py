@@ -11,6 +11,7 @@ first_data_path_config = {
     # 'last_date':                "",  # datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     'config_file_name':         CONFIG_FILE_NAME,
     'db_file_name':             DB_FILE_NAME,
+    'periods_file_name':        "period_export_table.csv",
     'office': {
         'db_path':              r"C:\Users\kazak.ke\Documents\PythonProjects\DB",
         'config_path':          r"C:\Users\kazak.ke\Documents\PythonProjects\Create_Fill_DB_quotes\config",
@@ -30,7 +31,7 @@ class LocalData(NamedTuple):
     place_name: str
     config_file: str
     db_file: str
-    periods_path: str
+    periods_file: str
     quote_catalog_path: str
     quote_data_path: str
     periods_data: list = None
@@ -46,10 +47,11 @@ def get_data_location(location: str) -> LocalData:
         place_name = location,
         config_file = config_file,
         db_file = create_abspath_file(config[location]['db_path'], config['db_file_name']),
-        periods_path = config[location]['periods_path'],
+        periods_file = create_abspath_file(
+            config[location]['periods_path'], config['periods_file_name']),
         quote_catalog_path = config[location]['quote_catalog_path'],
         quote_data_path = config[location]['quote_data_path'],
-        periods_data=[]
+        periods_data=config["periods_data"]
     )
     return location_paths
 
@@ -61,7 +63,7 @@ def save_data_location(local_paths: LocalData) -> int:
     config['periods_data'] = local_paths.periods_data
     write_config_to_json(local_paths.config_file, config)
     return 0
-    
+
 
 if __name__ == "__main__":
     from icecream import ic
@@ -78,4 +80,4 @@ if __name__ == "__main__":
     # ic(x)
     # ic(x.__dir__())
     # ic(x._asdict())
-    
+
