@@ -150,4 +150,8 @@ sql_periods_queries = {
         SELECT * FROM tblPeriods WHERE title = ?;
     """,
 
+    "select_period_by_id": """--sql
+        SELECT * FROM tblPeriods WHERE ID_tblPeriod = ?;
+    """,
+
 }

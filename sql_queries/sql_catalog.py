@@ -9,20 +9,32 @@ sql_catalog_queries = {
                 WHERE FK_tblCatalogs_tblPeriods < ?);
     """,
 
-    "delete_catalog_level_last_periods": """
-        DELETE
-        FROM tblCatalogs
-        WHERE
-            tblCatalogs.ID_tblCatalog IN (
+    "delete_catalog_less_than_specified_supplement_period": """--sql
+        /*
+        удаляет записи каталога у которых родитель code=?, тип origin=?
+        и номер дополнения периода < ?
+        */
+        DELETE FROM tblCatalogs WHERE tblCatalogs.ID_tblCatalog IN (
+            --
+            SELECT cat.ID_tblCatalog
+            FROM tblCatalogs AS cat
+            JOIN tblPeriods AS per ON per.ID_tblPeriod = cat.FK_tblCatalogs_tblPeriods
+            WHERE cat.ID_tblCatalog IN (
+                --
                 WITH CatalogLevel AS (
-                    SELECT ID_tblCatalog, ID_parent from tblCatalogs WHERE FK_tblCatalogs_tblOrigins = ? AND code = ?
+                    SELECT ID_tblCatalog, ID_parent
+                    FROM tblCatalogs
+                    WHERE FK_tblCatalogs_tblOrigins = ? AND code = ?
                     UNION ALL
                         SELECT c.ID_tblCatalog, c.ID_parent from tblCatalogs AS c
                         JOIN CatalogLevel ON c.ID_parent = CatalogLevel.ID_tblCatalog
-                    )
-                    SELECT ID_tblCatalog from CatalogLevel
-            ) AND
-            tblCatalogs.FK_tblCatalogs_tblPeriods < ?;
+                )
+                SELECT ID_tblCatalog from CatalogLevel
+                --
+                ) AND
+                per.supplement_num < ?
+            --
+        );
     """,
 
     # -- >  SELECT ----------------------------------------------------------------------
@@ -45,13 +57,13 @@ sql_catalog_queries = {
         SELECT COUNT(*) FROM tblCatalogs WHERE FK_tblCatalogs_tblOrigins = ? AND FK_tblCatalogs_tblPeriods < ?;
     """,
 
-    "select_changes": """
+    "select_changes": """--sql
         SELECT CHANGES() AS changes;
     """,
 
     # выводит все дочерние записи каталога для записи с нужным code
     # все записи для которых родителем является запись с code
-    "select_catalog_level": """
+    "select_catalog_level": """--sql
         WITH CatalogLevel AS (
             SELECT ID_tblCatalog, ID_parent
                 FROM tblCatalogs
@@ -63,36 +75,67 @@ sql_catalog_queries = {
         SELECT ID_tblCatalog from CatalogLevel;
      """,
 
-    "select_catalog_max_level_period": """
-        SELECT MAX(m.FK_tblCatalogs_tblPeriods) AS max_period
-        FROM tblCatalogs m
-        WHERE m.ID_tblCatalog IN (
+    # "select_catalog_max_level_period": """--sql
+    #     SELECT MAX(m.FK_tblCatalogs_tblPeriods) AS max_period
+    #     FROM tblCatalogs m
+    #     WHERE m.ID_tblCatalog IN (
+    #         WITH CatalogLevel AS (
+    #             SELECT ID_tblCatalog, ID_parent from tblCatalogs WHERE FK_tblCatalogs_tblOrigins = ? AND code = ?
+    #             UNION ALL
+    #             SELECT c.ID_tblCatalog, c.ID_parent from tblCatalogs AS c
+    #             JOIN CatalogLevel ON c.ID_parent = CatalogLevel.ID_tblCatalog
+    #         )
+    #         SELECT ID_tblCatalog from CatalogLevel
+    #     );
+    # """,
+
+    "select_catalog_max_supplement_period": """--sql
+        /*
+        считает максимальное значение дополнения для периода
+        записей каталога у которых родитель code и тип origin
+        */
+        SELECT MAX(per.supplement_num) AS max_supplement_periods
+        FROM tblCatalogs AS cat
+        JOIN tblPeriods AS per ON per.ID_tblPeriod = cat.FK_tblCatalogs_tblPeriods
+        WHERE cat.ID_tblCatalog IN (
+            --
             WITH CatalogLevel AS (
-                SELECT ID_tblCatalog, ID_parent from tblCatalogs WHERE FK_tblCatalogs_tblOrigins = ? AND code = ?
+                SELECT ID_tblCatalog, ID_parent
+                FROM tblCatalogs
+                WHERE FK_tblCatalogs_tblOrigins = ? AND code = ?
                 UNION ALL
-                SELECT c.ID_tblCatalog, c.ID_parent from tblCatalogs AS c
-                JOIN CatalogLevel ON c.ID_parent = CatalogLevel.ID_tblCatalog
+                    SELECT c.ID_tblCatalog, c.ID_parent from tblCatalogs AS c
+                    JOIN CatalogLevel ON c.ID_parent = CatalogLevel.ID_tblCatalog
             )
             SELECT ID_tblCatalog from CatalogLevel
+            --
         );
     """,
 
-    "select_catalog_count_level_period": """
-    SELECT COUNT(m.FK_tblCatalogs_tblPeriods) AS count
-    FROM tblCatalogs m
-    WHERE m.ID_tblCatalog IN (
+
+    "select_catalog_count_period_supplement": """--sql
+        /*
+        считает количество записей каталога у которых родитель code=? тип origin=?
+        и номер дополнения периода < ?
+        */
+        SELECT COUNT(cat.ID_tblCatalog) AS count
+        FROM tblCatalogs AS cat
+        JOIN tblPeriods AS per ON per.ID_tblPeriod = cat.FK_tblCatalogs_tblPeriods
+        WHERE cat.ID_tblCatalog IN (
+            --
             WITH CatalogLevel AS (
-                SELECT ID_tblCatalog, ID_parent from tblCatalogs WHERE  FK_tblCatalogs_tblOrigins = ? AND code = ?
+                SELECT ID_tblCatalog, ID_parent
+                FROM tblCatalogs
+                WHERE FK_tblCatalogs_tblOrigins = ? AND code = ?
                 UNION ALL
-                SELECT c.ID_tblCatalog, c.ID_parent from tblCatalogs AS c
-                JOIN CatalogLevel ON c.ID_parent = CatalogLevel.ID_tblCatalog
-                )
+                    SELECT c.ID_tblCatalog, c.ID_parent from tblCatalogs AS c
+                    JOIN CatalogLevel ON c.ID_parent = CatalogLevel.ID_tblCatalog
+            )
             SELECT ID_tblCatalog from CatalogLevel
-        )
-        AND m.period < ?;
+            --
+       ) AND
+        per.supplement_num < ?;
     """,
-
-
 
 
     # -- >  INSERT ----------------------------------------------------------------------
@@ -267,10 +310,9 @@ sql_catalog_creates = {
         CREATE VIEW viewCatalog AS
             SELECT
                 o.name AS 'источник',
-                m.FK_tblCatalogs_tblPeriods AS 'период',
+                per.title AS 'период',
                 i.title AS 'тип',
                 m.code AS 'шифр',
-                m.digit_code AS 'числ.шифр',
                 m.description AS 'описание',
 
                 (SELECT i.title
@@ -284,12 +326,14 @@ sql_catalog_creates = {
 
                (SELECT p.description
                 FROM tblCatalogs p
-                WHERE p.ID_tblCatalog = m.ID_parent) AS 'описание родителя'
+                WHERE p.ID_tblCatalog = m.ID_parent) AS 'описание родителя',
+
+                m.digit_code AS 'числ.шифр'
 
             FROM tblCatalogs m
             LEFT JOIN tblOrigins AS o ON o.ID_tblOrigin = m.FK_tblCatalogs_tblOrigins
             LEFT JOIN tblItems AS i ON i.ID_tblItem = m.FK_tblCatalogs_tblItems
-            LEFT JOIN tblPeriods AS p ON p.ID_tblPeriod = m.FK_tblCatalogs_tblPeriods
+            LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblCatalogs_tblPeriods
             ORDER BY m.digit_code;
     """,
 

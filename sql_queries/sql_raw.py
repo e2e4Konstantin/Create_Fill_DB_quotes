@@ -9,7 +9,9 @@ sql_raw_queries = {
     "delete_index_raw_data":     """DROP INDEX IF EXISTS idxTmpMaterial;""",
 
     # --- > Получение данных ----------------------------------------------------------------------
-    "select_rwd_all": """SELECT * FROM tblRawData;""",
+    "select_rwd_all": """--sql
+        SELECT * FROM tblRawData;
+    """,
 
     "select_rwd_code_regexp": """--sql
         SELECT

@@ -9,16 +9,18 @@ from tools.shared.code_tolls import clear_code
 
 
 def update_catalog(db: dbTolls, catalog_id: int, raw_catalog_data: tuple) -> int | None:
-    """ Формирует строку из Сырой таблицы. Изменяет catalog_id запись в таблице Каталога. """
-    # FK_tblCatalogs_tblOrigins, ID_parent, period, code, description, FK_tblCatalogs_tblItems, ID_tblCatalog
+    """ Изменяет данные в каталоге на новые raw_catalog_data для записи с catalog_id. """
+
+    # FK_tblCatalogs_tblOrigins, ID_parent, FK_tblCatalogs_tblPeriods, code, description, FK_tblCatalogs_tblItems, digit_code
     data = (raw_catalog_data + (catalog_id,))
     db.go_execute(sql_catalog_queries["update_catalog_id"], data)
+
     count = db.go_execute(sql_catalog_queries["select_changes"])
     return count.fetchone()['changes'] if count else None
 
 
 def insert_raw_catalog(db: dbTolls, raw_catalog_data: tuple) -> int | None:
-    """ Формирует строку из Сырой таблицы. Вставляет новую запись в таблицу Каталога. """
+    """ Вставляет новую запись в таблицу Каталога. """
     message = f"INSERT tblCatalog {raw_catalog_data}"
     inserted_id = db.go_insert(sql_catalog_queries["insert_catalog"], raw_catalog_data, message)
     if not inserted_id:
@@ -161,33 +163,36 @@ def delete_catalog_quotes_with_old_period(db_filename: str):
 
 def delete_catalog_old_period_for_parent_code(db_filename: str, origin: int, parent_code: str):
     """
-    Удаляет все записи из Каталога у которых период < максимального начиная с родительской записи 'parent_code'.
-    Вычисляет максимальный период для всех дочерних записей каталога начиная с родительской записи с шифром parent_code.
+    Удаляет записи каталога у которых шифр родителя parent_code, тип каталога origin,
+    и номер дополнения периода меньше чем максимальный период для всех дочерних записей родительской записи.
     """
     with (dbTolls(db_filename) as db):
         # mess = f"Удаление прошлых периодов для id каталога {origin=} и шифра {parent_code=}"
         # ic(mess)
-        max_period_res = db.go_select(sql_catalog_queries["select_catalog_max_level_period"], (origin, parent_code,))
-        if max_period_res is None:
+        query = sql_catalog_queries["select_catalog_max_supplement_period"]
+        result = db.go_select(query, (origin, parent_code,))
+        if result is None:
             output_message_exit(f"Ошибка при получении максимального периода Каталога",
                                 f"для id каталога {origin=} и шифра {parent_code=}")
             return
-        max_period = max_period_res[0]['max_period']
-        # mess = f"Для записи с кодом: {parent_code!r} максимальный период: {max_period}"
+        max_supplement_periods = result[0]['max_supplement_periods']
+        # mess = f"Для записи с кодом: {parent_code!r} максимальный период: {result}"
         # ic(mess)
         count_cursor = db.go_execute(
-            sql_catalog_queries["select_catalog_count_level_period"], (origin, parent_code, max_period)
-        )
+            sql_catalog_queries["select_catalog_count_period_supplement"],
+            (origin, parent_code, max_supplement_periods)
+            )
         number = count_cursor.fetchone()[0] if count_cursor else None
         if number and number > 0:
             # mess = (f"Из Каталога для родителя {parent_code} будут удалены {number} записей "
-            #         f"у которых период меньше: {max_period}")
+            #         f"у которых номер дополнения периода меньше: {max_supplement_periods}")
             # ic(mess)
             deleted_cursor = db.go_execute(
-                sql_catalog_queries["delete_catalog_level_last_periods"], (origin, parent_code, max_period)
-            )
+                sql_catalog_queries["delete_catalog_less_than_specified_supplement_period"],
+                (origin, parent_code, max_supplement_periods)
+                )
             mess = (f"Из Каталога для родителя {parent_code=} удалено {deleted_cursor.rowcount} записей "
-                    f"у которых период < {max_period}")
+                    f"у которых номер дополнения периода < {max_supplement_periods}")
             ic(mess)
 
 
@@ -235,7 +240,13 @@ def get_period_by_title(db: dbTolls, title: str) -> sqlite3.Row | None:
         return period[0]
     return None
 
-
+def get_period_by_id(db: dbTolls, period_id: int) -> sqlite3.Row | None:
+    """ Получает строку из tblPeriods по id. """
+    period = db.go_select(
+        sql_periods_queries["select_period_by_id"], (period_id, ))
+    if period:
+        return period[0]
+    return None
 
 
 def delete_last_period_product_row(db: dbTolls, origin_id: int, team: str, name: str):
@@ -302,8 +313,8 @@ def transfer_raw_items(
         db: dbTolls, catalog_name: str, directory_name: str, item_name: str,
         get_line_data: callable, raw_items: list[sqlite3.Row] = None
 ) -> None:
-    """ Вставляет или обновляет в записи типа item_name tblProducts
-        В рабочей таблице tblProducts ищется продукт с таким же шифром, если такой продукт уже есть в таблице,
+    """ Вставляет или обновляет записи типа item_name в таблицу tblProducts
+        В таблице tblProducts ищется продукт с таким же шифром, если такой продукт уже есть в таблице,
         то он обновляется, если нет, то вставляется новый продукт.
     :param db: Курсор БД
     :param catalog_name: название каталога
@@ -315,14 +326,14 @@ def transfer_raw_items(
     # получить идентификатор каталога
     ic()
     ic(catalog_name, item_name)
-    catalog_id = get_origin_id(db, origin_name=catalog_name)
+    origin_id = get_origin_id(db, origin_name=catalog_name)
     item_id = get_directory_id(db, directory_team=directory_name, item_name=item_name)
 
     inserted_success, updated_success = [], []
     for db_row in raw_items:
-        data = get_line_data(db, catalog_id, db_row, item_id)
+        data = get_line_data(db, origin_id, db_row, item_id)
         raw_code, raw_period = data[4], data[3]
-        product = get_product_by_code(db=db, origin_id=catalog_id, product_code=raw_code)
+        product = get_product_by_code(db=db, origin_id=origin_id, product_code=raw_code)
         if product:
             if raw_period >= product['period'] and item_id == product['FK_tblProducts_tblItems']:
                 count_updated = update_product(db, data + (product['ID_tblProduct'],))
@@ -343,7 +354,7 @@ def transfer_raw_items(
     none_log = f"Непонятных записей: {row_count - (len(updated_success) + len(inserted_success))}."
     ic(alog, ilog, ulog, none_log)
     # удалить item записи период которых меньше чем максимальный период
-    delete_last_period_product_row(db, origin_id=catalog_id, team=directory_name, name=item_name)
+    delete_last_period_product_row(db, origin_id=origin_id, team=directory_name, name=item_name)
 
 
 if __name__ == '__main__':

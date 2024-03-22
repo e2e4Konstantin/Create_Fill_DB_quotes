@@ -1,7 +1,7 @@
 import sqlite3
 from icecream import ic
 
-from config import dbTolls, teams
+from config import dbTolls, teams, MAIN_RECORD_CODE
 from sql_queries import sql_raw_queries, sql_origins, sql_products_queries, sql_items_queries, sql_catalog_queries
 from files_features import output_message, output_message_exit
 from tools.shared.code_tolls import clear_code, text_cleaning, get_integer_value
@@ -12,28 +12,31 @@ from tools.shared.shared_features import (
 )
 
 
-def _make_data_from_raw_quote(db: dbTolls, origin_id: int, raw_quote: sqlite3.Row, item_id: int) -> tuple | None:
-    """ Получает строку из таблицы tblRawData с импортированной расценкой и id типа записи.
+def _make_data_from_raw_quote(
+    db: dbTolls, origin_id: int, raw_quote: sqlite3.Row, item_id: int, period_id: int) -> tuple | None:
+    """ Получает строку из таблицы tblRawData с загруженной расценкой и id типа записи.
         Ищет в Каталоге родительскую запись по шифру и периоду.
         Выбирает и готовит нужные данные.
         Возвращает кортеж с данными для вставки в таблицу Расценок.
     """
-    raw_period = get_integer_value(raw_quote["PERIOD"])
-    holder_code = raw_quote['GROUP_WORK_PROCESS']
+    holder_code = raw_quote['gwp_pressmark']
+
     if holder_code is None:
-        catalog_name = get_origin_row_by_id(db, origin_id)["name"]
         # указатель на корневую запись каталога
-        holder_id = get_catalog_id_by_origin_code(db=db, origin=origin_id, code=catalog_name)
+        main_catalog_code = MAIN_RECORD_CODE
+        holder_id = get_catalog_id_by_origin_code(db=db, origin=origin_id, code=main_catalog_code)
     else:
         # в Каталоге!!! ищем родительскую запись с шифром holder_cod
         holder_id = get_catalog_id_by_origin_code(db=db, origin=origin_id, code=clear_code(holder_code))
     if holder_id:
-        code = clear_code(raw_quote["PRESSMARK"])
-        description = text_cleaning(raw_quote["TITLE"]).capitalize()
-        measurer = text_cleaning(raw_quote["UNIT_OF_MEASURE"])
+        code = clear_code(raw_quote["pressmark"])
+        description = text_cleaning(raw_quote["title"]).capitalize()
+        measurer = text_cleaning(raw_quote["unit_measure "])
+
         # FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins,
         # period, code, description, measurer, full_code
-        data = (holder_id, item_id, origin_id, raw_period, code, description, measurer, None)
+        data = (holder_id, item_id, origin_id, period_id,
+                code, description, measurer, None)
         return data
     else:
         output_message_exit(
@@ -52,26 +55,21 @@ def _get_raw_quotes(db: dbTolls) -> list[sqlite3.Row] | None:
     return results
 
 
-def transfer_raw_data_to_quotes(db_filename: str, catalog_name: str):
-    """ Записывает расценки из сырой таблицы tblRawData в рабочую таблицу tblProducts. """
-
-    with dbTolls(db_filename) as db:
+def transfer_raw_quotes_to_products(db_file: str, catalog_name: str, period_id: int):
+    """ Заполняет в таблицу tblProducts расценками из RAW таблицы tblRawData.
+    """
+    with dbTolls(db_file) as db:
         ic("\n")
         ic("Заполняем данные по Расценкам:")
-        # прочитать исходные данные по расценкам
         raw_quotes = _get_raw_quotes(db)
         if raw_quotes is None:
             return None
         directory, item_name = "units", "quote"
-        transfer_raw_items(db, catalog_name, directory, item_name, _make_data_from_raw_quote, raw_quotes)
+        transfer_raw_items(db, catalog_name, directory, item_name, _make_data_from_raw_quote, raw_quotes, period_id)
 
 
 if __name__ == '__main__':
-    import os
 
-    db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
-    # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
-    db_name = os.path.join(db_path, "Normative.sqlite3")
-    ic(db_name)
+    transfer_raw_quotes_to_products(db_file, TON_ORIGIN, period_id)
 
-    transfer_raw_data_to_quotes(db_name)
+

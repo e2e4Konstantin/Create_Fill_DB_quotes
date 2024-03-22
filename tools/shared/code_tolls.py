@@ -136,8 +136,11 @@ def code_to_number_2_digits(src_code: str) -> int:
     if src_code and isinstance(src_code, str):
         factors = (10**12, 10**10, 10**8, 10**6, 10**4, 100, 1)
         splitted_code = split_code_int(src_code)
-        pairs = list(itertools.zip_longest(splitted_code, factors, fillvalue=0))
-        return sum(map(lambda x: x[0]*x[1], pairs))
+        if len(splitted_code) > 1:
+            pairs = list(itertools.zip_longest(splitted_code, factors, fillvalue=0))
+            return sum(map(lambda x: x[0]*x[1], pairs))
+        else:
+            return get_integer_value(splitted_code[0]) * 10**12 - 1
     return 1
 
 
@@ -146,8 +149,8 @@ def code_to_number_2_digits(src_code: str) -> int:
 if __name__ == "__main__":
     from icecream import ic
 
-    codes = ('55.11-22-33-77-88-44', '1.1-2-8', '2', '4.1-2-77', '0.0')
-
+    # codes = ('55.11-22-33-77-88-44', '1.1-2-8', '2', '4.1-2-77', '0.0')
+    codes = ('3', '3.0', '3.0-0-0-0-1', '2.99-99-99-77-99', '2', '2.0', '2.0-0-0-0-1')
     for s in codes:
         x = code_to_number_2_digits(s)
         out = f"{s:22} ==> {x:22}"

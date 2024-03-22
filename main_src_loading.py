@@ -22,7 +22,9 @@ if __name__ == '__main__':
     db_create_fill_directory(local_path.db_file)    # Создать таблицы и заполнить справочники
     parsing_raw_periods(local_path)                 # заполнить периоды
 
-    # parsing_quotes(local_path)                  # заполнить каталог расценок и сами расценки
+    parsing_quotes(local_path)                  # заполнить каталог расценок и сами расценки
+
+
 
     # # --- > Расценки
     # # --------------------- > Каталог
