@@ -14,7 +14,7 @@ from tools.shared.shared_features import (
 
 def _make_data_from_raw_quote(
     db: dbTolls, origin_id: int, raw_quote: sqlite3.Row, item_id: int, period_id: int) -> tuple | None:
-    """ Получает строку из таблицы tblRawData с загруженной расценкой и id типа записи.
+    """ Получает строку из таблицы tblRawData с расценкой и id типа записи.
         Ищет в Каталоге родительскую запись по шифру и периоду.
         Выбирает и готовит нужные данные.
         Возвращает кортеж с данными для вставки в таблицу Расценок.
@@ -31,16 +31,17 @@ def _make_data_from_raw_quote(
     if holder_id:
         code = clear_code(raw_quote["pressmark"])
         description = text_cleaning(raw_quote["title"]).capitalize()
-        measurer = text_cleaning(raw_quote["unit_measure "])
+        measurer = text_cleaning(raw_quote["unit_measure"])
 
-        # FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins,
-        # period, code, description, measurer, full_code
+        # FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems,
+        # FK_tblProducts_tblOrigins, FK_tblProducts_tblPeriods
+        # code, description, measurer, full_code
         data = (holder_id, item_id, origin_id, period_id,
                 code, description, measurer, None)
         return data
     else:
         output_message_exit(
-            f"Для расценки {raw_quote['PRESSMARK']!r} в Каталоге не найдена родительская запись",
+            f"Для расценки {raw_quote['pressmark']!r} в Каталоге не найдена родительская запись",
             f"шифр {holder_code!r}"
         )
     return None
@@ -65,7 +66,7 @@ def transfer_raw_quotes_to_products(db_file: str, catalog_name: str, period_id: 
         if raw_quotes is None:
             return None
         directory, item_name = "units", "quote"
-        transfer_raw_items(db, catalog_name, directory, item_name, _make_data_from_raw_quote, raw_quotes, period_id)
+        transfer_raw_items(db, catalog_name, directory, item_name, _make_data_from_raw_quote, period_id, raw_quotes)
 
 
 if __name__ == '__main__':

@@ -309,9 +309,10 @@ def get_origin_row_by_id(db: dbTolls, origin_id: int) -> sqlite3.Row | None:
                         f"не найдено записи с id: {origin_id}.")
 
 
+
 def transfer_raw_items(
         db: dbTolls, catalog_name: str, directory_name: str, item_name: str,
-        get_line_data: callable, raw_items: list[sqlite3.Row] = None
+        get_line_data: callable, period_id: int, raw_items: list[sqlite3.Row] = None
 ) -> None:
     """ Вставляет или обновляет записи типа item_name в таблицу tblProducts
         В таблице tblProducts ищется продукт с таким же шифром, если такой продукт уже есть в таблице,
@@ -331,9 +332,17 @@ def transfer_raw_items(
 
     inserted_success, updated_success = [], []
     for db_row in raw_items:
-        data = get_line_data(db, origin_id, db_row, item_id)
+        data = get_line_data(db, origin_id, db_row, item_id, period_id)
+
+        # FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems,
+        # FK_tblProducts_tblOrigins, FK_tblProducts_tblPeriods
+        # code, description, measurer, full_code
+
         raw_code, raw_period = data[4], data[3]
+
         product = get_product_by_code(db=db, origin_id=origin_id, product_code=raw_code)
+
+
         if product:
             if raw_period >= product['period'] and item_id == product['FK_tblProducts_tblItems']:
                 count_updated = update_product(db, data + (product['ID_tblProduct'],))

@@ -1,3 +1,5 @@
+import itertools
+
 import re
 from fastnumbers import isfloat, isint
 from dateutil import parser
@@ -127,33 +129,37 @@ def date_parse(value: str) -> str | None:
 
 
 
-import itertools
 
-def code_to_number_2_digits(src_code: str) -> int:
-    """ Преобразует шифр в число. '4.1-2-77' -> 4010277000000
+def code_to_number(src_code: str) -> int:
+    """ Преобразует шифр в число. '3.1-2-99 ' -> 3001002099000000000
         sys.maxsize = 9223372036854775807
-    """
+        2**63-1 == 9223372036854775807 """
+    N = 3               # разрядов на группу
+    GROUP_NUMBER = 6    # количество групп
     if src_code and isinstance(src_code, str):
-        factors = (10**12, 10**10, 10**8, 10**6, 10**4, 100, 1)
+        factors = tuple([10**x for x in range((GROUP_NUMBER-1)*N, -N, -N)])
         splitted_code = split_code_int(src_code)
         if len(splitted_code) > 1:
-            pairs = list(itertools.zip_longest(splitted_code, factors, fillvalue=0))
+            pairs = list(itertools.zip_longest(
+                splitted_code, factors, fillvalue=0))
             return sum(map(lambda x: x[0]*x[1], pairs))
         else:
-            return get_integer_value(splitted_code[0]) * 10**12 - 1
+            return splitted_code[0] * factors[0] - 1
     return 1
-
 
 
 
 if __name__ == "__main__":
     from icecream import ic
 
-    # codes = ('55.11-22-33-77-88-44', '1.1-2-8', '2', '4.1-2-77', '0.0')
-    codes = ('3', '3.0', '3.0-0-0-0-1', '2.99-99-99-77-99', '2', '2.0', '2.0-0-0-0-1')
+
+
+    codes = ('10', '3', '3.0', '3.99', '3.1-99', '3.1-2-99',
+             '3.1-2-999', '3.1-2-3-999', '3.1-2-3-4-999', '999.999-999-999-999-999', '999.888-777-666-555-444-333')
+
     for s in codes:
-        x = code_to_number_2_digits(s)
-        out = f"{s:22} ==> {x:22}"
+        x = code_to_number(s)
+        out = f"{s:30} ==> {x:22} "
         ic(out)
 
     # x = split_code_int('5.1-2-8')

@@ -29,7 +29,7 @@ sql_products_queries = {
         SELECT * FROM tblProducts WHERE code = ?;
     """,
 
-    "select_products_origin_code": """
+    "select_products_origin_code": """--sql
         SELECT * FROM tblProducts WHERE FK_tblProducts_tblOrigins = ? AND code = ?;
     """,
 
@@ -76,8 +76,9 @@ sql_products_queries = {
 
     "insert_product": """--sql
         INSERT INTO tblProducts (
-            FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins,
-            period, code, description, measurer, digit_code
+            FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems,
+            FK_tblProducts_tblOrigins, FK_tblProducts_tblPeriods,
+            code, description, measurer, digit_code
         )
         VALUES ( ?, ?, ?, ?, ?, ?, ?, ?);
     """,
@@ -122,13 +123,14 @@ sql_products_creates = {
                 FOREIGN KEY (FK_tblProducts_tblItems) REFERENCES tblItems (ID_tblItem),
                 FOREIGN KEY (FK_tblProducts_tblOrigins) REFERENCES tblOrigins (ID_tblOrigin),
                 FOREIGN KEY (FK_tblProducts_tblPeriods) REFERENCES tblPeriods (ID_tblPeriod),
-                UNIQUE (FK_tblProducts_tblOrigins, code, FK_tblProducts_tblItems, FK_tblProducts_tblPeriods)
+                UNIQUE (FK_tblProducts_tblOrigins, FK_tblProducts_tblPeriods, code )
             );
         """,
 
     "create_index_products": """--sql
         CREATE UNIQUE INDEX IF NOT EXISTS idxProductsCode ON tblProducts (
-            code, period, FK_tblProducts_tblOrigins, FK_tblProducts_tblItems, FK_tblProducts_tblPeriods
+            FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins, FK_tblProducts_tblPeriods,
+            code
             );
     """,
 
@@ -200,15 +202,16 @@ sql_products_creates = {
         END;
     """,
 
-    "create_trigger_history_products_update": """
+    "create_trigger_history_products_update": """--sql
         CREATE TRIGGER IF NOT EXISTS tgrHistoryProductsUpdate
         AFTER UPDATE ON tblProducts
         FOR EACH ROW
         BEGIN
             INSERT INTO _tblHistoryProducts (
                 _rowid, ID_tblProduct,
-                FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins,
-                period, code, description, measurer, digit_code, last_update,
+                FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems,
+                FK_tblProducts_tblOrigins, FK_tblProducts_tblPeriods,
+                code, description, measurer, digit_code, last_update,
                 _version, _updated, _mask
             )
             SELECT
@@ -217,7 +220,7 @@ sql_products_creates = {
                 CASE WHEN old.FK_tblProducts_tblCatalogs != new.FK_tblProducts_tblCatalogs THEN new.FK_tblProducts_tblCatalogs ELSE null END,
                 CASE WHEN old.FK_tblProducts_tblItems != new.FK_tblProducts_tblItems THEN new.FK_tblProducts_tblItems ELSE null END,
                 CASE WHEN old.FK_tblProducts_tblOrigins != new.FK_tblProducts_tblOrigins THEN new.FK_tblProducts_tblOrigins ELSE null END,
-                CASE WHEN old.period != new.period THEN new.period ELSE null END,
+                CASE WHEN old.FK_tblProducts_tblPeriods != new.FK_tblProducts_tblPeriods THEN new.FK_tblProducts_tblPeriods ELSE null END,
                 CASE WHEN old.code != new.code THEN new.code ELSE null END,
                 CASE WHEN old.description != new.description THEN new.description ELSE null END,
                 CASE WHEN old.measurer != new.measurer THEN new.measurer ELSE null END,
@@ -231,7 +234,7 @@ sql_products_creates = {
                 (CASE WHEN old.FK_tblProducts_tblCatalogs != new.FK_tblProducts_tblCatalogs then 2 else 0 END) +
                 (CASE WHEN old.FK_tblProducts_tblItems != new.FK_tblProducts_tblItems then 4 else 0 END) +
                 (CASE WHEN old.FK_tblProducts_tblOrigins != new.FK_tblProducts_tblItems then 8 else 0 END) +
-                (CASE WHEN old.period != new.period then 16 else 0 END) +
+                (CASE WHEN old.FK_tblProducts_tblPeriods != new.FK_tblProducts_tblPeriods then 16 else 0 END) +
                 (CASE WHEN old.code != new.code then 32 else 0 END) +
                 (CASE WHEN old.description != new.description then 64 else 0 END) +
                 (CASE WHEN old.measurer != new.measurer then 128 else 0 END) +
@@ -242,7 +245,7 @@ sql_products_creates = {
                 old.FK_tblProducts_tblCatalogs != new.FK_tblProducts_tblCatalogs OR
                 old.FK_tblProducts_tblItems != new.FK_tblProducts_tblItems OR
                 old.FK_tblProducts_tblOrigins != new.FK_tblProducts_tblOrigins OR
-                old.period != new.period OR
+                old.FK_tblProducts_tblPeriods != new.s OR
                 old.code != new.code OR
                 old.description != new.description OR
                 old.measurer != new.measurer OR
@@ -251,21 +254,23 @@ sql_products_creates = {
         END;
     """,
 
-    "create_view_products": """
+    "create_view_products": """--sql
         CREATE VIEW viewProducts AS
             SELECT
+                per.title AS [period],
                 o.name AS origin,
                 i.title AS product_type,
                 c.code AS parent_code,
-                p.code AS code,
-                p.period AS period,
-                p.description AS title,
-                p.measurer AS measurer
-            FROM tblProducts p
-            LEFT JOIN tblCatalogs AS c ON c.ID_tblCatalog = p.FK_tblProducts_tblCatalogs
-            LEFT JOIN tblOrigins AS o ON o.ID_tblOrigin = p.FK_tblProducts_tblOrigins
-            LEFT JOIN tblItems AS i ON i.ID_tblItem = p.FK_tblProducts_tblItems;
-            --ORDER BY p.code;
+                m.code AS code,
+                m.description AS title,
+                m.measurer AS measurer
+            FROM tblProducts m
+            LEFT JOIN tblCatalogs AS c ON c.ID_tblCatalog = m.FK_tblProducts_tblCatalogs
+            LEFT JOIN tblOrigins AS o ON o.ID_tblOrigin = m.FK_tblProducts_tblOrigins
+            LEFT JOIN tblItems AS i ON i.ID_tblItem = m.FK_tblProducts_tblItems
+            LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblProducts_tblPeriods
+            ORDER BY m.digit_code;
+
     """,
 
 }

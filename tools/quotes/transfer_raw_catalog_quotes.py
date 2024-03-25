@@ -6,7 +6,7 @@ from sql_queries import (
     sql_items_queries, sql_raw_queries, sql_catalog_queries
 )
 from files_features import output_message, output_message_exit
-from tools.shared.code_tolls import clear_code, title_catalog_extraction, get_integer_value, code_to_number_2_digits
+from tools.shared.code_tolls import clear_code, title_catalog_extraction, get_integer_value, code_to_number
 from tools.shared.shared_features import (
     get_sorted_directory_items, get_catalog_id_by_origin_code,
     get_catalog_row_by_code, delete_catalog_old_period_for_parent_code,
@@ -47,7 +47,7 @@ def _make_data_from_raw_quotes_catalog(
         # period = get_integer_value(raw_catalog_row["PERIOD"])
         code = clear_code(raw_catalog_row["pressmark"])
         description = title_catalog_extraction(raw_catalog_row["title"], item.re_prefix)
-        digit_code = code_to_number_2_digits(code)
+        digit_code = code_to_number(code)
 
         # FK_tblCatalogs_tblOrigins, ID_parent, FK_tblCatalogs_tblPeriods, code, description, FK_tblCatalogs_tblItems, digit_code
         data = (origin_id, parent_id, period_id, code, description, item.id, digit_code)
