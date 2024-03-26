@@ -1,31 +1,32 @@
 sql_products_queries = {
 
-    "delete_products_last_periods": """
-        DELETE FROM tblProducts
-        WHERE ID_tblProduct IN (
-            SELECT ID_tblProduct
-            FROM tblProducts
-            WHERE period > 0 AND period < ?
-        );
-    """,
+    # "delete_products_last_periods": """
+    #     DELETE FROM tblProducts
+    #     WHERE ID_tblProduct IN (
+    #         SELECT ID_tblProduct
+    #         FROM tblProducts
+    #         WHERE period > 0 AND period < ?
+    #     );
+    # """,
 
-    "delete_products_period_team_name": """
+    "delete_products_origin_item_less_max_supplement": """--sql
         DELETE FROM tblProducts
         WHERE ID_tblProduct IN (
             SELECT ID_tblProduct
-            FROM tblProducts AS p
+            FROM tblProducts AS m
+            JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblProducts_tblPeriods
             WHERE
-                p.FK_tblProducts_tblOrigins = ? AND
-                p.FK_tblProducts_tblItems = (SELECT ID_tblItem FROM tblItems AS i WHERE i.team = ? AND i.name = ?) AND
-                (p.period > 0 AND p.period < ?)
+                m.FK_tblProducts_tblOrigins = ?
+                AND m.FK_tblProducts_tblItems = ?
+                AND (per.supplement_num > 0 AND per.supplement_num < ?)
         );
     """,
 
-    "select_product_id_origin_code": """
+    "select_product_id_origin_code": """--sql
         SELECT ID_tblProduct FROM tblProducts WHERE FK_tblProducts_tblOrigins = ? AND code = ?;
     """,
 
-    "select_product_all_code": """
+    "select_product_all_code": """--sql
         SELECT * FROM tblProducts WHERE code = ?;
     """,
 
@@ -33,32 +34,30 @@ sql_products_queries = {
         SELECT * FROM tblProducts WHERE FK_tblProducts_tblOrigins = ? AND code = ?;
     """,
 
-    "select_products_id": """
+    "select_products_id": """--sql
         SELECT * FROM tblProducts WHERE ID_tblProduct = ?;
     """,
 
-    "select_products_max_period": """
-        SELECT MAX(period) AS max_period FROM tblProducts WHERE FK_tblProducts_tblOrigins = ?;
+
+    "select_products_max_supplement_origin_item": """--sql
+        SELECT MAX(per.supplement_num) AS max_suppl
+        FROM tblProducts AS m
+        JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblProducts_tblPeriods
+        WHERE m.FK_tblProducts_tblOrigins = ? AND m.FK_tblProducts_tblItems = ?;
     """,
 
-    "select_products_max_period_origin_team_name": """
-        SELECT MAX(period) AS max_period
-        FROM tblProducts AS p
+    # "select_products_count_period_less": """
+    #     SELECT COUNT(*) FROM tblProducts WHERE WHERE FK_tblProducts_tblOrigins = ? AND (period > 0 AND period < ?);
+    # """,
+
+    "select_products_count_origin_item_less_supplement": """--sql
+        SELECT COUNT(*) AS number
+        FROM tblProducts AS m
+        JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblProducts_tblPeriods
         WHERE
-            FK_tblProducts_tblOrigins = ? AND
-            p.FK_tblProducts_tblItems = (SELECT ID_tblItem FROM tblItems AS i WHERE i.team = ? AND i.name = ?);
-    """,
-
-    "select_products_count_period_less": """
-        SELECT COUNT(*) FROM tblProducts WHERE WHERE FK_tblProducts_tblOrigins = ? AND (period > 0 AND period < ?);
-    """,
-
-    "select_products_count_origin_team_name_period": """
-        SELECT COUNT(*) AS number FROM tblProducts AS p
-        WHERE
-            FK_tblProducts_tblOrigins = ? AND
-            FK_tblProducts_tblItems = (SELECT ID_tblItem FROM tblItems AS i WHERE i.team = ? AND i.name = ?) AND
-            (p.period > 0 AND p.period < ?);
+            m.FK_tblProducts_tblOrigins = ? AND
+            m.FK_tblProducts_tblItems = ? AND
+            (per.supplement_num > 0 AND per.supplement_num < ?);
     """,
 
     "select_changes": """SELECT CHANGES() AS changes;""",
@@ -83,11 +82,12 @@ sql_products_queries = {
         VALUES ( ?, ?, ?, ?, ?, ?, ?, ?);
     """,
 
-    "update_product_id": """
+    "update_product_id": """--sql
         UPDATE tblProducts
         SET
-            FK_tblProducts_tblCatalogs = ?, FK_tblProducts_tblItems = ?, FK_tblProducts_tblOrigins = ?,
-            period = ?, code = ?, description = ?, measurer = ?, digit_code = ?
+            FK_tblProducts_tblCatalogs = ?, FK_tblProducts_tblItems = ?,
+            FK_tblProducts_tblOrigins = ?, FK_tblProducts_tblPeriods = ?,
+            code = ?, description = ?, measurer = ?, digit_code = ?
         WHERE ID_tblProduct = ?;
     """,
 }
@@ -129,8 +129,7 @@ sql_products_creates = {
 
     "create_index_products": """--sql
         CREATE UNIQUE INDEX IF NOT EXISTS idxProductsCode ON tblProducts (
-            FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins, FK_tblProducts_tblPeriods,
-            code
+            code, FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems, FK_tblProducts_tblOrigins, FK_tblProducts_tblPeriods
             );
     """,
 
@@ -233,7 +232,7 @@ sql_products_creates = {
                 (CASE WHEN old.ID_tblProduct != new.ID_tblProduct then 1 else 0 END) +
                 (CASE WHEN old.FK_tblProducts_tblCatalogs != new.FK_tblProducts_tblCatalogs then 2 else 0 END) +
                 (CASE WHEN old.FK_tblProducts_tblItems != new.FK_tblProducts_tblItems then 4 else 0 END) +
-                (CASE WHEN old.FK_tblProducts_tblOrigins != new.FK_tblProducts_tblItems then 8 else 0 END) +
+                (CASE WHEN old.FK_tblProducts_tblOrigins != new.FK_tblProducts_tblOrigins then 8 else 0 END) +
                 (CASE WHEN old.FK_tblProducts_tblPeriods != new.FK_tblProducts_tblPeriods then 16 else 0 END) +
                 (CASE WHEN old.code != new.code then 32 else 0 END) +
                 (CASE WHEN old.description != new.description then 64 else 0 END) +
@@ -245,7 +244,7 @@ sql_products_creates = {
                 old.FK_tblProducts_tblCatalogs != new.FK_tblProducts_tblCatalogs OR
                 old.FK_tblProducts_tblItems != new.FK_tblProducts_tblItems OR
                 old.FK_tblProducts_tblOrigins != new.FK_tblProducts_tblOrigins OR
-                old.FK_tblProducts_tblPeriods != new.s OR
+                old.FK_tblProducts_tblPeriods != new.FK_tblProducts_tblPeriods OR
                 old.code != new.code OR
                 old.description != new.description OR
                 old.measurer != new.measurer OR

@@ -48,7 +48,7 @@ class PostgresDB:
         return None
 
     def __exit__(
-            self, 
+            self,
             exc_type: Optional[Type[BaseException]],
             exc_val: Optional[BaseException],
             exc_tb: Optional[TracebackType],
@@ -59,7 +59,7 @@ class PostgresDB:
             raise exc_val
         if self.cursor:
             try:
-                self.cursor.close() 
+                self.cursor.close()
             except psycopg2.DatabaseError as e:
                 traceback.print_exc(e)
                 raise e
@@ -80,14 +80,14 @@ class PostgresDB:
                 with conn.cursor() as cursor:
                     cursor.execute(query)
             return f"{cur.rowcount} rows affected."
-        return None    
-        
+        return None
+
 
     def select_rows_dict_cursor(self, query, args=None):
         """ SELECT as dicts."""
         self.connect()
         # with closing(self.connection) as conn:
-        with self.connection as conn:    
+        with self.connection as conn:
             try:
                 self.cursor.execute(query, args)
                 records = self.cursor.fetchall()
@@ -102,9 +102,12 @@ if __name__ == "__main__":
     from icecream import ic
 
     with PostgresDB(db_access['vlad']) as db:
-        ic(db.connection)
-        ic(db.cursor.execute('SELECT 1+1;'))
-        sql = "COPY (SELECT * FROM larix.period p LIMIT 10) TO STDOUT WITH CSV DELIMITER ';';"
+        # ic(db.connection)
+        # ic(db.cursor.execute('SELECT 1+1;'))
+        # sql = "COPY (SELECT * FROM larix.period p LIMIT 10) TO STDOUT WITH CSV DELIMITER ';';"
+        query = pg_sql_queries["get_all_periods"]
+        db.select_rows_dict_cursor(query)
+
 
         with open("test.csv", "w", encoding='utf-8') as file:
             db.cursor.copy_expert(sql, file)

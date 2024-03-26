@@ -29,16 +29,17 @@ def parsing_quotes(data_paths: LocalData) -> int:
     quote_path = data_paths.quote_data_path
     db_file = data_paths.db_file
 
-    for period in data_paths.periods_data[:1]:
+    for period in data_paths.periods_data:   #[:2]:
+        ic(period)
         period_id = period["id"]
-        # # грузим каталог
-        # catalog_csv_file = create_abspath_file(catalog_path, period['quotes_catalog_csv_file'])
-        # load_csv_to_raw_table(catalog_csv_file, db_file, delimiter=",")
-        # transfer_raw_quotes_to_catalog(db_file, TON_ORIGIN, period_id)
+        # грузим каталог
+        catalog_csv_file = create_abspath_file(catalog_path, period['quotes_catalog_csv_file'])
+        load_csv_to_raw_table(catalog_csv_file, db_file, delimiter=",")
+        transfer_raw_quotes_to_catalog(db_file, TON_ORIGIN, period_id)
 
-        # # грузим расценки
-        # quote_csv_file = create_abspath_file(quote_path, period['quotes_data_csv_file'])
-        # load_csv_to_raw_table(quote_csv_file, db_file, delimiter=",")
+        # грузим расценки
+        quote_csv_file = create_abspath_file(quote_path, period['quotes_data_csv_file'])
+        load_csv_to_raw_table(quote_csv_file, db_file, delimiter=",")
 
         transfer_raw_quotes_to_products(db_file, TON_ORIGIN, period_id)
     return 0

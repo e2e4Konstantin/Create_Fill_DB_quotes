@@ -208,7 +208,7 @@ def update_product(db: dbTolls, data: tuple) -> int | None:
 
 def insert_product(db: dbTolls, data) -> int | None:
     """ Получает кортеж с данными продукта для вставки в таблицу tblProducts. """
-    message = f"INSERT tblProducts шифр {data[4]!r} период id: {data[3]}"
+    message = f"INSERT tblProducts шифр {data[2]!r} период: {data[1]}"
     inserted_id = db.go_insert(sql_products_queries["insert_product"], data, message)
     if inserted_id:
         return inserted_id
@@ -249,34 +249,31 @@ def get_period_by_id(db: dbTolls, period_id: int) -> sqlite3.Row | None:
     return None
 
 
-def delete_last_period_product_row(db: dbTolls, origin_id: int, item_id: int):
-    """ Удаляет все записи у которых период < максимального.
-    Вычисляет максимальный период для таблицы tblProducts. """
-
-    query_info = f"для {origin_id=!r} {item_id=!r}"
+def delete_last_period_product_row(db: dbTolls, origin_id: int, team: str, name: str):
+    """ Удаляет все записи у которых период < максимального. Вычисляет максимальный период для таблицы tblProducts. """
+    query_info = f"для {origin_id=!r} {team=!r} {name=!r}"
     work_cursor = db.go_execute(
-        sql_products_queries["select_products_max_supplement_origin_item"], (origin_id, item_id)
+        sql_products_queries["select_products_max_period_origin_team_name"], (origin_id, team, name)
     )
-    result = work_cursor.fetchone() if work_cursor else None
-    if result is None:
-        output_message_exit(f"Ошибка при получении максимального Номера дополнения периода Продуктов", query_info)
+    max_period = work_cursor.fetchone() if work_cursor else None
+    if max_period is None:
+        output_message_exit(f"Ошибка при получении максимального периода Продуктов", query_info)
         return
-    max_supplement_number = result['max_suppl']
-    ic(origin_id, item_id, max_supplement_number)
-
-    count_records_to_be_deleted = db.go_execute(
-        sql_products_queries["select_products_count_origin_item_less_supplement"],
-        (origin_id, item_id, max_supplement_number)
+    current_max_period = max_period['max_period']
+    ic(origin_id, team, name, current_max_period)
+    deleted_count_cursor = db.go_execute(
+        sql_products_queries["select_products_count_origin_team_name_period"],
+        (origin_id, team, name, current_max_period)
     )
-    number = count_records_to_be_deleted.fetchone()['number']
-    if number > 0:
-        message = f"Будут удалены {number} продуктов с периодом меньше: {max_supplement_number} {query_info}"
+    del_number = deleted_count_cursor.fetchone()['number']
+    if del_number > 0:
+        message = f"Будут удалены {del_number} продуктов с периодом меньше: {current_max_period} {query_info}"
         ic(message)
         deleted_cursor = db.go_execute(
-            sql_products_queries["delete_products_origin_item_less_max_supplement"],
-            (origin_id, item_id, max_supplement_number)
+            sql_products_queries["delete_products_period_team_name"],
+            (origin_id, team, name, current_max_period)
         )
-        message = f"Из Продуктов удалено {deleted_cursor.rowcount} записей с period < {max_supplement_number} {query_info}"
+        message = f"Из Продуктов удалено {deleted_cursor.rowcount} записей с period < {current_max_period} {query_info}"
         ic(message)
 
 
@@ -311,12 +308,6 @@ def get_origin_row_by_id(db: dbTolls, origin_id: int) -> sqlite3.Row | None:
     output_message_exit(f"в справочнике происхождения tblOrigins:",
                         f"не найдено записи с id: {origin_id}.")
 
-def _get_supplement_number(db: dbTolls, period_id: int) -> int | None:
-    """ Получает номер дополнения периода по id. """
-    product_data = get_period_by_id(db, period_id)
-    if product_data:
-        return product_data['supplement_num']
-    return None
 
 
 def transfer_raw_items(
@@ -342,20 +333,19 @@ def transfer_raw_items(
     inserted_success, updated_success = [], []
     for db_row in raw_items:
         data = get_line_data(db, origin_id, db_row, item_id, period_id)
+
         # FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems,
         # FK_tblProducts_tblOrigins, FK_tblProducts_tblPeriods
         # code, description, measurer, full_code
-        raw_code, raw_period_id = data[4], data[3]
-        # запоминаем номер дополнения для raw записи
-        raw_period_supplement_num = _get_supplement_number(db, raw_period_id)
-        # ищем продукт с таким же кодом в таблице tblProducts
+
+        raw_code, raw_period = data[4], data[3]
+
         product = get_product_by_code(db=db, origin_id=origin_id, product_code=raw_code)
+
+
         if product:
-            product_period_supplement_num = _get_supplement_number(
-            db, product['FK_tblProducts_tblPeriods'])
-            if raw_period_supplement_num >= product_period_supplement_num and item_id == product['FK_tblProducts_tblItems']:
-                extra_data = data + (product['ID_tblProduct'],)
-                count_updated = update_product(db, extra_data)
+            if raw_period >= product['period'] and item_id == product['FK_tblProducts_tblItems']:
+                count_updated = update_product(db, data + (product['ID_tblProduct'],))
                 if count_updated:
                     updated_success.append((id, raw_code))
             else:
@@ -372,9 +362,8 @@ def transfer_raw_items(
     ulog = f"Обновлено {len(updated_success)} {item_name}."
     none_log = f"Непонятных записей: {row_count - (len(updated_success) + len(inserted_success))}."
     ic(alog, ilog, ulog, none_log)
-
     # удалить item записи период которых меньше чем максимальный период
-    delete_last_period_product_row(db, origin_id=origin_id, item_id=item_id)
+    delete_last_period_product_row(db, origin_id=origin_id, team=directory_name, name=item_name)
 
 
 if __name__ == '__main__':

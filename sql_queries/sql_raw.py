@@ -3,6 +3,11 @@ sql_raw_queries = {
     "table_name_raw_data":       """tblRawData""",
 
     "create_index_raw_data":     """CREATE INDEX IF NOT EXISTS idxTmpMaterials ON tblRawData (ID, PARENT, CMT);""",
+    "create_index_raw_code":     """--sql
+        CREATE INDEX IF NOT EXISTS idxRawCodeTmpMaterials ON tblRawData (gwp_pressmark, pressmark);
+    """,
+
+
 
     # --- > Удаление таблиц -----------------------------------------------------------------------
     "delete_table_raw_data":     """DROP TABLE IF EXISTS tblRawData;""",
