@@ -20,11 +20,16 @@ class dbControl:
         reg = re.compile(expression)
         return reg.search(item) is not None
 
+    @staticmethod
+    def upper_utf8(text: str):
+        return text.upper() if text else None
+
     def connect(self):
         try:
             self.connection = sqlite3.connect(self.path, check_same_thread=False)
             self.connection.row_factory = sqlite3.Row
             self.connection.create_function("REGEXP", 2, self.regex)
+            self.connection.create_function("UPPER", 1, self.upper_utf8)
         except sqlite3.Error as err:
             self.close(err)
             output_message_exit(f"ошибка открытия БД Sqlite3: {err}", f"{self.path}")
@@ -103,9 +108,13 @@ class dbTolls(dbControl):
             output_message_exit(f"ошибка SELECT запроса БД Sqlite3: {' '.join(error.args)}", f"{src_data}")
         return None
 
-    def go_execute(self, *args, **kwargs) -> sqlite3.Cursor | None:
+
+
+    # def go_execute(self, *args, **kwargs) -> sqlite3.Cursor | None:
+    def go_execute(self, query, *args) -> sqlite3.Cursor | None:
+        ''' Execute SQL '''
         try:
-            result = self.connection.execute(*args, **kwargs)
+            result = self.connection.execute(query, *args)
             return result
         except sqlite3.Error as error:
             output_message(f"ошибка запроса БД Sqlite3: {' '.join(error.args)}", f"{args}")
