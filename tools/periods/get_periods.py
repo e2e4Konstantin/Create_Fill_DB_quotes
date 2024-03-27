@@ -10,7 +10,7 @@ def get_supplement_periods(db_file: str, sup_min: int, sup_max: int) -> list[dic
     with dbTolls(db_file) as db:
         origin_id = db.get_row_id(sql_origins["select_id_name_origins"], ('ТСН', ))
         items_category_id = db.get_row_id(
-            sql_items_queries["select_item_id_team_name"], 
+            sql_items_queries["select_item_id_team_name"],
             ('periods_category', 'дополнение'))
         query_params = (origin_id, items_category_id, sup_min, sup_max)
         results = db.go_select(

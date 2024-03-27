@@ -17,7 +17,8 @@ first_data_path_config = {
         'config_path':          r"C:\Users\kazak.ke\Documents\PythonProjects\Create_Fill_DB_quotes\config",
         'periods_path':         r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Periods",
         'quote_catalog_path':   r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Quotes\QuotesCatalog",
-        'quote_data_path':      r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Quotes\QuotesData"
+        'quote_data_path':      r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Quotes\QuotesData",
+        "resources_path":       r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Resources"
     },
     'home': {
         'db_path':              r"F:\Kazak\GoogleDrive\Python_projects\DB",
@@ -34,6 +35,7 @@ class LocalData(NamedTuple):
     periods_file: str
     quote_catalog_path: str
     quote_data_path: str
+    resources_path: str
     periods_data: list = None
 
 
@@ -51,6 +53,7 @@ def get_data_location(location: str) -> LocalData:
             config[location]['periods_path'], config['periods_file_name']),
         quote_catalog_path = config[location]['quote_catalog_path'],
         quote_data_path = config[location]['quote_data_path'],
+        resources_path=config[location]['resources_path'],
         periods_data=config["periods_data"]
     )
     return location_paths

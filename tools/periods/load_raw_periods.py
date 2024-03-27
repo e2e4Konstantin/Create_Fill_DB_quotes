@@ -2,11 +2,13 @@ import sqlite3
 import re
 from pandas import DataFrame
 from icecream import ic
+from collections import namedtuple
+from typing import Literal
+#--
 from config import dbTolls
-
 from tools.shared.excel_df_raw_table_transfer import load_csv_to_raw_table
 
-from config import LocalData, TON_ORIGIN
+from config import LocalData, TON_ORIGIN, EQUIPMENTS_ORIGIN, MONITORING_ORIGIN
 from tools.shared.shared_features import (
     get_origin_id,
     get_directory_id,
@@ -14,7 +16,11 @@ from tools.shared.shared_features import (
 )
 from tools.shared.code_tolls import text_cleaning, get_integer_value, date_parse
 from sql_queries import sql_periods_queries
-from files_features import output_message
+from files_features import output_message, output_message_exit
+
+
+PairSI = namedtuple(typename="PairSI", field_names=["supplement", "index"])
+PairSI.__annotations__ = {"supplement": int,"index": str}
 
 
 def _get_raw_data_by_pattern(
@@ -25,7 +31,7 @@ def _get_raw_data_by_pattern(
     raw_lines = db.go_select(query, (pattern,))
     if not raw_lines:
         output_message_exit(
-            f"в RAW таблице с Периодами не найдено ни одной записи:",
+            "в RAW таблице с Периодами не найдено ни одной записи:",
             f"tblRawData соответствующих шаблону {pattern!r} в поле {column_name!r}",
         )
         return None
@@ -39,8 +45,55 @@ def _insert_period(db: dbTolls, data) -> int | None:
         sql_periods_queries["insert_period"], data, message)
     if inserted_id:
         return inserted_id
-    output_message(f"период: {data}", f"не добавлен в tblPeriods")
+    output_message(f"период: {data}", "не добавлен в tblPeriods")
     return None
+
+
+def _get_supplement_index_numbers(
+    kind: Literal[
+        "equipment_supplement", "equipment_index", "ton_supplement", "ton_index"
+    ],
+    text: str,
+) -> PairSI | None:
+    match kind:
+        case "equipment_supplement":
+            # Оборудование (Глава 13-2)/дополнение 37
+            pattern = r"^\s*[О|о]борудование\s+.*\/[Д|д]ополнение\s*(\d+)"
+            result = re.match(pattern, text)
+            if result:
+                supplement_number = get_integer_value(result.groups()[0])
+                return PairSI(supplement_number, 0)
+            return None
+        case "equipment_index":
+            # 43 индекс/оборудование доп. 34 (мониторинг Февраль 2023)
+            pattern = r"^\s*(\d+)\s+.*доп\.\s*(\d+)"
+            result = re.match(pattern, text)
+            if result:
+                index_number = get_integer_value(result.groups()[0])
+                supplement_number = get_integer_value(result.groups()[1])
+                return PairSI(supplement_number, index_number)
+            return None
+        case "ton_supplement":
+            # Дополнение 69
+            pattern = r"^\s*[Д|д]ополнение\s*(\d+)"
+            result = re.match(pattern, text)
+            if result:
+                supplement_number = get_integer_value(result.groups()[0])
+                return PairSI(supplement_number, 0)
+            return None
+        case "ton_index":
+            # 209 индекс/дополнение 71 (мониторинг Февраль 2024)
+            pattern = r"^\s*(\d+)\s+индекс\/дополнение\s+(\d+)"
+            result = re.match(pattern, text)
+            if result:
+                index_number = get_integer_value(result.groups()[0])
+                supplement_number = get_integer_value(result.groups()[1])
+                return PairSI(supplement_number, index_number)
+            return None
+        case _:
+            return None
+
+
 
 
 def _make_data_from_raw_supplement_ton(
@@ -164,6 +217,36 @@ def _ton_index_periods_parsing(db_file: str) -> int:
     return 0
 
 
+
+def _equipment_supplement_periods_parsing(db_file: str) -> int:
+    """ Запись периодов 'Оборудование' категории 'Дополнение' из tblRawData в боевую таблицу периодов.
+    Устанавливает ID родительской записи на ту, где номер дополнения меньше на 1."""
+    with dbTolls(db_file) as db:
+        # Оборудование (Глава 13-2)/дополнение 37
+        pattern = "^\s*[О|о]борудование\s+.*\/[Д|д]ополнение\s*(\d+)"
+        supplements_equipment = _get_raw_data_by_pattern(db, column_name="[title]", pattern=pattern)
+
+        ic(len(supplements_equipment))
+        if supplements_equipment is None:
+            return None
+        origin_id = get_origin_id(db, origin_name=EQUIPMENTS_ORIGIN)
+        category_id = get_directory_id(db, directory_team="periods_category", item_name="supplement")
+        ic(origin_id, category_id)
+        for line in supplements_equipment:
+            title = text_cleaning(line["title"])
+            supplement_num, index_num = _get_supplement_index_numbers("equipment_supplement", title)
+            title = f"Оборудование - Дополнение {supplement_num}"
+            date_start = date_parse(text_cleaning(line["date_start"]))
+            comment = text_cleaning(line["cmt"])
+            ID_parent = None
+            basic_database_id = line["id"]
+            data = (
+                title, supplement_num, index_num, date_start, comment, ID_parent, origin_id,
+                category_id, basic_database_id,)
+            _insert_period(db, data)
+    return 0
+
+
 def _ton_update_periods(db_file: str) -> int:
     """ Обновляет данные периодов:
             получает id справочников
@@ -204,21 +287,33 @@ def parsing_raw_periods(data_paths: LocalData):
         Удаляет все данные из таблицы периодов.
         Загружает периоды типа "Дополнение" и "Индексы" для раздела ТСН.
     0: Success"""
-    csv_periods_file = data_paths.periods_file
+    # csv_periods_file = data_paths.periods_file
     db_file = data_paths.db_file
-    result = load_csv_to_raw_table(csv_periods_file, db_file, delimiter=",")
-    message = f"Данные по периодам прочитаны в tblRawData из файла {csv_periods_file!r}: {result=}"
-    ic(message)
-    # Удалить все периоды !!!!!!!!!!!!
-    with dbTolls(db_file) as db:
-        db.go_execute(sql_periods_queries["delete_all_data_periods"])
-    _ton_supplement_periods_parsing(db_file)
-    _ton_index_periods_parsing(db_file)
-    _ton_update_periods(db_file)
+    # result = load_csv_to_raw_table(csv_periods_file, db_file, delimiter=",")
+    # message = f"Данные по периодам прочитаны в tblRawData из файла {csv_periods_file!r}: {result=}"
+    # ic(message)
+    # # Удалить все периоды !!!!!!!!!!!!
+    # with dbTolls(db_file) as db:
+    #     db.go_execute(sql_periods_queries["delete_all_data_periods"])
+    # # _ton_supplement_periods_parsing(db_file)
+    # # _ton_index_periods_parsing(db_file)
+    _equipment_supplement_periods_parsing(db_file)
+    # _ton_update_periods(db_file)
     return 0
 
 
 if __name__ == "__main__":
+    # data = [
+    #     ["equipment_supplement", "Оборудование (Глава 13-2)/дополнение 37"],
+    #     ["equipment_index"," 43 индекс/оборудование доп. 34 (мониторинг Февраль 2023) "],
+    #     ["ton_supplement", "   Дополнение   69  "],
+    #     ["ton_index", " 209 индекс/дополнение 71 (мониторинг Февраль 2024)"],
+    # ]
+    # for item in data:
+    #     x = _get_supplement_index_numbers(item[0], item[1])
+    #     ic(item[1],x)
+
+
     from config import get_data_location
 
     location = "office"  # office home
