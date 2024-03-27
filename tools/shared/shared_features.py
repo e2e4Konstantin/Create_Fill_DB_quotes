@@ -308,7 +308,7 @@ def get_origin_row_by_id(db: dbTolls, origin_id: int) -> sqlite3.Row | None:
     origin_row = db.go_select(sql_origins["select_origin_id"], (origin_id,))
     if origin_row:
         return origin_row[0]
-    output_message_exit(f"в справочнике происхождения tblOrigins:",
+    output_message_exit("в справочнике происхождения tblOrigins:",
                         f"не найдено записи с id: {origin_id}.")
 
 def _get_supplement_number(db: dbTolls, period_id: int) -> int | None:
