@@ -16,11 +16,11 @@ def _read_excel_to_df(excel_file: str, sheet_name: str) -> pd.DataFrame | None:
         )
         if df.empty:
             output_message_exit(
-                f"Данные из файла {excel_file_name!r}", f"Не прочитались."
+                f"Данные из файла {excel_file!r}", "Не прочитались."
             )
         return df
     except IOError as err:
-        output_message_exit(f"Ошибка при чтении файла", f"{excel_file_name!r}")
+        output_message_exit("Ошибка при чтении файла", f"{excel_file!r}\n{err}")
 
 
 def _read_csv_to_df(csv_file_name: str, delimiter: str = ";") -> pd.DataFrame | None:
@@ -35,7 +35,7 @@ def _read_csv_to_df(csv_file_name: str, delimiter: str = ";") -> pd.DataFrame | 
         )
         if df.empty:
             output_message_exit(
-                f"Данные из файла {excel_file_name!r}", f"Не прочитались."
+                f"Данные из файла {csv_file_name!r}", "Не прочитались."
             )
         return df
     except IOError as err:
@@ -62,7 +62,7 @@ def _load_df_to_db_table(df: pd.DataFrame, db_file: str, table_name: str) -> int
 
 def load_csv_to_raw_table(csv_file: str, db_file: str, delimiter: str = ";") -> int:
     """Заполняет таблицу tblRawData данными из csv файла."""
-    df: DataFrame = _read_csv_to_df(csv_file, delimiter)
+    df: pd.DataFrame = _read_csv_to_df(csv_file, delimiter)
     # df.to_clipboard()
     result = _load_df_to_db_table(df, db_file, "tblRawData")
     return result
@@ -70,6 +70,6 @@ def load_csv_to_raw_table(csv_file: str, db_file: str, delimiter: str = ";") -> 
 
 def load_xlsx_to_raw_table(excel_file: str, sheet_name: str, db_file: str) -> int:
     """Заполняет таблицу tblRawData данными из excel файла со страницы sheet_name."""
-    df: DataFrame = _read_excel_to_df(excel_file, sheet_name)
+    df: pd.DataFrame = _read_excel_to_df(excel_file, sheet_name)
     # df.to_clipboard()
     return _load_df_to_db_table(df, db_file, "tblRawData")

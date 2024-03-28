@@ -19,8 +19,8 @@ if __name__ == '__main__':
     local_path = get_data_location(location)
     ic(location, local_path.db_file)
 
-    db_create_fill_directory(local_path.db_file)    # создать таблицы и заполнить справочники
-    parsing_raw_periods(local_path)                 # заполнить периоды
+    # db_create_fill_directory(local_path.db_file)    # создать таблицы и заполнить справочники
+    # parsing_raw_periods(local_path)                 # заполнить периоды
 
     parsing_quotes(local_path)                  # заполнить каталог расценок и сами расценки
 

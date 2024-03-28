@@ -79,7 +79,7 @@ class PostgresDB:
             with closing(self.connect) as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(query)
-            return f"{cur.rowcount} rows affected."
+                    return f"{cursor.rowcount} строк обновлено."
         return None
 
 
@@ -99,15 +99,14 @@ class PostgresDB:
 
 
 if __name__ == "__main__":
-    from icecream import ic
+
+    from postgres_export.pg_sql_queries import pg_sql_queries
 
     with PostgresDB(db_access['vlad']) as db:
-        # ic(db.connection)
-        # ic(db.cursor.execute('SELECT 1+1;'))
-        # sql = "COPY (SELECT * FROM larix.period p LIMIT 10) TO STDOUT WITH CSV DELIMITER ';';"
         query = pg_sql_queries["get_all_periods"]
-        db.select_rows_dict_cursor(query)
+        result = db.select_rows_dict_cursor(query)
+        print(len(result))
 
-
-        with open("test.csv", "w", encoding='utf-8') as file:
-            db.cursor.copy_expert(sql, file)
+        # with db.connection.cursor() as cur:
+        #     with open( "test.csv", "w", encoding="utf-8") as file:
+        #         cur.copy_from(file, "tblRawData", sep=",")

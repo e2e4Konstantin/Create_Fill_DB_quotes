@@ -23,6 +23,9 @@ from tools.quotes.transfer_raw_quotes_to_products import transfer_raw_quotes_to_
 
 # заполнить каталог расценок и сами расценки
 def parsing_quotes(data_paths: LocalData) -> int:
+    """Читает данные из CSV файлов в tblRawData: дерево расценок и сами расценки.
+       Переносит эти данные в боевые таблицы.
+    """
     data_paths.periods_data.sort(key=lambda x: x['supplement'])
 
     catalog_path = data_paths.quote_catalog_path

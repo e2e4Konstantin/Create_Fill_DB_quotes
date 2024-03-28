@@ -1,7 +1,18 @@
 import sqlite3
 import pandas as pd
 from icecream import ic
-from config import dbTolls, items_catalog, DirectoryItem, MAIN_RECORD_CODE
+from config import (
+    dbTolls,
+    LocalData,
+    get_data_location,
+    items_catalog,
+    DirectoryItem,
+    MAIN_RECORD_CODE,
+    TON_ORIGIN,
+)
+
+
+
 from sql_queries import (
     sql_items_queries, sql_raw_queries, sql_catalog_queries
 )
@@ -140,7 +151,9 @@ def transfer_raw_quotes_to_catalog(db_file_name: str, catalog_name: str, period_
 if __name__ == '__main__':
     location = "office"  # office  # home
     data_paths: LocalData = get_data_location(location)
-    data_paths.db_file, catalog_name = TON_ORIGIN, period_id = period_id
+    data_paths.db_file,
+    catalog_name = TON_ORIGIN,
+    period_id = 67
 
     transfer_raw_quotes_to_catalog(
         data_paths.db_file,

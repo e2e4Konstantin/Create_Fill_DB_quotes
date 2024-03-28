@@ -18,7 +18,7 @@ def get_supplement_periods(db_file: str, sup_min: int, sup_max: int) -> list[dic
         if results:
             return [dict(x) for x in results]
         output_message_exit(
-                f"в таблице с Периодами не найдено ни одной записи:",
+                "в таблице с Периодами не найдено ни одной записи:",
                 f"для границ: {query_params}")
     return None
 

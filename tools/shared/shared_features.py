@@ -24,7 +24,7 @@ def insert_raw_catalog(db: dbTolls, raw_catalog_data: tuple) -> int | None:
     message = f"INSERT tblCatalog {raw_catalog_data}"
     inserted_id = db.go_insert(sql_catalog_queries["insert_catalog"], raw_catalog_data, message)
     if not inserted_id:
-        output_message(f"запись {raw_catalog_data}", f"НЕ добавлена в Каталог.")
+        output_message(f"запись {raw_catalog_data}", "НЕ добавлена в Каталог.")
         return None
     return inserted_id
 
@@ -38,7 +38,7 @@ def get_raw_data_items(db: dbTolls, item: DirectoryItem) -> list[sqlite3.Row] | 
     raw_cursor = db.go_execute(sql_raw_queries["select_rwd_code_regexp"], (item.re_pattern,))
     results = raw_cursor.fetchall() if raw_cursor else None
     if not results:
-        output_message_exit(f"в RAW таблице с данными для каталога не найдено ни одной записи:",
+        output_message_exit("в RAW таблице с данными для каталога не найдено ни одной записи:",
                             f"{item.item_name!r}, {item.re_pattern}")
         return None
     return results
@@ -64,7 +64,7 @@ def get_parent_catalog_id(db: dbTolls, origin_id: int, raw_parent_id: int) -> in
     parent_code = clear_code(select[0]['CMT']) if select else None
     if parent_code:
         return get_catalog_id_by_origin_code(db=db, origin=origin_id, code=parent_code)
-    output_message_exit(f"в каталоге", f"не найден родитель с шифром {parent_code!r}")
+    output_message_exit("в каталоге", f"не найден родитель с шифром {parent_code!r}")
     return None
 
 
@@ -82,7 +82,7 @@ def get_catalog_id_by_origin_code(db: dbTolls, origin: int, code: str) -> int | 
     row_id = db.get_row_id(sql_catalog_queries["select_catalog_id_code"], (origin, code))
     if row_id:
         return row_id
-    output_message(f"В каталоге не найдена запись:", f"шифр: {code!r}")
+    output_message("В каталоге не найдена запись:", f"шифр: {code!r}")
     return None
 
 
@@ -142,7 +142,7 @@ def delete_catalog_quotes_with_old_period(db_filename: str):
         work_cursor = db.go_execute(sql_catalog_queries["select_catalog_max_period"])
         max_period = work_cursor.fetchone()['max_period'] if work_cursor else None
         if max_period is None:
-            output_message_exit(f"при получении максимального периода Каталога", f"{max_period=}")
+            output_message_exit("при получении максимального периода Каталога", f"{max_period=}")
             return
         ic(max_period)
 
@@ -172,7 +172,7 @@ def delete_catalog_old_period_for_parent_code(db_filename: str, origin: int, par
         query = sql_catalog_queries["select_catalog_max_supplement_period"]
         result = db.go_select(query, (origin, parent_code,))
         if result is None:
-            output_message_exit(f"Ошибка при получении максимального периода Каталога",
+            output_message_exit("Ошибка при получении максимального периода Каталога",
                                 f"для id каталога {origin=} и шифра {parent_code=}")
             return
         max_supplement_periods = result[0]['max_supplement_periods']
@@ -202,7 +202,7 @@ def update_product(db: dbTolls, data: tuple) -> int | None:
     count = db.go_execute(sql_products_queries["select_changes"])
     if count:
         return count.fetchone()['changes']
-    output_message(f"продукт {data}", f"не обновлен в таблице tblProducts")
+    output_message(f"продукт {data}", "не обновлен в таблице tblProducts")
     return None
 
 
@@ -212,7 +212,7 @@ def insert_product(db: dbTolls, data) -> int | None:
     inserted_id = db.go_insert(sql_products_queries["insert_product"], data, message)
     if inserted_id:
         return inserted_id
-    output_message(f"продукт {data}", f"не добавлен в tblProducts")
+    output_message(f"продукт {data}", "не добавлен в tblProducts")
     return None
 
 
@@ -259,7 +259,7 @@ def delete_last_period_product_row(db: dbTolls, origin_id: int, item_id: int):
     )
     result = work_cursor.fetchone() if work_cursor else None
     if result is None:
-        output_message_exit(f"Ошибка при получении максимального Номера дополнения периода Продуктов", query_info)
+        output_message_exit("Ошибка при получении максимального Номера дополнения периода Продуктов", query_info)
         return
     max_supplement_number = result['max_suppl']
     ic(origin_id, item_id, max_supplement_number)
@@ -284,8 +284,8 @@ def get_raw_data(db: dbTolls) -> list[sqlite3.Row] | None:
     """ Выбрать все записи из сырой таблицы. """
     rows = db.go_select(sql_raw_queries["select_rwd_all"])
     if not rows:
-        output_message_exit(f"в RAW таблице не найдено ни одной записи:",
-                            f"tblRawData пустая.")
+        output_message_exit("в RAW таблице не найдено ни одной записи:",
+                            "tblRawData пустая.")
         return None
     return rows
 
@@ -297,7 +297,7 @@ def get_origin_id(db: dbTolls, origin_name: str) -> int | None:
     origin_id = db.get_row_id(sql_origins["select_origin_name"], (origin_name,))
     if origin_id:
         return origin_id
-    output_message_exit(f"в справочнике происхождения tblOrigins:",
+    output_message_exit("в справочнике происхождения tblOrigins:",
                         f"не найдено записи с названием: {origin_name}.")
 
 
@@ -361,7 +361,7 @@ def transfer_raw_items(
             else:
                 output_message_exit(
                     f"Ошибка обновления Продукта: {raw_code!r} или item_type не совпадает {item_id=!r}",
-                    f"период Продукта {product['period']} старше загружаемого {raw_period}")
+                    f"период Продукта {product['period']} старше загружаемого")
         else:
             inserted_id = insert_product(db, data)
             if inserted_id:

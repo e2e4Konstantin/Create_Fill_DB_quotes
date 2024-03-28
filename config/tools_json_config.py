@@ -11,11 +11,10 @@ def read_config_to_json(json_file_name: str) -> dict:
 def write_config_to_json(json_file_name: str, config_data: dict) -> int:
     """ Записывает файл с конфигурацией. """
     if config_data:
-        config_data['last_date'] = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
         with open(json_file_name, 'w', encoding='utf8') as file:
             json.dump(config_data, file, sort_keys=True,
                       indent=4, ensure_ascii=False)
-            return 0        
+            return 0
     return 1
 
 

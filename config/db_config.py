@@ -30,6 +30,8 @@ class dbControl:
             self.connection.row_factory = sqlite3.Row
             self.connection.create_function("REGEXP", 2, self.regex)
             self.connection.create_function("UPPER", 1, self.upper_utf8)
+            # включить проверку целостности таблиц
+            # self.connection.execute("PRAGMA foreign_keys = ON;")
         except sqlite3.Error as err:
             self.close(err)
             output_message_exit(f"ошибка открытия БД Sqlite3: {err}", f"{self.path}")
@@ -117,7 +119,7 @@ class dbTolls(dbControl):
             result = self.connection.execute(query, *args)
             return result
         except sqlite3.Error as error:
-            output_message(f"ошибка запроса БД Sqlite3: {' '.join(error.args)}", f"{args}")
+            output_message(f"ошибка запроса БД Sqlite3: {' '.join(error.args)}", f"{args}\n{query} ")
             # print(f"SQLite error: {' '.join(error.args)}")
             # print(f"Exception class is: {error.__class__}")
             # print('SQLite traceback: ')

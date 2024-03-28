@@ -10,7 +10,6 @@ sql_periods_queries = {
     #     WHERE p.supplement_num >= ? AND p.supplement_num <= ? AND p.index_num >= ? AND p.index_num <= ?
     #     ORDER BY p.supplement_num DESC, p.index_num DESC;
     # """,
-
     "get_periods_supplement_num": """--sql
         -- получить список периодов для заданного каталога и тпа периода в диапазоне n < дополнений < m
         SELECT p.ID_tblPeriod AS [id], p.title AS [title], p.basic_database_id AS [basic_id],
@@ -22,8 +21,6 @@ sql_periods_queries = {
         p.supplement_num >= ? AND p.supplement_num <= ?
         ORDER BY p.supplement_num DESC
     """,
-
-
     "insert_period": """--sql
         INSERT INTO tblPeriods (
             title, supplement_num, index_num, date_start, comment, ID_parent,
@@ -31,7 +28,6 @@ sql_periods_queries = {
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     """,
-
     "update_periods_supplement_parent": """--sql
         -- Для дополнений ТСН устанавливает ID родительской записи где номер дополнения меньше на 1
         -- named style parameter: {"id_origin": 1, "id_item": 27}, 27 - supplement
@@ -49,7 +45,6 @@ sql_periods_queries = {
             tblPeriods.FK_Origin_tblOrigins_tblPeriods = :id_origin AND
             tblPeriods.FK_Category_tblItems_tblPeriods = :id_item;
         """,
-
     "update_periods_index_parent": """--sql
         -- Для индексов ТСН, устанавливает ID родительской записи на ту, где номер индекса меньше на 1.
         -- named style parameter: {"id_origin": 1, "id_item": 28}, 28 - index
@@ -67,9 +62,8 @@ sql_periods_queries = {
             FK_Origin_tblOrigins_tblPeriods = :id_origin AND
             FK_Category_tblItems_tblPeriods = :id_item;
         """,
-
     "update_periods_index_num_by_max": """--sql
-        -- Для дополнений ТСН устанавливает номер индекса
+        -- Для дополнений ТСН/Оборудование устанавливает номер индекса
         -- на максимальный из группы индексов предыдущего дополнения
         -- named style parameter:
         -- {"id_origin": 1, "id_item_index": 28, "id_item_supplement": 27}
@@ -88,11 +82,9 @@ sql_periods_queries = {
             tblPeriods.FK_Origin_tblOrigins_tblPeriods = :id_origin AND
             tblPeriods.FK_Category_tblItems_tblPeriods = :id_item_supplement;
     """,
-
     "delete_table_periods": """DROP TABLE IF EXISTS tblPeriods;""",
     "delete_index_periods": """DROP INDEX IF EXISTS idxPeriods;""",
     "delete_all_data_periods": """DELETE FROM tblPeriods;""",
-
     "create_table_periods": """--sql
     /*
     Таблица для хранения периодов.
@@ -117,16 +109,14 @@ sql_periods_queries = {
         FOREIGN KEY (FK_Origin_tblOrigins_tblPeriods) REFERENCES tblOrigins (ID_tblOrigin),
         FOREIGN KEY (FK_Category_tblItems_tblPeriods) REFERENCES tblItems (ID_tblItem),
 
-        UNIQUE (supplement_num, index_num, title, FK_Origin_tblOrigins_tblPeriods, FK_Category_tblItems_tblPeriods)
+        UNIQUE (FK_Origin_tblOrigins_tblPeriods, FK_Category_tblItems_tblPeriods, supplement_num, index_num, title)
     );
     """,
-
     "create_index_periods": """--sql
         CREATE UNIQUE INDEX IF NOT EXISTS idxPeriods ON tblPeriods (
             FK_Origin_tblOrigins_tblPeriods, FK_Category_tblItems_tblPeriods, supplement_num, index_num
         );
     """,
-
     "create_view_periods": """--sql
         CREATE VIEW viewPeriods AS
             SELECT
@@ -142,16 +132,15 @@ sql_periods_queries = {
             LEFT JOIN tblOrigins AS o ON o.ID_tblOrigin = p.FK_Origin_tblOrigins_tblPeriods
             LEFT JOIN tblItems AS i ON i.ID_tblItem = p.FK_Category_tblItems_tblPeriods
             LEFT JOIN tblPeriods AS s ON s.ID_tblPeriod = p.ID_parent
-            ORDER BY p.supplement_num DESC, p.index_num DESC;
-            --p.date_start DES
+            ORDER BY
+                p.FK_Origin_tblOrigins_tblPeriods ASC,
+                p.supplement_num DESC,
+                p.index_num DESC;
     """,
-
     "select_period_by_title": """--sql
         SELECT * FROM tblPeriods WHERE title = ?;
     """,
-
     "select_period_by_id": """--sql
         SELECT * FROM tblPeriods WHERE ID_tblPeriod = ?;
     """,
-
 }

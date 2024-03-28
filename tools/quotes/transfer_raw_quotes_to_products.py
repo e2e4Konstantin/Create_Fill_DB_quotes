@@ -52,7 +52,7 @@ def _get_raw_quotes(db: dbTolls) -> list[sqlite3.Row] | None:
     """ Выбрать все записи расценок из сырой таблицы. """
     results = db.go_select(sql_raw_queries["select_rwd_all"])
     if not results:
-        output_message_exit(f"в RAW таблице с Расценками нет записей:", f"tblRawData пустая")
+        output_message_exit("в RAW таблице с Расценками нет записей:", "tblRawData пустая")
         return None
     return results
 
@@ -72,7 +72,7 @@ def transfer_raw_quotes_to_products(db_file: str, catalog_name: str, period_id: 
 
 
 if __name__ == '__main__':
-
-    transfer_raw_quotes_to_products(db_file, TON_ORIGIN, period_id)
+    ...
+    # transfer_raw_quotes_to_products(db_file, TON_ORIGIN, period_id)
 
 

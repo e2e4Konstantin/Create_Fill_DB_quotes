@@ -8,32 +8,31 @@ from config.tools_json_config import read_config_to_json, write_config_to_json
 from files_features import create_abspath_file
 
 
-src_config = {
-    "config_file_name": CONFIG_FILE_NAME,
-    "db_file_name": DB_FILE_NAME,
-    "periods_file_name": "period_export_table.csv",
-    "office": {
-        "db_path": r"C:\Users\kazak.ke\Documents\PythonProjects\DB",
-        "config_path": r"C:\Users\kazak.ke\Documents\PythonProjects\Create_Fill_DB_quotes\config",
-        "periods_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Periods",
-        "quote_catalog_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Quotes\QuotesCatalog",
-        "quote_data_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Quotes\QuotesData",
-        "resources_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Resources",
+first_data_path_config = {
+    # 'last_date':                "",  # datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    'config_file_name':         CONFIG_FILE_NAME,
+    'db_file_name':             DB_FILE_NAME,
+    'periods_file_name':        "period_export_table.csv",
+    'office': {
+        'db_path':              r"C:\Users\kazak.ke\Documents\PythonProjects\DB",
+        'config_path':          r"C:\Users\kazak.ke\Documents\PythonProjects\Create_Fill_DB_quotes\config",
+        'periods_path':         r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Periods",
+        'quote_catalog_path':   r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Quotes\QuotesCatalog",
+        'quote_data_path':      r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Quotes\QuotesData",
+        "resources_path":       r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Resources"
     },
-    "periods_data": [],
+    'home': {
+        'db_path':              r"F:\Kazak\GoogleDrive\Python_projects\DB",
+        'config_path':          r"C:\Users\kazak.ke\Documents\PythonProjects\Create_Fill_DB_quotes\config",
+    },
+    'periods_data': [],
 }
 
 
-class LocalData:
-    def __init__(self, location: str):
-        self.place_name: Literal["office", "home"] = location
-        self.config_file: str = create_abspath_file(
-            src_config[location]["config_path"], src_config["config_file_name"]
-        )
-        self.db_file: str = create_abspath_file(
-            src_config[location]["db_path"], src_config["db_file_name"]
-        )
-
+class LocalData(NamedTuple):
+    place_name: Literal['office', 'home']
+    config_file: str
+    db_file: str
     periods_file: str
     quote_catalog_path: str
     quote_data_path: str
