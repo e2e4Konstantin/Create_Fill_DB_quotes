@@ -1,44 +1,52 @@
 {
-    "config_file_name": "config_quotes_parsing.json",
-    "db_file_name": "Normative.sqlite3",
-    "home": {
-        "config_path": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\Create_Fill_DB_quotes\\config",
-        "db_path": "F:\\Kazak\\GoogleDrive\\Python_projects\\DB"
-    },
-    "last_date": "27-03-2024 13:13:27",
-    "office": {
-        "config_path": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\Create_Fill_DB_quotes\\config",
-        "db_path": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\DB",
-        "periods_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\Periods",
-        "quote_catalog_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\Quotes\\QuotesCatalog",
-        "quote_data_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\Quotes\\QuotesData",
-        "resources_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\Resources"
-    },
+    "config_file": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\Create_Fill_DB_quotes\\config\\config_quotes_parsing.json",
+    "db_file": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\DB\\Normative.sqlite3",
+    "last_date": "29-03-2024 16:57:39",
     "periods_data": [
+        {
+            "basic_id": 167085727,
+            "id": 72,
+            "index": 210,
+            "quotes_catalog_csv_file": "Catalog_Quotes_Дополнение_72_id_167085727.csv",
+            "quotes_data_csv_file": "Quotes_Дополнение_72_id_167085727.csv",
+            "resources_catalog_csv_file": "Resources_Catalog_Дополнение_72_id_167085727.csv",
+            "supplement": 72,
+            "title": "Дополнение 72"
+        },
+        {
+            "basic_id": 166954793,
+            "id": 71,
+            "index": 207,
+            "quotes_catalog_csv_file": "Catalog_Quotes_Дополнение_71_id_166954793.csv",
+            "quotes_data_csv_file": "Quotes_Дополнение_71_id_166954793.csv",
+            "resources_catalog_csv_file": "Resources_Catalog_Дополнение_71_id_166954793.csv",
+            "supplement": 71,
+            "title": "Дополнение 71"
+        },
+        {
+            "basic_id": 152472566,
+            "id": 68,
+            "index": 204,
+            "quotes_catalog_csv_file": "Catalog_Quotes_Дополнение_70_id_152472566.csv",
+            "quotes_data_csv_file": "Quotes_Дополнение_70_id_152472566.csv",
+            "resources_catalog_csv_file": "Resources_Catalog_Дополнение_70_id_152472566.csv",
+            "supplement": 70,
+            "title": "Дополнение 70"
+        },
         {
             "basic_id": 151427079,
             "id": 67,
             "index": 201,
-            "quotes_catalog_csv_file": "Resources_Catalog_Дополнение_69_id_151427079.csv",
+            "quotes_catalog_csv_file": "Catalog_Quotes_Дополнение_69_id_151427079.csv",
+            "quotes_data_csv_file": "Quotes_Дополнение_69_id_151427079.csv",
+            "resources_catalog_csv_file": "Resources_Catalog_Дополнение_69_id_151427079.csv",
             "supplement": 69,
             "title": "Дополнение 69"
-        },
-        {
-            "basic_id": 150719989,
-            "id": 66,
-            "index": 198,
-            "quotes_catalog_csv_file": "Resources_Catalog_Дополнение_68_id_150719989.csv",
-            "supplement": 68,
-            "title": "Дополнение 68"
-        },
-        {
-            "basic_id": 149000015,
-            "id": 70,
-            "index": 195,
-            "quotes_catalog_csv_file": "Resources_Catalog_Дополнение_67_id_149000015.csv",
-            "supplement": 67,
-            "title": "Дополнение 67"
         }
     ],
-    "periods_file_name": "period_export_table.csv"
+    "periods_file": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\Periods\\period_export_table.csv",
+    "place": "office",
+    "quote_catalog_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\Quotes\\QuotesCatalog",
+    "quote_data_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\Quotes\\QuotesData",
+    "resources_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\Resources"
 }

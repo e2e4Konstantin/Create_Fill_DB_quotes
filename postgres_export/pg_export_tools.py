@@ -1,45 +1,52 @@
 from pathlib import Path
-from postgres_export.pg_config import AccessData
-from icecream import ic
 import pandas as pd
+from icecream import ic
+
+
+from config import dbTolls
+from sql_queries import sql_periods_queries, sql_origins, sql_items_queries
+from files_features import output_message_exit
+
 
 from files_features import create_abspath_file
 
-from config import dbTolls, LocalData, get_data_location, save_data_location
+from config import LocalData
 
 from postgres_export.pg_sql_queries import pg_sql_queries
 from postgres_export.pg_config_db import PostgresDB
 from postgres_export.pg_config import AccessData, db_access
 
-from tools.periods.get_periods import get_supplement_periods
+
+from tools.periods.get_periods import get_periods_range
 
 
-def export_table_periods(location: str, pgr_access: AccessData):
-    """ Сохраняет таблицу larix.period в CSV файл. """
 
-    data_paths: LocalData = get_data_location(location)
-    csv_file = data_paths.periods_file
-    with PostgresDB(pgr_access) as db:
-        query = pg_sql_queries["get_all_periods"]
-        _query_to_csv(db, csv_file, query)
-
-        # query = pg_sql_queries["get_all_period_table"]
-        # with open(csv_file, "w", encoding='utf-8') as file:
-        #     db.cursor.copy_expert(query, file)
-
-
-def _query_to_csv(db: PostgresDB, csv_file_name: str, query: str, params=None) -> int:
-    """ Получает выборку из БД и сохраняет ее в csv файл. """
+def _query_to_csv(db: PostgresDB, csv_file: str, query: str, params=None) -> int:
+    """Получает выборку из БД и сохраняет ее в csv файл."""
     # df = pd.read_sql_query(
     #     sql=query, params=params, con=db.connection)
     results = db.select_rows_dict_cursor(query, params)
     if results:
         df = pd.DataFrame(results)
         df.columns = results[0].keys()
-        df.to_csv(csv_file_name, mode='w', encoding='utf-8', header=True, index=False)
-        print(f"df выгружен в файл {csv_file_name!r}")
+        df.to_csv(csv_file, mode="w", encoding="utf-8", header=True, index=False)
         return 0
     return 1
+
+
+def export_table_periods(csv_file: str, pgr_access: AccessData):
+    """Сохраняет таблицу Postgres Normative larix.period в CSV файл."""
+    with PostgresDB(pgr_access) as db:
+        query = pg_sql_queries["get_all_periods"]
+        _query_to_csv(db, csv_file, query)
+    print(f"Периоды из Postgres Normative выгружены в файл: {csv_file!r}")
+
+    # query = pg_sql_queries["get_all_period_table"]
+        # with open(csv_file, "w", encoding='utf-8') as file:
+        #     db.cursor.copy_expert(query, file)
+
+
+
 
 
 def get_period_id_by_name(pgr_access: AccessData, period_title: str) -> int | None:
@@ -90,34 +97,29 @@ def build_file_name(period_info: dict[str: any], path: str, file_tail: str) -> s
 
 
 
-def export_quotes_for_range_periods(
-    location: str, pgr_access: AccessData, supplement_min: int, supplement_max: int
-    ) -> int:
-    """ Выгружает данные по расценкам и дереву в CSV файлы для каждого периода отдельно.
-        Отдельно файл Каталога и файл с Данными по расценкам.
-        Получает данные по периодам Дополнений в заданном диапазоне.
-        Для каждого периода выгружает файл с каталогом и файл с расценками.
+def export_quotes_for_range_periods(location: LocalData, pgr_access: AccessData) -> int:
     """
-    data_paths: LocalData = get_data_location(location)
+    Из Postgres Normative выгружает данные по расценкам и каталогу/дереву в CSV файлы.
+    Список периодов получаем из атрибута класса LocalData, куда он загружен из SQLite БД периодов.
+    Для каждого периода отдельно из списка выгружает 2 фала: каталог и расценки.
+    """
 
-    db_file = data_paths.db_file
-    quote_path = data_paths.quote_data_path
-    quote_catalog_path = data_paths.quote_catalog_path
+    quote_path = location.quote_data_path
+    quote_catalog_path = location.quote_catalog_path
 
-    periods_band = get_supplement_periods(db_file, supplement_min, supplement_max)
-
-    for period in periods_band:
+    for period in location.periods_data:
         # ==> Quotes Catalog ==>
-        catalog_csv_file = build_file_name(period, quote_catalog_path, file_tail='Catalog.csv')
+        catalog_csv_file = build_file_name(
+            period, quote_catalog_path, file_tail="Catalog_Quotes.csv"
+        )
         export_catalog_to_csv_for_period_id(pgr_access, period['basic_id'], catalog_csv_file)
         period['quotes_catalog_csv_file'] = Path(catalog_csv_file).name
+
         # ==> Quotes Data ==>
         quote_csv_file = build_file_name(period, quote_path, file_tail='Quotes.csv')
         export_quotes_to_csv_for_period_id(pgr_access, period['basic_id'], quote_csv_file)
         period['quotes_data_csv_file'] = Path(quote_csv_file).name
 
-    data_paths = data_paths._replace(periods_data=periods_band)
-    save_data_location(data_paths)
 
 
 
@@ -126,6 +128,7 @@ def export_resource_catalog_to_csv_for_period_id(pgr_access: AccessData, period_
     """ Записывает Дерево каталога из GROUP_WORK_PROCESS для id_периода в CSV файл. """
     if period_id > 0 and csv_file:
         with PostgresDB(pgr_access) as db:
+            # larix.resource_classifier id
             result = db.select_rows_dict_cursor(pg_sql_queries["get_origin_id"], {'origin_title': 'ТСН'})
             if result:
                 origin_id = result[0][0]
@@ -144,55 +147,53 @@ def export_resource_catalog_to_csv_for_period_id(pgr_access: AccessData, period_
 
 
 
-def export_resource_for_range_periods(
-    location: str, pgr_access: AccessData, supplement_min: int, supplement_max: int
-) -> int:
-    """ Выгружает данные по ресурсам и дереву ресурсов в CSV файлы для каждого периода отдельно.
-        Отдельно файл Каталога/Дерева и файл с Данными по Ресурсам.
-        Получает данные по периодам Дополнений в заданном диапазоне.
-        Для каждого периода выгружает файл с каталогом и файл с расценками.
+def export_resource_for_range_periods(location: LocalData, pgr_access: AccessData) -> int:
     """
-    data_paths: LocalData = get_data_location(location)
+    Из Postgres Normative выгружает данные по ресурсам и каталогу/дереву в CSV файлы.
+    Список периодов получаем из атрибута класса LocalData, куда он загружен из SQLite БД периодов.
+    Для каждого периода отдельно из списка выгружает 2 фала: каталог и ресурсы.
+    """
 
-    db_file = data_paths.db_file
-    resources_path = data_paths.resources_path
+    resources_path = location.resources_path
 
-    periods_band = get_supplement_periods(
-        db_file, supplement_min, supplement_max)
-
-    for period in periods_band:
+    for period in location.periods_data:
         print(period)
         # ==> Resources Catalog ==>
         catalog_csv_file = build_file_name(
-            period, resources_path, file_tail='Resources_Catalog.csv')
+            period, resources_path, file_tail='Resources_Catalog.csv'
+        )
         export_resource_catalog_to_csv_for_period_id(
-            pgr_access, period['basic_id'], catalog_csv_file)
+            pgr_access, period['basic_id'], catalog_csv_file
+        )
         # добавить имя файла в конфиг
-        period['quotes_catalog_csv_file'] = Path(catalog_csv_file).name
+        period["resources_catalog_csv_file"] = Path(catalog_csv_file).name
 
 
 
-    data_paths = data_paths._replace(periods_data=periods_band)
-    save_data_location(data_paths)
 
 
 
 
 if __name__ == "__main__":
-    location = "office"
 
-    # Выгрузить таблицу периодов
-    export_table_periods(location, db_access['normative'])
+    with LocalData("office") as local:
+        supplement_min, supplement_max = 69, 72
 
-    # Выгрузить данные: каталог расценок и расценки для указанных периодов
-    # export_quotes_for_range_periods(
-    #     location, db_access['normative'],
-    #     supplement_min=67, supplement_max=69)
+        # 1. Выгрузить таблицу периодов
+        export_table_periods(csv_file=local.periods_file, pgr_access = db_access["normative"])
+        # 2. Получить данные нужных периодов и записать в конфиг
+        local.periods_data = get_periods_range(
+            db_file=local.db_file,
+            origin_name="ТСН",
+            period_item_type="supplement",
+            supplement_min=supplement_min,
+            supplement_max=supplement_max,
+        )
+        # 3. Выгрузить: каталог расценок и расценки для указанных периодов (номеров дополнений)
+        export_quotes_for_range_periods(local, db_access["normative"])
 
-    # Выгрузить данные: каталог расценок и расценки для указанных периодов
-    # export_resource_for_range_periods(
-    #     location, db_access['normative'],
-    #     supplement_min=67, supplement_max=69)
+        # Выгрузить: каталог ресурсов и ресурсы и расценки для указанных периодов
+        export_resource_for_range_periods(local, db_access["normative"])
 
 
     # ==> Test

@@ -1,6 +1,6 @@
 import sqlite3
 import re
-from pandas import DataFrame
+
 from icecream import ic
 from collections import namedtuple
 from typing import Literal
@@ -9,11 +9,10 @@ from typing import Literal
 from config import dbTolls
 from tools.shared.excel_df_raw_table_transfer import load_csv_to_raw_table
 
-from config import LocalData, TON_ORIGIN, EQUIPMENTS_ORIGIN, MONITORING_ORIGIN
+from config import LocalData, TON_ORIGIN, EQUIPMENTS_ORIGIN
 from tools.shared.shared_features import (
     get_origin_id,
-    get_directory_id,
-    get_period_by_title,
+    get_directory_id
 )
 from tools.shared.code_tolls import text_cleaning, get_integer_value, date_parse
 from sql_queries import sql_periods_queries
@@ -22,7 +21,6 @@ from files_features import output_message, output_message_exit
 
 PairSI = namedtuple(typename="PairSI", field_names=["supplement", "index"])
 PairSI.__annotations__ = {"supplement": int, "index": str}
-
 
 def _get_raw_data_by_pattern(
     db: dbTolls, column_name: str, pattern: str
@@ -294,13 +292,15 @@ def _update_periods_parent(db_file: str, origin_name: str) -> int:
     return 0
 
 
-def parsing_raw_periods(data_paths: LocalData):
-    """Читает данные о периодах из выгруженного файла из основной базы.
-        Удаляет все данные из таблицы периодов.
-        Загружает периоды типа "Дополнение" и "Индексы" для раздела 'ТСН' и 'Оборудование'.
-    0: Success"""
-    csv_periods_file = data_paths.periods_file
-    db_file = data_paths.db_file
+def parsing_raw_periods(location: LocalData):
+    """
+    Читает данные о периодах из файла выгруженного из Postgres Normative
+    larix.period в SQLite tblRawDat.  Удаляет все данные из таблицы
+    периодов tblPeriods. Загружает периоды типа "Дополнение" и "Индекс"
+    для раздела 'ТСН' и 'Оборудование'.
+    """
+    csv_periods_file = location.periods_file
+    db_file = location.db_file
     result = load_csv_to_raw_table(csv_periods_file, db_file, delimiter=",")
     message = f"Данные по периодам прочитаны в tblRawData из файла {csv_periods_file!r}: {result=}"
     ic(message)
@@ -319,19 +319,4 @@ def parsing_raw_periods(data_paths: LocalData):
 
 
 if __name__ == "__main__":
-    # data = [
-    #     ["equipment_supplement", "Оборудование (Глава 13-2)/дополнение 37"],
-    #     ["equipment_index"," 43 индекс/оборудование доп. 34 (мониторинг Февраль 2023) "],
-    #     ["ton_supplement", "   Дополнение   69  "],
-    #     ["ton_index", " 209 индекс/дополнение 71 (мониторинг Февраль 2024)"],
-    # ]
-    # for item in data:
-    #     x = _get_supplement_index_numbers(item[0], item[1])
-    #     ic(item[1],x)
-
-    from config import get_data_location
-
-    location = "office"  # office home
-    local_path = get_data_location(location)
-
-    parsing_raw_periods(local_path)
+    parsing_raw_periods(LocalData("office"))

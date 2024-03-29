@@ -1,4 +1,4 @@
-from typing import NamedTuple
+
 from datetime import datetime
 from typing import Literal
 
@@ -8,82 +8,89 @@ from config.tools_json_config import read_config_to_json, write_config_to_json
 from files_features import create_abspath_file
 
 
-src_config = {
-    "config_file_name": CONFIG_FILE_NAME,
-    "db_file_name": DB_FILE_NAME,
-    "periods_file_name": "period_export_table.csv",
-    "office": {
-        "db_path": r"C:\Users\kazak.ke\Documents\PythonProjects\DB",
-        "config_path": r"C:\Users\kazak.ke\Documents\PythonProjects\Create_Fill_DB_quotes\config",
-        "periods_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Periods",
-        "quote_catalog_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Quotes\QuotesCatalog",
-        "quote_data_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Quotes\QuotesData",
-        "resources_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Resources",
-    },
-    "periods_data": [],
-}
-
-
 class LocalData:
+    """ класс для чтения, хранения, записи конфигурации фалов данных."""
+    SRC = {
+        "config_file_name": CONFIG_FILE_NAME,
+        "db_file_name": DB_FILE_NAME,
+        "periods_file_name": "period_export_table.csv",
+        "office": {
+            "db_path": r"C:\Users\kazak.ke\Documents\PythonProjects\DB",
+            "config_path": r"C:\Users\kazak.ke\Documents\PythonProjects\Create_Fill_DB_quotes\config",
+            "periods_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Periods",
+            "quote_catalog_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Quotes\QuotesCatalog",
+            "quote_data_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Quotes\QuotesData",
+            "resources_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Resources",
+        },
+        "home": {
+            "db_path": r"..\DB",
+            "config_path": r"..\Create_Fill_DB_quotes\config",
+            "periods_path": r"\..\Periods",
+            "quote_catalog_path": r"\..\Quotes\QuotesCatalog",
+            "quote_data_path": r"\..\Quotes\QuotesData",
+            "resources_path": r"\..\Resources",
+        },
+        # список периодов
+        "periods_data": [],
+    }
+
     def __init__(self, location: str):
         self.place_name: Literal["office", "home"] = location
         self.config_file: str = create_abspath_file(
-            src_config[location]["config_path"], src_config["config_file_name"]
+            LocalData.SRC[location]["config_path"], LocalData.SRC["config_file_name"]
         )
         self.db_file: str = create_abspath_file(
-            src_config[location]["db_path"], src_config["db_file_name"]
+            LocalData.SRC[location]["db_path"], LocalData.SRC["db_file_name"]
         )
+        self.periods_file: str = create_abspath_file(
+            LocalData.SRC[location]["periods_path"], LocalData.SRC["periods_file_name"]
+        )
+        self.quote_catalog_path: str = LocalData.SRC[location]["quote_catalog_path"]
+        self.quote_data_path: str = LocalData.SRC[location]["quote_data_path"]
+        self.resources_path: str = LocalData.SRC[location]["resources_path"]
+        config = read_config_to_json(self.config_file)
+        if config:
+            self.periods_data = config["periods_data"]
+        else:
+            self.periods_data = []
 
-    periods_file: str
-    quote_catalog_path: str
-    quote_data_path: str
-    resources_path: str
-    periods_data: list = None
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        self.save_config()
+
+    def __str__(self):
+        period_out = "\n".join([f"Период: {period}" for period in self.periods_data])
+        return f"Место: {self.place_name}\nDB: {self.config_file}\n{period_out}"
 
     def save_config(self):
-        config = read_config_to_json(self.config_file)
-        config["periods_data"] = self.periods_data
+        config = {}
+        config["place"] = self.place_name
         config['last_date'] = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+        config["config_file"] = self.config_file
+        config["db_file"] = self.db_file
+        config["periods_file"] = self.periods_file
+        config["quote_catalog_path"] = self.quote_catalog_path
+        config["quote_data_path"] = self.quote_data_path
+        config["resources_path"] = self.resources_path
+
+        config["periods_data"] = self.periods_data
         write_config_to_json(self.config_file, config)
 
 
 
 
 
-def get_data_location(location: str) -> LocalData:
-    """ Формирует ссылки на данные в зависимости от места работы. """
-    config_path = first_data_path_config[location]["config_path"]
-    config_file_name = first_data_path_config["config_file_name"]
-
-    config_file = create_abspath_file(config_path, config_file_name)
-    config = read_config_to_json(config_file)
-
-    location_paths  = LocalData(
-        place_name = location,
-        config_file = config_file,
-        db_file = create_abspath_file(config[location]['db_path'], config['db_file_name']),
-        periods_file = create_abspath_file(
-            config[location]['periods_path'], config['periods_file_name']),
-        quote_catalog_path = config[location]['quote_catalog_path'],
-        quote_data_path = config[location]['quote_data_path'],
-        resources_path=config[location]['resources_path'],
-        periods_data=config["periods_data"]
-    )
-    return location_paths
-
 
 if __name__ == "__main__":
     from icecream import ic
     ic()
-    # path = first_data_path_config['office']['config_path']
-    # first_config_file = create_abspath_file(path, CONFIG_FILE_NAME)
-    # ic(first_config_file)
-    # write_config_to_json(first_config_file, first_data_path_config)
 
-    x = get_data_location("office")
-    x.save_config()
+    # x = LocalData("office")
+    # print(x)
+    # x.save_config()
 
-    # ic(x)
-    # ic(x.__dir__())
-    # ic(x._asdict())
-
+    with LocalData("office") as local:
+        print(local)
+        local.place_name = "****"

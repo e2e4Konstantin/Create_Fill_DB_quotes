@@ -1,18 +1,28 @@
-import sqlite3
+
 from icecream import ic
 from config import dbTolls
 from sql_queries import sql_periods_queries, sql_origins, sql_items_queries
 from files_features import output_message_exit
 
 
-def get_supplement_periods(db_file: str, sup_min: int, sup_max: int) -> list[dict[str: any]] | None:
-    """ Для каталога 'ТСН' выбирает периоды дополнений по диапазону номеров min -> max. """
+def get_periods_range(
+    db_file: str,
+    origin_name: str,
+    period_item_type: str,
+    supplement_min: int,
+    supplement_max: int,
+) -> list[dict[str:any]] | None:
+    """
+    Для каталога 'origin_name' и типа периода 'period_type'
+    выбирает периоды для диапазону номеров min -> max.
+    """
     with dbTolls(db_file) as db:
-        origin_id = db.get_row_id(sql_origins["select_id_name_origins"], ('ТСН', ))
-        items_category_id = db.get_row_id(
+        origin_id = db.get_row_id(sql_origins["select_id_name_origins"], (origin_name, ))
+        items_id = db.get_row_id(
             sql_items_queries["select_item_id_team_name"],
-            ('periods_category', 'дополнение'))
-        query_params = (origin_id, items_category_id, sup_min, sup_max)
+            ("periods_category", period_item_type),
+        )
+        query_params = (origin_id, items_id, supplement_min, supplement_max)
         results = db.go_select(
             sql_periods_queries["get_periods_supplement_num"], query_params)
         if results:
@@ -24,11 +34,16 @@ def get_supplement_periods(db_file: str, sup_min: int, sup_max: int) -> list[dic
 
 
 if __name__ == "__main__":
-    from config import LocalData, get_data_location
+    from config import LocalData
 
-    location = "office"  # office  # home
-    paths: LocalData = get_data_location(location)
-    db_file = paths.db_file
+    local = "office"  # office  # home
+    db_file = LocalData(local).db_file
 
-    l = get_supplement_periods(db_file, sup_min=67, sup_max=72)
-    ic(l)
+    result = get_periods_range(
+        db_file,
+        origin_name="ТСН",
+        period_item_type="supplement",
+        supplement_min=67,
+        supplement_max=72,
+    )
+    ic(result)

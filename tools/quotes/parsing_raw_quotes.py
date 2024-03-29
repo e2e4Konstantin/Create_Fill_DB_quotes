@@ -1,5 +1,5 @@
 
-from config import dbTolls, LocalData, get_data_location, TON_ORIGIN
+from config import LocalData, TON_ORIGIN
 from icecream import ic
 
 from tools.shared.excel_df_raw_table_transfer import load_csv_to_raw_table
@@ -50,19 +50,7 @@ def parsing_quotes(data_paths: LocalData) -> int:
 
 if __name__ == "__main__":
 
-    location = "office"  # office  # home
-    data_paths: LocalData = get_data_location(location)
-
-    parsing_quotes(data_paths)
+    location = LocalData("office") # office  # home
+    parsing_quotes(location)
 
 
-
-# # --- > Расценки
-# # --------------------- > Каталог
-# ic(catalog_data)
-# read_csv_to_raw_table(db_name, catalog_data, period)
-# transfer_raw_quotes_to_catalog(db_name, catalog_name=TON_CATALOG)
-# # ---------------------- > Данные
-# ic(quotes_data)
-# read_csv_to_raw_table(db_name, quotes_data, period)
-# transfer_raw_data_to_quotes(db_name, catalog_name=TON_CATALOG)

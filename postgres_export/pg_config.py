@@ -2,7 +2,8 @@ from typing import NamedTuple
 
 
 class AccessData(NamedTuple):
-    """ Доступ соединения с БД."""
+    """Доступ соединения с БД."""
+
     host: str = None
     port: int = 5432
     dbname: str = None
@@ -17,20 +18,18 @@ class AccessData(NamedTuple):
 
 
 # Данные для коннектов
-db_access: dict[str: AccessData] = {
+db_access: dict[str:AccessData] = {
     "vlad": AccessData(
-        host='172.16.49.193', dbname='postgres', user='read_write', password='read_write'
-        ),
-
+        host="172.16.49.193",
+        dbname="postgres",
+        user="read_write",
+        password="read_write",
+    ),
     "normative": AccessData(
-        host='192.168.23.3', dbname='normativ', user='read_larix', password='read_larix'
-        )
+        host="172.16.51.8", dbname="normativ", user="read_larix", password="read_larix"
+    ),
 }
 
 if __name__ == "__main__":
-    
-    print(*db_access['vlad'])
-    print(db_access['vlad'])
-    
-    
-    
+    print(*db_access["vlad"])
+    print(db_access["vlad"])

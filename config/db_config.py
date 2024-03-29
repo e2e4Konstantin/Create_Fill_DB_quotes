@@ -146,10 +146,10 @@ class dbTolls(dbControl):
                     table_info = self.connection.execute(f"PRAGMA table_info({table_name})")
                     data = table_info.fetchall()
 
-                    print(f"поля таблицы: ")
+                    print("поля таблицы: ")
                     print([tuple(d) for d in data])
                     if all_details:
-                        print(f"данные таблицы:")
+                        print("данные таблицы:")
                         cursor = self.connection.execute(f"SELECT * from {table_name}")
                         print([row_i for row_i in cursor])
 
