@@ -46,6 +46,31 @@ pg_sql_queries = {
         WHERE gr.deleted = 0 AND gr."period" = %(period_id)s AND gr.pressmark !~ '(^\s*[0]+\s*$)' AND rc.id = %(origin_id)s
         ORDER BY gr.pressmark_sort;
     """,
+    # получает ресурсы глава 1 и 2 для id периода
+    "get_resources_1_2_for_period_id": """--sql
+        SELECT
+            r.id,
+            r.pressmark ,
+            r.title,
+            uom.title "unit_measure",
+            r.unit_of_measure "id_measure",
+            tr.id "id_type_resources",
+            per.id "id_period",
+            r.group_resource "id_group_resource"
+            /*,
+            per.title AS "period_title",
+            tr.title AS "type_resources",
+            gr.pressmark AS "group_pressmark",
+            gr.title AS "group_title"
+            */
+        FROM larix.resources r
+        INNER JOIN larix."period" per on per.id = r."period"
+        INNER JOIN larix.group_resource gr ON gr.id = r.group_resource AND gr."period" = per.id
+        INNER JOIN larix.type_resource tr ON tr.id = r.type_resource
+        INNER JOIN larix.unit_of_measure uom ON uom.id = r.unit_of_measure
+        WHERE r."period" = %(period_id)s AND r.deleted = 0 AND r.pressmark ~ '^\s*[1|2]\.'
+        ORDER BY r.pressmark_sort
+    """,
     # -------------- test -----------------------
     "q_test_1": """--sql
         SELECT p.id AS period_id from larix.period p WHERE p.title = {0};

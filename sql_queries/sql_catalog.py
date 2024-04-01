@@ -159,7 +159,7 @@ sql_catalog_queries = {
         UPDATE tblCatalogs SET (FK_tblCatalogs_tblPeriods) = (?) WHERE code = ? AND FK_tblCatalogs_tblOrigins = ?;
     """,
 
-    "update_catalog_parent_himself": """
+    "update_catalog_parent_himself": """--sql
         UPDATE tblCatalogs SET (ID_parent) = (ROWID) WHERE ID_tblCatalog = ?;
     """,
 

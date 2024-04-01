@@ -11,30 +11,24 @@ from tools.quotes.parsing_raw_quotes import parsing_quotes
 #     transfer_raw_data_to_pnwc_resources, delete_raw_tables
 # )
 
-from config import dbTolls, LocalData, get_data_location
+from config import LocalData
 
 if __name__ == '__main__':
     # version = f"SQLite: {sqlite3.sqlite_version}\nPython: {sys.version}"
+    # ic(version)
     location = "office" # office  # home
-    local_path = get_data_location(location)
-    ic(location, local_path.db_file)
+    local = LocalData(location)
+    db_file: str = local.db_file
+    ic(location, db_file)
+    # создать таблицы и заполнить справочники
+    # db_create_fill_directory(db_file)
+    # --
+    # периоды переносятся при экспорте данных в scv файлы
+    # --
+    # заполнить каталог расценок и сами расценки
+    parsing_quotes(local)
 
-    # db_create_fill_directory(local_path.db_file)    # создать таблицы и заполнить справочники
-    # parsing_raw_periods(local_path)                 # заполнить периоды
 
-    parsing_quotes(local_path)                  # заполнить каталог расценок и сами расценки
-
-
-
-    # # --- > Расценки
-    # # --------------------- > Каталог
-    # ic(catalog_data)
-    # read_csv_to_raw_table(db_name, catalog_data, period)
-    # transfer_raw_quotes_to_catalog(db_name, catalog_name=TON_CATALOG)
-    # # ---------------------- > Данные
-    # ic(quotes_data)
-    # read_csv_to_raw_table(db_name, quotes_data, period)
-    # transfer_raw_data_to_quotes(db_name, catalog_name=TON_CATALOG)
     # #
     # # --- > Материалы Глава 1
     # # --------------------- > Каталог Материалы

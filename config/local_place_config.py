@@ -74,8 +74,11 @@ class LocalData:
         config["quote_catalog_path"] = self.quote_catalog_path
         config["quote_data_path"] = self.quote_data_path
         config["resources_path"] = self.resources_path
-
+        # сортируем периоды по убыванию номеров дополнений
+        if self.periods_data:
+            self.periods_data.sort(key=lambda x: x['supplement'])
         config["periods_data"] = self.periods_data
+
         write_config_to_json(self.config_file, config)
 
 

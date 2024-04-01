@@ -56,14 +56,19 @@ POM: project outlay module
 
 # Порядок Экспорта данных из Postgres Normative larix
 
-Выгружаем периоды из Postgres Normative larix.period в scv файл.
-Загружаем scv файл во временную таблицу в SQLite tblRawData.
-Устанавливает ссылки/связи на справочники, обрабатывает данные и
-загружает таблицу tblPeriods со связями и типами.
-( для справочников 'ТСН' и 'Оборудование' загружает
-периоды типов "Дополнение" и "Индекс".)
+- SQLite чистая, справочники заполнены. В каталоге две головные записи для ТСН и НЦКР.
+- Экспортируем таблицу из (Postgres Normative larix.period) периодов в csv файл.
+- Загружаем scv файл во временную таблицу в SQLite tblRawData и переносим периоды из tblRawData в Боевую таблицу периодов tblPeriods со связями и типами.
+- Задаем диапазон периодов. Записываем данные в конфиг/словарь/файл.
+- Экспортируем  Расценки и Ресурсы для созданного диапазона периодов в csv файлы,
+- Сохраняем имена файлов и маршруты в конфиг.
 
-- export_table_periods(csv_file: str, pgr_access: AccessData):
-- parsing_raw_periods(location: LocalData):
+export_table_periods(csv_file: str, pgr_access: AccessData)
+parsing_raw_periods(location: LocalData)
+supplement_min, supplement_max = 69, 72
+get_periods_range()
+export_quotes_for_range_periods()
+export_resource_for_range_periods()
+
 
 

@@ -3,8 +3,9 @@ sql_items_queries = {
     "delete_all_data_items": """DELETE FROM tblItems;""",
 
     "select_items":  """SELECT * FROM tblItems;""",
-    "select_items_id_team_name": """
-        SELECT ID_tblItem FROM tblItems WHERE team IS ? and name IS ?;
+
+    "select_items_id_team_name": """--sql
+        SELECT ID_tblItem FROM tblItems WHERE team = ? and name = ?;
     """,
 
     "select_items_all_team_name": """

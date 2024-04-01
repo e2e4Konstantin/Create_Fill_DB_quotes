@@ -8,32 +8,23 @@ from tools.quotes.transfer_raw_catalog_quotes import transfer_raw_quotes_to_cata
 from tools.quotes.transfer_raw_quotes_to_products import transfer_raw_quotes_to_products
 
 
-# {
-#     "basic_id": 150719989,
-#     "id": 66,
-#     "index": 198,
-#     "quotes_catalog_csv_file": "Catalog_Дополнение_68_id_150719989.csv",
-#     "quotes_data_csv_file": "Quotes_Дополнение_68_id_150719989.csv",
-#     "supplement": 68,
-#     "title": "Дополнение 68"
-# },
-
-
 
 
 # заполнить каталог расценок и сами расценки
-def parsing_quotes(data_paths: LocalData) -> int:
-    """Читает данные из CSV файлов в tblRawData: дерево расценок и сами расценки.
-       Переносит эти данные в боевые таблицы.
+def parsing_quotes(location: LocalData) -> int:
     """
-    data_paths.periods_data.sort(key=lambda x: x['supplement'])
+    Заполняет Таблицы БД (tblCatalogs, tblProducts) каталог/дерево
+    расценок и сами расценки. Читает данные из CSV файлов в tblRawData.
+    Переносит данные из tblRawData в боевые таблицы.
+    """
+    # сортируем периоды по убыванию номеров дополнений
+    location.periods_data.sort(key=lambda x: x['supplement'])
+    catalog_path: str = location.quote_catalog_path
+    quote_path: str = location.quote_data_path
+    db_file: str = location.db_file
 
-    catalog_path = data_paths.quote_catalog_path
-    quote_path = data_paths.quote_data_path
-    db_file = data_paths.db_file
-
-    for period in data_paths.periods_data:   #[:2]:
-        ic(period)
+    for period in location.periods_data:   #[:2]:
+        ic(period["title"])
         period_id = period["id"]
         # грузим каталог
         catalog_csv_file = create_abspath_file(catalog_path, period['quotes_catalog_csv_file'])

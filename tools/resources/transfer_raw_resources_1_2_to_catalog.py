@@ -1,4 +1,5 @@
 import sqlite3
+from config import LocalData, TON_ORIGIN
 
 from icecream import ic
 from config import dbTolls, items_catalog, DirectoryItem
@@ -119,31 +120,33 @@ def _transfer_raw_item_to_catalog(db_file_name: str, origin_id: int, item: Direc
         ic(alog, ilog, ulog, none_log)
 
 
-def transfer_raw_data_to_catalog(db_name: str, directory: str, catalog_name: str, main_code: str):
-    """ Заполняет каталог данными из таблицы с RAW данными для справочника 'directory' в таблицу Каталога.
-        Каталог заполняется в соответствии с иерархией элементов в справочнике 'directory'.
-        Сортирует справочник в соответствии с иерархией. Иерархия задается родителями в классе ItemCatalogDirectory.
-        Удалить из Каталога записи главы 'main_code' период которых меньше чем текущий период.
-         (максимальный на данный в каталоге записей начиная с 'main_code')
+def transfer_raw_resources_1_2_to_catalog(
+    db_file: str, catalog_name: str, period_id: int
+):
+    """
+    Заполняет Каталог данными из RAW таблицы каталога Ресурсов, главы 1 и 2.
+    Каталог заполняется последовательно, с самого старшего элемента (Глава...).
+    В соответствии с иерархией Справочника 'quotes' в таблице tblItems.
+    Иерархия задается родителями в классе ItemCatalogDirectory.
     """
 
-    with dbTolls(db_name) as db:
+    with dbTolls(db_file) as db:
         # получить идентификатор каталога
-        catalog_id = get_origin_id(db, origin_name=catalog_name)
-        # получить отсортированный список элементов справочника directory каталога
-        dir_catalog = get_sorted_directory_items(db, directory_name=directory)
+        origin_id = get_origin_id(db, origin_name=catalog_name)
+        ic(origin_id)
+        # получить Справочник 'machines' отсортированный в соответствии с иерархией
+        dir_catalog = get_sorted_directory_items(db, directory_name="machines")
         ic(dir_catalog)
-    for item in dir_catalog[1:]:
-        _transfer_raw_item_to_catalog(db_name, origin_id=catalog_id, item=item)
 
-    delete_catalog_old_period_for_parent_code(db_name, origin=catalog_id, parent_code=main_code)
+    # for item in dir_catalog[1:]:
+    #     _transfer_raw_item_to_catalog(db_name, origin_id=catalog_id, item=item)
+
+    # delete_catalog_old_period_for_parent_code(db_name, origin=catalog_id, parent_code=main_code)
 
 
-if __name__ == '__main__':
-    import os
 
-    # db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
-    db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
-    db_file_name = os.path.join(db_path, "Normative.sqlite3")
+if __name__ == "__main__":
+    local = LocalData("office")  # office  # home
+    db_file: str = local.db_file
 
-    transfer_raw_data_to_catalog(db_file_name, directory='machines', main_code='2')
+    transfer_raw_resources_1_2_to_catalog(db_file, directory="machines", period_id="2")

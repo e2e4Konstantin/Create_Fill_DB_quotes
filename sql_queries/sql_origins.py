@@ -29,7 +29,7 @@ sql_origins = {
         INSERT INTO tblOrigins (name, title ) VALUES ( ?, ?);
     """,
 
-    "select_origin_name": """
+    "select_origin_name": """--sql
         SELECT ID_tblOrigin FROM tblOrigins WHERE name = ?;
     """,
 

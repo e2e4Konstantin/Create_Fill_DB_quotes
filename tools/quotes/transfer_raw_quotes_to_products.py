@@ -1,14 +1,12 @@
 import sqlite3
 from icecream import ic
 
-from config import dbTolls, teams, MAIN_RECORD_CODE
-from sql_queries import sql_raw_queries, sql_origins, sql_products_queries, sql_items_queries, sql_catalog_queries, sql_raw_queries
-from files_features import output_message, output_message_exit
-from tools.shared.code_tolls import clear_code, text_cleaning, get_integer_value, code_to_number
+from config import dbTolls, MAIN_RECORD_CODE
+from sql_queries import sql_raw_queries
+from files_features import output_message_exit
+from tools.shared.code_tolls import clear_code, text_cleaning,  code_to_number
 from tools.shared.shared_features import (
-    get_directory_id, get_product_by_code, update_product, insert_product,
-    delete_last_period_product_row, get_origin_id, get_origin_row_by_id, get_catalog_id_by_origin_code,
-    transfer_raw_items
+    get_catalog_id_by_origin_code, transfer_raw_items
 )
 
 

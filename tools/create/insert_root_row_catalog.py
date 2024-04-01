@@ -38,4 +38,4 @@ def insert_root_record_to_catalog(db_filename: str, catalog: str, code: str, per
             log = f"добавлена запись в каталог {catalog}: {description!r} id: {inserted_id}"
             ic(log)
             return inserted_id
-    output_message_exit(f"Не добавлена", f"корневая запись для Каталога {code}")
+    output_message_exit("Не добавлена", f"корневая запись для Каталога {code}")

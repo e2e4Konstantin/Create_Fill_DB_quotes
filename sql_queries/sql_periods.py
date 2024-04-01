@@ -19,7 +19,7 @@ sql_periods_queries = {
         p.FK_Origin_tblOrigins_tblPeriods = ? AND
         p.FK_Category_tblItems_tblPeriods = ? AND
         p.supplement_num >= ? AND p.supplement_num <= ?
-        ORDER BY p.supplement_num DESC
+        ORDER BY p.supplement_num DESC;
     """,
     "insert_period": """--sql
         INSERT INTO tblPeriods (
