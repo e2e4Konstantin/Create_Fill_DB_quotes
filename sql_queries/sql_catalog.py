@@ -183,10 +183,10 @@ sql_catalog_creates = {
                 ID_tblCatalog               INTEGER PRIMARY KEY NOT NULL,
                 FK_tblCatalogs_tblOrigins   INTEGER NOT NULL, -- происхождение ТСН/ПСМ...
                 ID_parent                   INTEGER REFERENCES tblCatalogs (ID_tblCatalog) NOT NULL,  -- ссылка родителя
-                FK_tblCatalogs_tblPeriods   INTEGER NOT NULL, -- период на который загружен каталог
+                FK_tblCatalogs_tblPeriods   INTEGER NOT NULL, -- период на который загружена запись
                 code                        TEXT NOT NULL,    -- шифр элемента каталога
                 description                 TEXT NOT NULL,    -- описание
-                FK_tblCatalogs_tblItems     INTEGER NOT NULL, -- тип элемента каталога
+                FK_tblCatalogs_tblItems     INTEGER NOT NULL, -- тип элемента каталога (глава, раздел...)
                 digit_code                  INTEGER NOT NULL, -- шифр преобразованный в число
                 last_update                 INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')), -- время обновления
                 FOREIGN KEY (FK_tblCatalogs_tblOrigins) REFERENCES tblOrigins (ID_tblOrigin),

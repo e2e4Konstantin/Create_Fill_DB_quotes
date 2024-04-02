@@ -85,7 +85,8 @@ def _make_data_from_raw_quotes_catalog(
 def _save_raw_item_catalog_quotes(
     item: DirectoryItem, db_filename: str, origin_id: int, period_id: int
 ) -> list[tuple[str, str]] | None:
-    """Записывает все значения типа item_name в каталог из RAW таблицы в таблицу каталога.
+    """
+    Записывает все значения типа item_name в каталог из RAW таблицы в таблицу каталога.
     Создает ссылки на родителей.
     Если запись с таким шифром уже есть в каталоге, то обновляет ее, иначе вставляет новую.
     Данные записывается только если период больше либо равен периоду текущей записи."""
@@ -103,6 +104,7 @@ def _save_raw_item_catalog_quotes(
             catalog_row = get_catalog_row_by_code(db, origin_id, raw_code)
             if catalog_row:
                 per_id = catalog_row["FK_tblCatalogs_tblPeriods"]
+
                 per_record = get_period_by_id(db, per_id)
                 catalog_period_supplement_num = per_record["supplement_num"]
 

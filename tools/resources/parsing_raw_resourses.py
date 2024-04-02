@@ -4,7 +4,8 @@ from icecream import ic
 from tools.shared.excel_df_raw_table_transfer import load_csv_to_raw_table
 from files_features import create_abspath_file
 from tools.resources.transfer_raw_resources_1_2_to_catalog import (
-    transfer_raw_resources_1_2_to_catalog,
+    transfer_raw_resource_to_catalog,
+
 )
 # from tools.quotes.transfer_raw_quotes_to_products import transfer_raw_quotes_to_products
 
@@ -20,25 +21,27 @@ def parsing_resources(location: LocalData) -> int:
     location.periods_data.sort(key=lambda x: x["supplement"])
     resources_path: str = location.resources_path
     db_file: str = location.db_file
-    ic(location.periods_data[0])
     for period in location.periods_data[:1]:  # [:2]:
         period_id = period["id"]
         title = period["title"]
-        message = f"Загружаем ресурсы для периода {title} per.id: {period_id}."
+        message = f"Загружаем ресурсы для периода {title!r} per.id: {period_id}."
         ic(message)
 
-        # грузим каталог
-        catalog_csv_file = create_abspath_file(
-            resources_path, period["resources_catalog_csv_file"]
+        # # грузим каталог
+        # catalog_csv_file = create_abspath_file(
+        #     resources_path, period["resources_catalog_csv_file"]
+        # )
+        # load_csv_to_raw_table(catalog_csv_file, db_file, delimiter=",")
+
+        # transfer_raw_resource_to_catalog(db_file, TON_ORIGIN, period_id)
+
+        # # грузим ресурсы
+        data_csv_file = create_abspath_file(
+            resources_path, period["resources_data_csv_file"]
         )
-        load_csv_to_raw_table(catalog_csv_file, db_file, delimiter=",")
-        # transfer_raw_resources_1_2_to_catalog(db_file, TON_ORIGIN, period_id)
+        load_csv_to_raw_table(data_csv_file, db_file, delimiter=",")
 
-        # # грузим
-        # quote_csv_file = create_abspath_file(quote_path, period["quotes_data_csv_file"])
-        # load_csv_to_raw_table(quote_csv_file, db_file, delimiter=",")
-
-        # transfer_raw_quotes_to_products(db_file, TON_ORIGIN, period_id)
+        transfer_raw_resource_to_products(db_file, TON_ORIGIN, period_id)
     return 0
 
 
