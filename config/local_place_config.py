@@ -48,6 +48,7 @@ class LocalData:
         self.quote_catalog_path: str = LocalData.SRC[location]["quote_catalog_path"]
         self.quote_data_path: str = LocalData.SRC[location]["quote_data_path"]
         self.resources_path: str = LocalData.SRC[location]["resources_path"]
+        # читаем конфиг из файла
         config = read_config_to_json(self.config_file)
         if config:
             self.periods_data = config["periods_data"]
@@ -76,7 +77,7 @@ class LocalData:
         config["resources_path"] = self.resources_path
         # сортируем периоды по убыванию номеров дополнений
         if self.periods_data:
-            self.periods_data.sort(key=lambda x: x['supplement'])
+            self.periods_data.sort(reverse=False, key=lambda x: x["supplement"])
         config["periods_data"] = self.periods_data
 
         write_config_to_json(self.config_file, config)

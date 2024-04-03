@@ -35,8 +35,8 @@ class PostgresDB:
                 traceback.print_exc(e)
                 # print(e)
                 raise e
-            finally:
-                print(f"Соединение с БД {self.dbname!r} установлено.")
+            # finally:
+            #     print(f"Соединение с БД {self.dbname!r} установлено.")
 
     def __enter__(self):
         self.connect()

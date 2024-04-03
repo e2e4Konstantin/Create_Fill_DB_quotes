@@ -1,22 +1,29 @@
 import sqlite3
-from icecream import ic
-
 from config import LocalData, TON_ORIGIN, MAIN_RECORD_CODE
-from config import dbTolls,  DirectoryItem
-from sql_queries import sql_raw_queries
-from files_features import  output_message_exit
+
+from icecream import ic
+from config import dbTolls, items_catalog, DirectoryItem
+from sql_queries import (
+    sql_items_queries, sql_raw_queries, sql_catalog_queries, sql_origins
+)
+from files_features import output_message, output_message_exit
 from tools.shared.code_tolls import (
-    clear_code, title_catalog_extraction, code_to_number,
+    clear_code,
+    title_catalog_extraction,
+    get_integer_value,
+    code_to_number,
 )
 from tools.shared.shared_features import (
     get_period_by_id,
     update_catalog,
     insert_raw_catalog,
+
     get_sorted_directory_items,
     get_catalog_id_by_origin_code,
     delete_catalog_old_period_for_parent_code,
     get_catalog_row_by_code,
     get_origin_id,
+    get_origin_row_by_id,
 )
 
 
@@ -41,6 +48,26 @@ def _get_raw_resource_items_chapter(
         )
         return None
     return results
+
+
+# def _get_raw_resource_items(db: dbTolls, item: DirectoryItem) -> list[sqlite3.Row] | None:
+#     """
+#     Для ресурсов Выбрать все записи из таблицы tblRawData у которых шифр соответствует паттерну
+#     для item типа записей.
+#     !!! В запросе добавляется столбец [parent_pressmark].
+#     """
+#     raw_cursor = db.go_execute(
+#         sql_raw_queries["select_raw_resource_by_code"], (item.re_pattern,)
+#     )
+#     results = raw_cursor.fetchall() if raw_cursor else None
+#     if not results:
+#         output_message_exit(
+#             "в RAW таблице с данными для каталога Ресурсов не найдено ни одной записи:",
+#             f"{item.item_name!r}, {item.re_pattern}",
+#         )
+#         return None
+#     return results
+
 
 def _make_data_from_raw_resource_catalog(
     db: dbTolls,
@@ -123,17 +150,18 @@ def _save_raw_item_catalog_resources(
                 work_id = insert_raw_catalog(db, pure_data)
                 if work_id:
                     inserted_success.append((id, raw_code))
-
-        added = len(inserted_success)
-        updated = len(updated_success)
-        bug = len(raw_item_data) - (added + updated)
-        message = f"{item.item_name:>12} : добавлено: {added:>5}, обновлено: {updated:>5}, ошибки: {bug:>5}"
-        ic(message)
-
+        alog = f"Для {item.item_name!r} всего входящих записей: {len(raw_item_data)}."
+        ilog = f"Добавлено {len(inserted_success)}."
+        ulog = f"Обновлено {len(updated_success)}."
+        perg = f"Период id: {period_id}"
+        none_log = f"Непонятных записей: {len(raw_item_data) - (len(updated_success) + len(inserted_success))}."
+        ic(alog, ilog, ulog, none_log, perg)
     if inserted_success or updated_success:
         inserted_success.extend(updated_success)
         return inserted_success
     return None
+
+
 
 
 def transfer_raw_resource_to_catalog(
@@ -146,9 +174,6 @@ def transfer_raw_resource_to_catalog(
     В соответствии с иерархией Справочника 'quotes' в таблице tblItems.
     Иерархия задается родителями в классе ItemCatalogDirectory.
     """
-    # message = f"Загружаем Каталог Ресурсов в таблицу tblCatalogs: {catalog_name!r} период id: {period_id}"
-    # ic(message)
-
     with dbTolls(db_file) as db:
         # получить идентификатор каталога
         origin_id = get_origin_id(db, origin_name=catalog_name)
@@ -158,21 +183,18 @@ def transfer_raw_resource_to_catalog(
         machines_item_catalog = get_sorted_directory_items(db, directory_name="machines")
 
     # загружаем каталог Главы 1
-    ic("каталог глава 1")
     pattern_chapter_1 = "(^\s*1\..*)|(^\s*1\s*$)"
     for item in materials_item_catalog[1:]:
+        ic(item)
         _save_raw_item_catalog_resources(item, db_file, origin_id, period_id, pattern_chapter_1)
     delete_catalog_old_period_for_parent_code(db_file, origin_id, parent_code='1')
 
     # загружаем каталог Главы 2
-    ic("каталог глава 2")
     pattern_chapter_2 = "(^\s*2\..*)|(^\s*2\s*$)"
     for item in machines_item_catalog[1:]:
+        ic(item)
         _save_raw_item_catalog_resources(item, db_file, origin_id, period_id, pattern_chapter_2)
     delete_catalog_old_period_for_parent_code(db_file, origin_id, parent_code="2")
-
-    # message = f"Загружен каталог: глава 1 и 2 для {catalog_name!r}"
-    # ic(message)
 
 
 if __name__ == "__main__":

@@ -1,11 +1,15 @@
 import json
-from datetime import datetime
 
-def read_config_to_json(json_file_name: str) -> dict:
+from files_features import file_exist
+
+
+def read_config_to_json(json_file_name: str) -> dict | None:
     """ Читает файл с конфигурацией. """
-    with open(json_file_name, 'r', encoding='utf8') as file:
-        data_loaded = json.load(file)
-    return data_loaded if data_loaded else None
+    if file_exist(json_file_name):
+        with open(json_file_name, 'r', encoding='utf8') as file:
+            data_loaded = json.load(file)
+        return data_loaded if data_loaded else None
+    return None
 
 
 def write_config_to_json(json_file_name: str, config_data: dict) -> int:

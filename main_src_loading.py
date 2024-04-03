@@ -1,70 +1,59 @@
-# import os
-# import sys
-# import sqlite3
 from icecream import ic
 
-from tools import db_create_fill_directory, parsing_raw_periods
-from tools.quotes.parsing_raw_quotes import parsing_quotes
-# from tools import (read_csv_to_raw_table, transfer_raw_quotes_to_catalog, transfer_raw_data_to_quotes,
-#     transfer_raw_data_to_catalog, transfer_raw_data_to_materials, create_index_resources_raw_data,
-#     transfer_raw_data_to_machines, transfer_raw_data_to_equipments, transfer_raw_pnwc_resources_to_catalog,
-#     transfer_raw_data_to_pnwc_resources, delete_raw_tables
-# )
-
+from tools import db_create_fill_directory, parsing_quotes, parsing_resources, delete_raw_table
+from tools import parsing_raw_periods, get_periods_range
 from config import LocalData
+from postgres_export import (
+    db_access,
+    export_table_periods_to_csv,
+    export_quotes_for_range_periods,
+    export_resource_for_range_periods,
+)
+
+
+def db_data_prepare(location: str):
+    """
+    Создает чистую БД SQLite. Заполняет справочники.
+    Записывает в каталог две головные записи для ТСН и НЦКР.
+    Экспортирует периоды из Postgres.Normative larix.period в csv файл.
+    Загружает периоды из scv файла в таблицу периодов tblPeriods.
+    Формирует диапазон периодов для экспорта данных
+    по расценкам и ресурсам из Postgres.Normative.
+    Экспортируем расценки и ресурсы для диапазона периодов.
+    Данные из LocalData записываются в файл конфигурации.
+    """
+    with LocalData(location) as local:
+        db_file: str = local.db_file
+        ic(location, db_file)
+
+        db_create_fill_directory(db_file)
+
+        export_table_periods_to_csv(
+            csv_file=local.periods_file, pgr_access=db_access["normative"]
+        )
+
+        parsing_raw_periods(local)
+
+        supplement_min, supplement_max = 69, 72
+        local.periods_data = get_periods_range(
+            db_file=local.db_file, origin_name="ТСН", period_item_type="supplement",
+            supplement_min=supplement_min, supplement_max=supplement_max,
+        )
+        export_quotes_for_range_periods(local, db_access["normative"])
+        export_resource_for_range_periods(local, db_access["normative"])
+    # Записать данные периодов в конфиг файл __exit__().
+
 
 if __name__ == '__main__':
-    # version = f"SQLite: {sqlite3.sqlite_version}\nPython: {sys.version}"
-    # ic(version)
+
     location = "office" # office  # home
+
+    # db_data_prepare(location)
+
     local = LocalData(location)
-    db_file: str = local.db_file
-    ic(location, db_file)
-    # создать таблицы и заполнить справочники
-    # db_create_fill_directory(db_file)
-    # --
-    # периоды переносятся при экспорте данных в scv файлы
-    # --
-    # заполнить каталог расценок и сами расценки
-    parsing_quotes(local)
+    periods = [x["title"] for x in local.periods_data]
+    ic(periods)
 
-
-    # #
-    # # --- > Материалы Глава 1
-    # # --------------------- > Каталог Материалы
-    # ic(materials_data)
-    # read_csv_to_raw_table(db_name, materials_data, period)
-    # transfer_raw_data_to_catalog(db_name, directory='materials', catalog_name=TON_CATALOG, main_code='1')
-    # # ----------------------- > Данные Материалы
-    # create_index_resources_raw_data(db_name)
-    # transfer_raw_data_to_materials(db_name, catalog_name=TON_CATALOG)
-    # #
-    # # --- > Машины Глава 2
-    # # ---------------------- > Каталог Машины
-    # ic(machines_data)
-    # read_csv_to_raw_table(db_name, machines_data, period)
-    # transfer_raw_data_to_catalog(db_name, directory='machines', catalog_name=TON_CATALOG, main_code='2')
-    # # ----------------------- > Данные Машины
-    # transfer_raw_data_to_machines(db_name, catalog_name=TON_CATALOG)
-    # #
-    # # --- > Оборудование Глава 13
-    # # ---------------------- > Каталог
-    # ic(equipments_data)
-    # read_csv_to_raw_table(db_name, equipments_data, period)
-    # transfer_raw_data_to_catalog(db_name, directory='equipments', catalog_name=TON_CATALOG, main_code='13')
-    # # ----------------------- > Данные Оборудование
-    # transfer_raw_data_to_equipments(db_name, catalog_name=TON_CATALOG)
-
-    # # # --- > Ресурсы НЦКР
-    # # # --------------------- > Каталог НЦКР
-    # # ic(pnwc_catalog)
-    # # period = 55
-    # # read_csv_to_raw_table(db_name, pnwc_catalog, period)
-    # # transfer_raw_pnwc_resources_to_catalog(db_name, catalog_name=PNWC_CATALOG)
-    # # # ----------------------- > Данные Ресурсы НЦКР
-    # # read_csv_to_raw_table(db_name, pnwc_resource, period, new_column_name=['N', 'NPP', 'Шифр новый действующий', 'Уточненное наименование по данным мониторинга'])
-    # # transfer_raw_data_to_pnwc_resources(db_name, catalog_name=PNWC_CATALOG)
-
-    # # delete_raw_tables(db_name)
-
-    # #
+    # parsing_quotes(local)
+    parsing_resources(local)
+    delete_raw_table(local.db_file)

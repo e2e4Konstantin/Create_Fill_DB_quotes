@@ -4,6 +4,7 @@ import re
 from icecream import ic
 from collections import namedtuple
 from typing import Literal
+from pathlib import Path
 
 # --
 from config import dbTolls
@@ -101,13 +102,13 @@ def _ton_supplement_periods_parsing(db_file: str):
         ton_supplements = _get_raw_data_by_pattern(
             db, column_name="[title]", pattern=pattern
         )
-        message = f"Прочитано ТСН Дополнений: {len(ton_supplements)}"
-        ic(message)
+        # message = f"Прочитано ТСН Дополнений: {len(ton_supplements)}"
+        # ic(message)
         if ton_supplements is None:
             return None
         origin_id = get_origin_id(db, origin_name=TON_ORIGIN)
         category_id = get_directory_id(db, "periods_category", "supplement")
-        ic(origin_id, category_id)
+        # ic(origin_id, category_id)
         for line in ton_supplements:
             title = text_cleaning(line["title"])
             supplement, index = _get_supplement_index_numbers("ton_supplement", title)
@@ -141,13 +142,13 @@ def _ton_index_periods_parsing(db_file: str) -> int:
         ton_indexes = _get_raw_data_by_pattern(
             db, column_name="[title]", pattern=pattern
         )
-        message = f"Прочитано ТСН Индексов: {len(ton_indexes)}"
-        ic(message)
+        # message = f"Прочитано ТСН Индексов: {len(ton_indexes)}"
+        # ic(message)
         if ton_indexes is None:
             return None
         origin_id = get_origin_id(db, origin_name=TON_ORIGIN)
         category_id = get_directory_id(db, "periods_category", "index")
-        ic(origin_id, category_id)
+        # ic(origin_id, category_id)
         for line in ton_indexes:
             title = text_cleaning(line["title"])
             supplement, index = _get_supplement_index_numbers("ton_index", title)
@@ -185,15 +186,15 @@ def _equipment_supplement_periods_parsing(db_file: str) -> int:
         supplements_equipment = _get_raw_data_by_pattern(
             db, column_name="[title]", pattern=pattern
         )
-        message = f"Прочитано Оборудование Дополнений: {len(supplements_equipment)}"
-        ic(message)
+        # message = f"Прочитано Оборудование Дополнений: {len(supplements_equipment)}"
+        # ic(message)
         if supplements_equipment is None:
             return None
         origin_id = get_origin_id(db, origin_name=EQUIPMENTS_ORIGIN)
         category_id = get_directory_id(
             db, directory_team="periods_category", item_name="supplement"
         )
-        ic(origin_id, category_id)
+        # ic(origin_id, category_id)
         for line in supplements_equipment:
             title = text_cleaning(line["title"])
             supplement_num, index_num = _get_supplement_index_numbers(
@@ -225,15 +226,15 @@ def _equipment_index_periods_parsing(db_file: str) -> int:
         # 49 индекс/оборудование доп. 36 (мониторинг Август 2023)
         pattern = "^\s*(\d+)\s*[И|и]ндекс\s*\/[О|о]борудование\s*доп\.\s*(\d+)"
         indexes = _get_raw_data_by_pattern(db, column_name="[title]", pattern=pattern)
-        message = f"Прочитано Оборудование Индексов: {len(indexes)}"
-        ic(message)
+        # message = f"Прочитано Оборудование Индексов: {len(indexes)}"
+        # ic(message)
         if indexes is None:
             return None
         origin_id = get_origin_id(db, origin_name=EQUIPMENTS_ORIGIN)
         category_id = get_directory_id(
             db, directory_team="periods_category", item_name="index"
         )
-        ic(origin_id, category_id)
+        # ic(origin_id, category_id)
         for line in indexes:
             title = text_cleaning(line["title"])
             supplement, index = _get_supplement_index_numbers("equipment_index", title)
@@ -301,9 +302,9 @@ def parsing_raw_periods(location: LocalData):
     """
     csv_periods_file = location.periods_file
     db_file = location.db_file
-    result = load_csv_to_raw_table(csv_periods_file, db_file, delimiter=",")
-    message = f"Данные по периодам прочитаны в tblRawData из файла {csv_periods_file!r}: {result=}"
-    ic(message)
+    load_csv_to_raw_table(csv_periods_file, db_file, delimiter=",")
+    # message = f"Данные по периодам прочитаны в tblRawData из файла {csv_periods_file!r}"
+    # ic(message)
     # Удалить все периоды !!!!!!!!!!!!
     with dbTolls(db_file) as db:
         db.go_execute(sql_periods_queries["delete_all_data_periods"])
@@ -315,6 +316,8 @@ def parsing_raw_periods(location: LocalData):
     _equipment_supplement_periods_parsing(db_file)
     _equipment_index_periods_parsing(db_file)
     _update_periods_parent(db_file, EQUIPMENTS_ORIGIN)
+    message = f"Периоды загружены из файла {Path(csv_periods_file).name!r}"
+    ic(message)
     return 0
 
 

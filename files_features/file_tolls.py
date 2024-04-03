@@ -18,16 +18,16 @@ def handle_location(data_path: str, data_file: str):
     output_file = os.path.join(output_path, output_file_name)
 
     if not os.path.exists(src_file):
-        output_message_exit(f"фал с данными не найден", f"{src_file!r}")
+        output_message_exit("фал с данными не найден", f"{src_file!r}")
     if not os.path.isdir(output_path):
-        output_message_exit(f"папка для вывода фала с результатом не найдена", f"{output_path!r}")
+        output_message_exit("папка для вывода фала с результатом не найдена", f"{output_path!r}")
     return src_file, output_file
 
 
 def construct_abs_file_name(path: str, file_name: str) -> str:
     """ Создает абсолютный маршрут к файлу. """
     if not os.path.isdir(path):
-        output_message_exit(f"папка не найдена", f"{path!r}")
+        output_message_exit("папка не найдена", f"{path!r}")
     return os.path.join(path, file_name)
 
 def create_abspath_file(path: str=None, file_name: str=None) -> str | None:
@@ -37,4 +37,10 @@ def create_abspath_file(path: str=None, file_name: str=None) -> str | None:
         return pathlib.Path.joinpath(path, file_name).__str__()
     return None
 
-    
+
+
+def file_exist(path: str) -> bool:
+    """ проверяет то что маршрут существует и это файл."""
+    return pathlib.Path(path).is_file()
+
+

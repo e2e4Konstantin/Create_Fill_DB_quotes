@@ -53,14 +53,13 @@ pg_sql_queries = {
             r.pressmark ,
             r.title,
             uom.title "unit_measure",
-            r.unit_of_measure "id_measure",
-            tr.id "id_type_resources",
+            tr.title AS "type_resources",
             per.id "id_period",
-            r.group_resource "id_group_resource"
+            r.group_resource "id_group_resource",
+            gr.pressmark "group_pressmark"
             /*,
             per.title AS "period_title",
             tr.title AS "type_resources",
-            gr.pressmark AS "group_pressmark",
             gr.title AS "group_title"
             */
         FROM larix.resources r

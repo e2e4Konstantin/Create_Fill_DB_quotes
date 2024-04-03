@@ -60,8 +60,8 @@ def transfer_raw_quotes_to_products(db_file: str, catalog_name: str, period_id: 
     """
     with dbTolls(db_file) as db:
         # создать индекс в tblRawData
+        db.go_execute(sql_raw_queries["delete_index_raw_catalog_resources"])
         db.go_execute(sql_raw_queries["create_index_raw_code"])
-        ic("Заполняем данные по Расценкам:")
         raw_quotes = _get_raw_quotes(db)
         if raw_quotes is None:
             return None

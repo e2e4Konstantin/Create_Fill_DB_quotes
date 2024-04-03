@@ -191,8 +191,10 @@ def delete_catalog_old_period_for_parent_code(db_filename: str, origin: int, par
                 sql_catalog_queries["delete_catalog_less_than_specified_supplement_period"],
                 (origin, parent_code, max_supplement_periods)
                 )
-            mess = (f"Из Каталога для родителя {parent_code=} удалено {deleted_cursor.rowcount} записей "
-                    f"у которых номер дополнения периода < {max_supplement_periods}")
+            mess = (
+                f"для шифра '{parent_code:<5}' удалено {deleted_cursor.rowcount:<5} записей "
+                f"номер дополнения < {max_supplement_periods}"
+            )
             ic(mess)
 
 
@@ -262,21 +264,20 @@ def delete_last_period_product_row(db: dbTolls, origin_id: int, item_id: int):
         output_message_exit("Ошибка при получении максимального Номера дополнения периода Продуктов", query_info)
         return
     max_supplement_number = result['max_suppl']
-    ic(origin_id, item_id, max_supplement_number)
-
+    # ic(origin_id, item_id, max_supplement_number)
     count_records_to_be_deleted = db.go_execute(
         sql_products_queries["select_products_count_origin_item_less_supplement"],
         (origin_id, item_id, max_supplement_number)
     )
     number = count_records_to_be_deleted.fetchone()['number']
     if number > 0:
-        message = f"Будут удалены {number} продуктов с периодом меньше: {max_supplement_number} {query_info}"
-        ic(message)
+        # message = f"Будут удалены {number} продуктов с периодом меньше: {max_supplement_number} {query_info}"
+        # ic(message)
         deleted_cursor = db.go_execute(
             sql_products_queries["delete_products_origin_item_less_max_supplement"],
             (origin_id, item_id, max_supplement_number)
         )
-        message = f"Из Продуктов удалено {deleted_cursor.rowcount} записей с period < {max_supplement_number} {query_info}"
+        message = f"удалено {deleted_cursor.rowcount} записей с период дополнения < {max_supplement_number}"
         ic(message)
 
 
@@ -334,8 +335,6 @@ def transfer_raw_items(
     :param raw_items: Список raw строк БД
     """
     # получить идентификатор каталога
-    ic()
-    ic(catalog_name, item_name)
     origin_id = get_origin_id(db, origin_name=catalog_name)
     item_id = get_directory_id(db, directory_team=directory_name, item_name=item_name)
 
@@ -366,34 +365,17 @@ def transfer_raw_items(
             inserted_id = insert_product(db, data)
             if inserted_id:
                 inserted_success.append((id, raw_code))
-    row_count = len(raw_items)
-    alog = f"Всего записей в raw таблице: {row_count}."
-    ilog = f"Добавлено {len(inserted_success)} {item_name}."
-    ulog = f"Обновлено {len(updated_success)} {item_name}."
-    none_log = f"Непонятных записей: {row_count - (len(updated_success) + len(inserted_success))}."
-    ic(alog, ilog, ulog, none_log)
 
+    added = len(inserted_success)
+    updated = len(updated_success)
+    bug = len(raw_items) - (added + updated)
+    message = f"{item_name:>12} : добавлено: {added:>5}, обновлено: {updated:>5}, ошибки: {bug:>5}"
+    ic(message)
     # удалить item записи период которых меньше чем максимальный период
     delete_last_period_product_row(db, origin_id=origin_id, item_id=item_id)
 
-
-if __name__ == '__main__':
-    import os
-    from icecream import ic
-
-    db_path = r"F:\Kazak\GoogleDrive\Python_projects\DB"
-    # db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB"
-    db_name = os.path.join(db_path, "Normative.sqlite3")
-
-    # delete_catalog_old_period_for_level(db_name, parent_code='1')
-    # delete_last_period_product_row(db_name, team='units', name='material')
-
-    #
-    # directory = get_sorted_directory_items(db_name, directory_name='machines')
-    # ic(directory)
-    #
-    # directory = get_sorted_directory_items(db_name, directory_name='units')
-    # ic(directory)
-    #
-    # directory = get_sorted_directory_items(db_name, directory_name='quotes')
-    # ic(directory)
+def delete_raw_table(db_file: str):
+    """ Удаляет временную таблицу tblRawData. """
+    with (dbTolls(db_file) as db):
+        db.go_execute(sql_raw_queries["delete_table_raw_data"])
+        ic("Удалили tblRawData.")

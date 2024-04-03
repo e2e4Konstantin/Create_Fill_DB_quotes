@@ -126,13 +126,12 @@ def _save_raw_item_catalog_quotes(
                 work_id = insert_raw_catalog(db, pure_data)
                 if work_id:
                     inserted_success.append((raw_code, item.item_name))
+        added = len(inserted_success)
+        updated = len(updated_success)
+        bug = len(raw_item_data) - (added + updated)
+        message = f"{item.item_name:>12} : добавлено: {added:>5}, обновлено: {updated:>5}, ошибки: {bug:>5}"
+        ic(message)
 
-        alog = f"Для {item.item_name!r}:Всего входящих записей: {len(raw_item_data)}."
-        ilog = f"Добавлено {len(inserted_success)}."
-        ulog = f"Обновлено {len(updated_success)}."
-        perg = f"Период id: {period_id}"
-        none_log = f"Непонятных записей: {len(raw_item_data) - (len(updated_success) + len(inserted_success))}."
-        ic(alog, ilog, ulog, none_log, perg)
     if inserted_success or updated_success:
         inserted_success.extend(updated_success)
         return inserted_success
@@ -147,24 +146,17 @@ def transfer_raw_quotes_to_catalog(
     Каталог заполняется последовательно, с самого старшего элемента (Глава...).
     В соответствии с иерархией Справочника 'quotes' в таблице tblItems.
     Иерархия задается родителями в классе ItemCatalogDirectory.
-    Удаляет из Каталога Главы и всех наследников, период которых меньше чем текущий период (последний)
-
+    Удаляет из Каталога Главы и всех наследников, период которых меньше чем текущий период (последний).
     """
-    ic()
     with dbTolls(db_file_name) as db:
         # получить идентификатор каталога
         origin_id = get_origin_id(db, origin_name=catalog_name)
-        ic(origin_id)
         # получить Справочник 'quotes' отсортированный в соответствии с иерархией
         dir_catalog = get_sorted_directory_items(db, directory_name="quotes")
-        ic(dir_catalog)
-    ic("\n")
-    ic("Заполняем каталог Расценок:")
     # заполнить и сохранить Главы корневые записи дерева что бы было на кого ссылаться
     chapters = _save_raw_item_catalog_quotes(
         dir_catalog[1], db_file_name, origin_id, period_id
     )
-
     # заполнить остальные сущности
     for item in dir_catalog[2:]:
         _save_raw_item_catalog_quotes(item, db_file_name, origin_id, period_id)

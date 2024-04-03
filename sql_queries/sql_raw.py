@@ -3,15 +3,17 @@ sql_raw_queries = {
     "table_name_raw_data": """tblRawData""",
     "create_index_raw_data": """CREATE INDEX IF NOT EXISTS idxTmpMaterials ON tblRawData (ID, PARENT, CMT);""",
     "create_index_raw_code": """--sql
-        CREATE INDEX IF NOT EXISTS idxRawCodeTmpMaterials ON tblRawData (gwp_pressmark, pressmark);
+        CREATE INDEX IF NOT EXISTS idxRawGwpCodeResources ON tblRawData (gwp_pressmark, pressmark);
     """,
     # индекс для переноса Ресурсов глава 1 и 2
     "create_index_raw_resources": """--sql
-        CREATE INDEX IF NOT EXISTS idxRawCodeTmpMaterials ON tblRawData (pressmark, id_group_resource);
+        CREATE INDEX IF NOT EXISTS idxRawCodeGrResources ON tblRawData (pressmark, id_group_resource);
     """,
-    # --- > Удаление таблиц -----------------------------------------------------------------------
+    # --- > Удаление ------------------------------------------------------------------------------
     "delete_table_raw_data": """DROP TABLE IF EXISTS tblRawData;""",
     "delete_index_raw_data": """DROP INDEX IF EXISTS idxTmpMaterial;""",
+    "delete_index_raw_resources": """DROP INDEX IF EXISTS idxRawCodeGrResources;""",
+    "delete_index_raw_catalog_resources": """DROP INDEX IF EXISTS idxRawGwpCodeResources;""",
     # --- > Получение данных ----------------------------------------------------------------------
     "select_rwd_all": """--sql
         SELECT * FROM tblRawData;
@@ -45,9 +47,11 @@ sql_raw_queries = {
         (SELECT p.pressmark FROM tblRawData AS p WHERE p.id = CAST(m.parent_id AS INT) ) AS [parent_pressmark], m.*, m.*
         FROM (SELECT f.* FROM tblRawData f WHERE f.pressmark REGEXP ?) AS m
         WHERE m.pressmark REGEXP ?;
-
     """,
     # Материалы Глава 1
+    "select_raw_like_pressmark": """--sql
+        SELECT * FROM tblRawData r WHERE r.pressmark LIKE ?;
+    """,
     "select_raw_chapter_1": """--sql
         SELECT * FROM tblRawData WHERE pressmark REGEXP '^\s*[(1\.)|1]';
     """,

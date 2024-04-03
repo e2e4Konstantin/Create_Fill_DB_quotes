@@ -54,9 +54,9 @@ def _load_df_to_db_table(df: pd.DataFrame, db_file: str, table_name: str) -> int
             method="multi",
         )  # dtype=pandas.StringDtype(),
 
-        count = db.go_select(f"SELECT COUNT() AS count FROM {table_name};")[0]["count"]
-        message = f"Из df импортировано: {count} записей в {table_name!r}"
-        ic(message)
+        # count = db.go_select(f"SELECT COUNT() AS count FROM {table_name};")[0]["count"]
+        # message = f"Из df импортировано: {count} записей в {table_name!r}"
+        # ic(message)
     return 0
 
 

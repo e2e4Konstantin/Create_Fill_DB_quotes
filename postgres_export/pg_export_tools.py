@@ -5,7 +5,7 @@ from icecream import ic
 from files_features import create_abspath_file
 
 from config import LocalData
-from tools import parsing_raw_periods
+# from tools import parsing_raw_periods
 
 from postgres_export.pg_sql_queries import pg_sql_queries
 from postgres_export.pg_config_db import PostgresDB
@@ -33,8 +33,8 @@ def export_table_periods_to_csv(csv_file: str, pgr_access: AccessData):
     with PostgresDB(pgr_access) as db:
         query = pg_sql_queries["get_all_periods"]
         _query_to_csv(db, csv_file, query)
-    message = f"Периоды из Postgres Normative выгружены в файл: {csv_file!r}"
-    ic(message)
+    # message = f"Периоды из Postgres Normative выгружены в файл: {csv_file!r}"
+    # ic(message)
 
     # query = pg_sql_queries["get_all_period_table"]
     # with open(csv_file, "w", encoding='utf-8') as file:
@@ -166,7 +166,7 @@ def export_resource_for_range_periods(
     """
     resources_path = location.resources_path
     for period in location.periods_data:
-        ic(period)
+        # ic(period)
         # ==> Resources Catalog ==>
         catalog_csv_file = build_file_name(
             period, resources_path, file_tail="Resources_Catalog.csv"
@@ -189,12 +189,11 @@ def export_resource_for_range_periods(
 
 if __name__ == "__main__":
     """
-    SQLite чистая, справочники заполнены. В каталоге две головные записи для ТСН и НЦКР.
     Экспортируем таблицу из (Postgres Normative larix.period) периодов в csv файл.
-    Загружаем scv файл во временную таблицу в SQLite tblRawData и переносим периоды из
-    tblRawData в боевую таблицу периодов tblPeriods со связями и типами.
-    Задаем диапазон периодов. Записываем данные в конфиг/словарь/файл.
-    Экспортируем  Расценки и Ресурсы для созданного диапазона периодов в csv файлы,
+    В main_src_loading.py загружаем периоды. Задаем диапазон периодов.
+    Записываем данные в конфиг/словарь/файл.
+
+    Экспортируем  Расценки и Ресурсы для созданного диапазона периодов в свои csv файлы,
     Сохраняем имена файлов и маршруты в конфиг (при закрытии контекстного менеджера ).
     """
     with LocalData("office") as local:
@@ -202,20 +201,9 @@ if __name__ == "__main__":
         export_table_periods_to_csv(
             csv_file=local.periods_file, pgr_access=db_access["normative"]
         )
-        # периоды зи csv файла выгружает в SQLite tblPeriods
-        # функция parsing_raw_periods() в вызове из main_src_loading.py
-        # перенести периоды в рабочую таблицу
-        parsing_raw_periods(local)
+        # .... Сформируй диапазон периодов
+        # main_src_loading.py
 
-        # 2. Получить данные нужных периодов и записать в конфиг файл
-        supplement_min, supplement_max = 69, 72
-        local.periods_data = get_periods_range(
-            db_file=local.db_file,
-            origin_name="ТСН",
-            period_item_type="supplement",
-            supplement_min=supplement_min,
-            supplement_max=supplement_max,
-        )
         # 3. Выгрузить: каталог расценок и расценки для периодов,
         #  данные которых записаны в конфиг. файл
         export_quotes_for_range_periods(local, db_access["normative"])
