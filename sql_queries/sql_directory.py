@@ -32,12 +32,10 @@ sql_items_creates = {
         DROP TABLE IF EXISTS tblItems;""",
     "delete_index_items": """--sql
         DROP INDEX IF EXISTS idxItems;""",
-
     "delete_table_items_history": """--sql
         DROP TABLE IF EXISTS _tblHistoryItems;""",
     "delete_index_items_history": """--sql
         DROP INDEX IF EXISTS idxHistoryItems;""",
-
     # --- > Таблица для хранения справочников ---------------------
     # названия справочников
     # ['units', 'quotes', 'materials', 'machines', 'equipments']
@@ -49,7 +47,7 @@ sql_items_creates = {
                 ID_tblItem  INTEGER PRIMARY KEY NOT NULL,
                 team        TEXT NOT NULL,                              -- название справочника
                 name        TEXT NOT NULL,                              -- название
-                title     	TEXT NOT NULL,                              -- описание
+                title       TEXT NOT NULL,                              -- описание
                 ID_parent   INTEGER REFERENCES tblItems (ID_tblItem),   -- родитель
                 re_pattern  TEXT,                                       -- re паттерн шифра категории  NOT NULL
                 re_prefix   TEXT,                                       -- re паттерн названия/title
@@ -57,15 +55,12 @@ sql_items_creates = {
                 UNIQUE (team, name)
         );
     """,
-
     "create_index_items": """--sql
         CREATE UNIQUE INDEX IF NOT EXISTS idxItems ON tblItems (team, name);
     """,
-
     "insert_item": """--sql
         INSERT INTO tblItems (team, name, title, ID_parent, re_pattern, re_prefix) VALUES ( ?, ?, ?, ?, ?, ?);
     """,
-
     # --- > таблица для хранения истории изменений Справочников ---------------------------
     # _mask битовая маска указывает в каком поле были изменения. Вычисляется как сумма значений:
     # 1:  ID_tblDirectoryItem
@@ -77,6 +72,7 @@ sql_items_creates = {
     # 64: re_prefix
     # 128: last_update
     # _mask равная -1 показывает что запись была удалена.
+    # ID_tblItem, team, name, title, ID_parent, re_pattern, re_prefix, last_update
     "create_table_history_items": """--sql
         CREATE TABLE IF NOT EXISTS _tblHistoryItems (
             _rowid      INTEGER,
@@ -93,11 +89,10 @@ sql_items_creates = {
             _mask       INTEGER NOT NULL
         );
         """,
-
     "create_index_history_items": """--sql
         CREATE INDEX IF NOT EXISTS idxHistoryItems ON _tblHistoryItems (_rowid);
     """,
-
+    # ID_tblItem, team, name, title, ID_parent, re_pattern, re_prefix, last_update
     "create_trigger_history_items_insert": """--sql
         CREATE TRIGGER IF NOT EXISTS tgrHistoryItemsInsert
         AFTER INSERT ON tblItems
@@ -113,7 +108,7 @@ sql_items_creates = {
             );
         END;
     """,
-
+    # ID_tblItem, team, name, title, ID_parent, re_pattern, re_prefix, last_update
     "create_trigger_history_items_delete": """--sql
         CREATE TRIGGER tgrHistoryItemsDelete
         AFTER DELETE ON tblItems
@@ -130,7 +125,7 @@ sql_items_creates = {
             );
         END;
     """,
-
+    # ID_tblItem, team, name, title, ID_parent, re_pattern, re_prefix, last_update
     "create_trigger_history_items_update": """--sql
         CREATE TRIGGER IF NOT EXISTS tgrHistoryItemsUpdate
         AFTER UPDATE ON tblItems
@@ -144,8 +139,8 @@ sql_items_creates = {
                 old.rowid,
                 CASE WHEN old.ID_tblItem != new.ID_tblItem THEN new.ID_tblItem ELSE null END,
                 CASE WHEN old.team != new.team THEN new.team ELSE null END,
-                CASE WHEN old.code != new.name THEN new.name ELSE null END,
-                CASE WHEN old.name != new.title THEN new.title ELSE null END,
+                CASE WHEN old.name != new.name THEN new.name ELSE null END,
+                CASE WHEN old.title != new.title THEN new.title ELSE null END,
                 CASE WHEN old.ID_parent != new.ID_parent THEN new.ID_parent ELSE null END,
                 CASE WHEN old.re_pattern != new.re_pattern THEN new.re_pattern ELSE null END,
                 CASE WHEN old.re_prefix != new.re_prefix THEN new.re_prefix ELSE null END,
@@ -171,5 +166,4 @@ sql_items_creates = {
                 old.last_update != new.last_update;
         END;
     """,
-
 }

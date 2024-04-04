@@ -1,19 +1,17 @@
 import sqlite3
-
+import re
 db_path = r"C:\Users\kazak.ke\Documents\PythonProjects\DB\Normative.sqlite3"
 
 queries = {
     "select_all": """--sql
         SELECT * FROM tblProducts;
     """,
-
     "select_products_max_supplement_origin_item": """--sql
         SELECT MAX(per.supplement_num) AS max_suppl
         FROM tblProducts AS m
         JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblProducts_tblPeriods
         WHERE m.FK_tblProducts_tblOrigins = ? AND m.FK_tblProducts_tblItems = ?;
     """,
-
     "update_product_id": """--sql
         UPDATE tblProducts
         SET
@@ -21,6 +19,13 @@ queries = {
             FK_tblProducts_tblOrigins = ?, FK_tblProducts_tblPeriods = ?,
             code = ?, description = ?, measurer = ?, digit_code = ?
         WHERE ID_tblProduct = ?;
+    """,
+    "select_raw_items_by_chapter": """--sql
+        /* два параметра 1: '(^\s*1\..*)|(^\s*1\s*$)' 2: '^\s*(\d+)\s*$' */
+        SELECT
+        (SELECT p.pressmark FROM tblRawData AS p WHERE p.id = CAST(m.parent_id AS INT) ) AS [parent_pressmark], m.*, m.*
+        FROM (SELECT f.* FROM tblRawData f WHERE f.pressmark REGEXP ?) AS m
+        WHERE m.pressmark REGEXP ?;
     """,
 }
 
@@ -46,19 +51,21 @@ if __name__ == "__main__":
     conn.create_function("REGEXP", 2, regex)
 
 
-    result = conn.execute(queries["select_all"])
-    if result:
-        row = result.fetchone()
-        print(row['code'], row['description'])
+    # result = conn.execute(queries["select_all"])
+    # if result:
+    #     row = result.fetchone()
+    #     print(row['code'], row['description'])
 
-    result = conn.execute(
-        queries["select_products_max_supplement_origin_item"], (1, 2))
+    # result = self.connection.execute(query, *args)
+    pars = ('(^\s*1\..*)|(^\s*1\s*$)', '^\s*(\d+)\s*$')
+    print(pars)
+    result = conn.execute(queries["select_raw_items_by_chapter"], pars)
     if result:
         row = result.fetchone()
         print(dict(row))
 
-    result = conn.execute(
-        queries["update_product_id"], x)
+    # result = conn.execute(
+    #     queries["update_product_id"], x)
 
 
     if conn is not None:

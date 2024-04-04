@@ -1,15 +1,4 @@
-#
-# -- % Заготовительно-складских расходов (%ЗСР)
-#
-sql_storage_costs_queries = {
-    "delete_table_storage_costs": """DROP TABLE IF EXISTS tblStorageCosts;""",
-    "delete_index_storage_costs": """DROP INDEX IF EXISTS idxStorageCosts;""",
-    "delete_table_history_storage_costs": """DROP TABLE IF EXISTS _tblHistoryStorageCosts;""",
-    "delete_index_history_storage_costs": """DROP INDEX IF EXISTS idxHistoryStorageCosts;""",
-    "delete_view_storage_costs": """DROP VIEW IF EXISTS viewStorageCosts;""",
-    #
-    "create_table_storage_costs": """--sql
-        CREATE TABLE tblStorageCosts
+CREATE TABLE tblStorageCosts
             -- таблица для % Заготовительно-складских расходов (%ЗСР)
             (
                 ID_tblStorageCosts              INTEGER PRIMARY KEY NOT NULL,
@@ -22,13 +11,10 @@ sql_storage_costs_queries = {
                 last_update                     INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')),
                 UNIQUE (FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name)
             );
-        """,
-    "create_index_purchasing_storage_costs": """--sql
-        CREATE UNIQUE INDEX IF NOT EXISTS idxStorageCosts ON tblStorageCosts (FK_tblStorageCosts_tblPeriods, name);
-    """,
-    # -----------------------------------------------------------------------------------------------------------------
-    "create_table_history_storage_costs": """--sql
-        CREATE TABLE _tblHistoryStorageCosts (
+
+CREATE UNIQUE INDEX IF NOT EXISTS idxStorageCosts ON tblStorageCosts (FK_tblStorageCosts_tblPeriods, name);
+
+CREATE TABLE _tblHistoryStorageCosts (
         -- ID_tblStorageCosts, FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods,
         -- name, percent_storage_costs, description, last_update
         -- таблица для хранения истории %ЗСР
@@ -42,16 +28,12 @@ sql_storage_costs_queries = {
             last_update                     INTEGER,
             _version                        INTEGER NOT NULL,
             _updated                        INTEGER NOT NULL,
-            _mask                       INTEGER NOT NULL
+            _mask                           INTEGER NOT NULL
         );
-        """,
-    "create_index_history_storage_costs": """--sql
-        CREATE INDEX IF NOT EXISTS idxHistoryStorageCosts ON _tblHistoryStorageCosts (_rowid);
-    """,
 
-    # -- ID_tblStorageCosts, FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name, percent_storage_costs, description, last_update
-    "create_trigger_insert_storage_costs": """--sql
-        CREATE TRIGGER tgrHistoryStorageCostsInsert
+CREATE INDEX IF NOT EXISTS idxHistoryStorageCosts ON _tblHistoryStorageCosts (_rowid);
+
+CREATE TRIGGER tgrHistoryStorageCostsInsert
         AFTER INSERT ON tblStorageCosts
         BEGIN
             INSERT INTO _tblHistoryStorageCosts (
@@ -67,9 +49,8 @@ sql_storage_costs_queries = {
                 new.last_update, 1, unixepoch('now'), 0
             );
         END;
-    """,
-    "create_trigger_delete_storage_costs": """--sql
-        CREATE TRIGGER tgrHistoryStorageCostsDelete
+        
+CREATE TRIGGER tgrHistoryStorageCostsDelete
         AFTER DELETE ON tblStorageCosts
         BEGIN
             INSERT INTO _tblHistoryStorageCosts (
@@ -86,10 +67,8 @@ sql_storage_costs_queries = {
                 UNIXEPOCH('now'), -1
             );
         END;
-    """,
-    "create_trigger_update_storage_cost": """--sql
-        -- обновление цены %ЗСР в таблице tblPropertiesMachines
-        CREATE TRIGGER tgrHistoryStorageCostsUpdate
+        
+CREATE TRIGGER tgrHistoryStorageCostsUpdate
         AFTER UPDATE ON tblStorageCosts
         FOR EACH ROW
         BEGIN
@@ -126,9 +105,8 @@ sql_storage_costs_queries = {
                 old.description != new.description OR
                 old.last_update != new.last_update;
         END;
-    """,
-    "create_view_storage_costs": """--sql
-        CREATE VIEW viewStorageCosts AS
+
+CREATE VIEW viewStorageCosts AS
             SELECT
                 i.name AS 'тип',
                 p.title AS 'период',
@@ -139,51 +117,23 @@ sql_storage_costs_queries = {
             LEFT JOIN tblItems AS i ON i.ID_tblItem = sc.FK_tblStorageCosts_tblItems
             LEFT JOIN tblPeriods AS p ON p.ID_tblPeriod = sc.FK_tblStorageCosts_tblPeriods
             ORDER BY FK_tblStorageCosts_tblPeriods, sc.name;
-    """,
-}
+
+
+
+-- FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, 
+-- name, percent_storage_costs, description
+
+INSERT INTO tblStorageCosts (FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name, percent_storage_costs, description) VALUES 
+	( 3, 166, 'Значение по умолчанию', 0, 'Значение по умолчанию, используется если не установлено действительное значение'),
+	( 3, 166, 'Строительные материалы', 2, 'к строительным материалам, кроме металлических конструкций'),
+	( 3, 166, 'Металлические конструкции', 0.75, 'к металлическим конструкциям'),
+	( 4, 166, 'Оборудование', 1.2, 'к оборудованию');
 
 
 
 
-# "create_trigger_update_storage_cost": """--sql
-#         -- обновление цены %ЗСР в таблице tblPropertiesMachines
-#         CREATE TRIGGER tgrHistoryStorageCostsUpdate
-#         AFTER UPDATE ON tblStorageCosts
-#         FOR EACH ROW
-#         BEGIN
-#             UPDATE tblStorageCosts
-#             SET storage_costs = new.percent_storage_costs
-#             WHERE FK_tblPropertiesMachine_tblStorageCosts = new.ID_tblStorageCosts;
 
 
-#             -- History
-#             INSERT INTO _tblHistoryStorageCosts (
-#                 _rowid, ID_tblStorageCosts,
-#                 percent_storage_costs, name, description, last_update,
-#                 _version, _updated, _mask
-#             )
-#             SELECT
-#                 old.rowid,
-#                 CASE WHEN old.ID_tblStorageCosts != new.ID_tblStorageCosts THEN new.ID_tblStorageCosts ELSE null END,
-#                 CASE WHEN old.percent_storage_costs != new.percent_storage_costs THEN new.percent_storage_costs ELSE null END,
-#                 CASE WHEN old.name != new.name THEN new.name ELSE null END,
-#                 CASE WHEN old.description != new.description THEN new.description ELSE null END,
-#                 CASE WHEN old.last_update != new.last_update THEN new.last_update ELSE null END,
-#                 (SELECT MAX(_version) FROM _tblHistoryStorageCosts WHERE _rowid = old.rowid) + 1,
-#                 UNIXEPOCH('now'),
-#                 (CASE WHEN old.ID_tblStorageCosts != new.ID_tblStorageCosts then 1 else 0 END) +
-#                 (CASE WHEN old.percent_storage_costs != new.percent_storage_costs then 2 else 0 END) +
-#                 (CASE WHEN old.name != new.name then 4 else 0 END) +
-#                 (CASE WHEN old.description != new.description then 8 else 0 END) +
-#                 (CASE WHEN old.last_update != new.last_update then 16 else 0 END)
-#             WHERE
-#                 old.ID_tblStorageCosts != new.ID_tblStorageCosts OR
-#                 old.percent_storage_costs != new.percent_storage_costs OR
-#                 old.name != new.name OR
-#                 old.description != new.description OR
-#                 old.last_update != new.last_update;
-#         END;
-#     """,
 
 
 

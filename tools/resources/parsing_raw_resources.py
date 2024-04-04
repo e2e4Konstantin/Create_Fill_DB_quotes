@@ -22,7 +22,7 @@ def parsing_resources(location: LocalData) -> int:
     ic("===>>> Загружаем Ресурсы (1 & 2).")
     resources_path: str = location.resources_path
     db_file: str = location.db_file
-    for period in location.periods_data[3:]:  # [:1]:
+    for period in location.periods_data:  # [:1]:
         print()
         ic(period["title"])
         period_id = period["id"]

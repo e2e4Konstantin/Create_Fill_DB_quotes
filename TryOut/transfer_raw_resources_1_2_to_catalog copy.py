@@ -100,22 +100,16 @@ def _save_raw_item_catalog_resources(
                 db, origin_id, period_id, item, line
             )
             raw_code = pure_data[3]
-            # искать в Каталоге запись с raw_code
             catalog_row = get_catalog_row_by_code(db, origin_id, raw_code)
-            # если это глава то проверить шифр с точкой и без нее
-            if catalog_row is None and item.item_name == "chapter":
-                raw_code = raw_code.split(".")[0]
-                catalog_row = get_catalog_row_by_code(db, origin_id, raw_code)
-                if catalog_row is None:
-                    raw_code = f"{raw_code}."
-                    catalog_row = get_catalog_row_by_code(db, origin_id, raw_code)
-
             if catalog_row:
                 per_id = catalog_row["FK_tblCatalogs_tblPeriods"]
+
                 per_record = get_period_by_id(db, per_id)
                 catalog_period_supplement_num = per_record["supplement_num"]
+
                 per_record = get_period_by_id(db, period_id)
                 raw_period_supplement_num = per_record["supplement_num"]
+
                 if raw_period_supplement_num >= catalog_period_supplement_num:
                     changed_count = update_catalog(
                         db, catalog_row["ID_tblCatalog"], pure_data
@@ -188,4 +182,3 @@ if __name__ == "__main__":
     db_file: str = local.db_file
     period_id = 72
     transfer_raw_resource_to_catalog(db_file, TON_ORIGIN, period_id)
-

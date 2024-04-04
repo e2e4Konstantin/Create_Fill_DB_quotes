@@ -55,7 +55,7 @@ def text_cleaning(text: str) -> str | None:
     return None
 
 
-def split_code(src_code: str) -> tuple[str, ...] | None:
+def split_code(src_code: str=None) -> tuple[str, ...] | None:
     """ Разбивает шифр на части. '4.1-2-10' -> ('4', '1', '2', '10')"""
     # if src_code:
     #     return tuple([x for x in re.split('[.-]', src_code) if x])
@@ -63,9 +63,12 @@ def split_code(src_code: str) -> tuple[str, ...] | None:
     return tuple([x for x in re.split('[.-]', src_code) if x]) if src_code else None
 
 
-def split_code_int(src_code: str) -> tuple[int, ...] | None:
+def split_code_int(src_code: str=None) -> tuple[int, ...] | None:
     """ Разбивает шифр на части из чисел. '4.1-2-10' -> (4, 1, 2, 10)"""
-    return tuple(map(int, re.split('[.-]', src_code))) if src_code else None
+    # return tuple(map(int, re.split('[.-]', src_code))) if src_code else None
+    digit_string = split_code(src_code)
+    ret = tuple(map(int, digit_string))
+    return ret
 
 
 def identify_item(src_code: str) -> tuple:
@@ -130,37 +133,63 @@ def date_parse(value: str) -> str | None:
 
 
 
-def code_to_number(src_code: str) -> int:
-    """ Преобразует шифр в число. '3.1-2-99 ' -> 3001002099000000000
-        sys.maxsize = 9223372036854775807
-        2**63-1 == 9223372036854775807 """
-    N = 3               # разрядов на группу
-    GROUP_NUMBER = 6    # количество групп
-    if src_code and isinstance(src_code, str):
-        factors = tuple([10**x for x in range((GROUP_NUMBER-1)*N, -N, -N)])
-        splitted_code = split_code_int(src_code)
-        if len(splitted_code) > 1:
-            pairs = list(itertools.zip_longest(
-                splitted_code, factors, fillvalue=0))
-            return sum(map(lambda x: x[0]*x[1], pairs))
-        else:
-            return splitted_code[0] * factors[0] - 1
-    return 1
+# def code_to_number(src_code: str) -> int:
+#     """ Преобразует шифр в число. '3.1-2-99 ' -> 3001002099000000000
+#         sys.maxsize = 9223372036854775807
+#         2**63-1 == 9223372036854775807 """
+#     N = 3               # разрядов на группу
+#     GROUP_NUMBER = 6    # количество групп
+#     if src_code and isinstance(src_code, str):
+#         factors = tuple([10**x for x in range((GROUP_NUMBER-1)*N, -N, -N)])
+#         splitted_code = split_code_int(src_code)
+#         if len(splitted_code) > 1:
+#             pairs = list(itertools.zip_longest(
+#                 splitted_code, factors, fillvalue=0))
+#             return sum(map(lambda x: x[0]*x[1], pairs))
+#         else:
+#             return splitted_code[0] * factors[0] - 1
+#     return 1
 
+
+def code_to_number(src_code: str) -> int:
+    """Преобразует шифр в число. '3.1-2-99 ' -> 3001002099000000000
+    sys.maxsize = 9223372036854775807
+    2**63-1 == 9223372036854775807"""
+    N = 3  # разрядов на группу
+    GROUP_NUMBER = 6  # количество групп
+    if src_code and isinstance(src_code, str):
+        factors = tuple([10**x for x in range((GROUP_NUMBER - 1) * N, -N, -N)])
+        splitted_code = split_code_int(src_code)
+        if len(splitted_code) > 1 and not all([x == 0 for x in splitted_code[1:]]):
+            pairs = list(itertools.zip_longest(splitted_code, factors, fillvalue=0))
+            return sum(map(lambda x: x[0] * x[1], pairs))
+        else:
+            return splitted_code[0] * factors[0] + len(splitted_code[1:])
+    return 1
 
 
 if __name__ == "__main__":
     from icecream import ic
 
+    codes = (
+        "1",
+        "1.",
+        "1.0",
+        "1.0-0",
+        "1.0-0-0",
+        "1.0-0-0-0",
+        "1.0-0-0-0-1",
+    )
 
+    # codes = ('1.', '10', '3', '3.0', '3.99', '3.1-99', '3.1-2-99',
+    #          '3.1-2-999', '3.1-2-3-999', '3.1-2-3-4-999', '999.999-999-999-999-999', '999.888-777-666-555-444-333')
+    for x in codes:
+        print(f"{x:<15} {code_to_number(x)}")
 
-    codes = ('10', '3', '3.0', '3.99', '3.1-99', '3.1-2-99',
-             '3.1-2-999', '3.1-2-3-999', '3.1-2-3-4-999', '999.999-999-999-999-999', '999.888-777-666-555-444-333')
-
-    for s in codes:
-        x = code_to_number(s)
-        out = f"{s:30} ==> {x:22} "
-        ic(out)
+    # for s in codes:
+    #     x = code_to_number(s)
+    #     out = f"{s:30} ==> {x:22} "
+    #     ic(out)
 
     # x = split_code_int('5.1-2-8')
     # ic(x)

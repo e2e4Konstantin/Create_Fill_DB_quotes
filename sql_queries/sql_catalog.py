@@ -46,7 +46,7 @@ sql_catalog_queries = {
         SELECT * FROM tblCatalogs WHERE ID_tblCatalog = ?;
     """,
 
-    "select_catalog_code": """
+    "select_catalog_code": """--sql
         SELECT * FROM tblCatalogs WHERE FK_tblCatalogs_tblOrigins = ? AND code = ?;
         """,
     "select_catalog_max_period": """
@@ -178,7 +178,7 @@ sql_catalog_creates = {
     "delete_index_catalog_history": """DROP INDEX IF EXISTS idxHistoryCatalogs;""",
 
     "create_table_catalogs": """--sql
-        CREATE TABLE IF NOT EXISTS tblCatalogs
+        CREATE TABLE tblCatalogs
             (
                 ID_tblCatalog               INTEGER PRIMARY KEY NOT NULL,
                 FK_tblCatalogs_tblOrigins   INTEGER NOT NULL, -- происхождение ТСН/ПСМ...
@@ -197,13 +197,13 @@ sql_catalog_creates = {
         """,
 
     "create_index_catalog": """--sql
-        CREATE UNIQUE INDEX IF NOT EXISTS idxCatalogs ON tblCatalogs (
+        CREATE UNIQUE INDEX idxCatalogs ON tblCatalogs (
             FK_tblCatalogs_tblOrigins, FK_tblCatalogs_tblPeriods, code, FK_tblCatalogs_tblItems, digit_code
         );
     """,
 
     "create_table_history_catalog": """--sql
-        CREATE TABLE IF NOT EXISTS _tblHistoryCatalogs (
+        CREATE TABLE _tblHistoryCatalogs (
             _rowid                      INTEGER,
             ID_tblCatalog               INTEGER,
             FK_tblCatalogs_tblOrigins   INTEGER,
@@ -225,7 +225,7 @@ sql_catalog_creates = {
     """,
 
     "create_trigger_history_catalog_insert": """--sql
-        CREATE TRIGGER IF NOT EXISTS tgrHistoryCatalogsInsert
+        CREATE TRIGGER tgrHistoryCatalogsInsert
         AFTER INSERT ON tblCatalogs
         BEGIN
             INSERT INTO _tblHistoryCatalogs (
@@ -262,7 +262,7 @@ sql_catalog_creates = {
     """,
 
     "create_trigger_history_catalog_update": """--sql
-        CREATE TRIGGER IF NOT EXISTS tgrHistoryCatalogsUpdate
+        CREATE TRIGGER tgrHistoryCatalogsUpdate
         AFTER UPDATE ON tblCatalogs
         FOR EACH ROW
         BEGIN

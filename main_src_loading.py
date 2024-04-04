@@ -48,12 +48,12 @@ if __name__ == '__main__':
 
     location = "office" # office  # home
 
-    # db_data_prepare(location)
+    db_data_prepare(location)
 
     local = LocalData(location)
     periods = [x["title"] for x in local.periods_data]
     ic(periods)
 
-    # parsing_quotes(local)
+    parsing_quotes(local)
     parsing_resources(local)
     delete_raw_table(local.db_file)
