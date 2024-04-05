@@ -1,7 +1,7 @@
 {
     "config_file": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\Create_Fill_DB_quotes\\config\\config_quotes_parsing.json",
     "db_file": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\DB\\Normative.sqlite3",
-    "last_date": "05-04-2024 14:51:40",
+    "last_date": "05-04-2024 09:52:00",
     "periods_data": [
         {
             "basic_id": 151427079,
@@ -52,7 +52,6 @@
     "place": "office",
     "quote_catalog_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\Quotes\\QuotesCatalog",
     "quote_data_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\Quotes\\QuotesData",
-    "resources_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\Resources",
-    "storage_costs_file": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\StorageCost\\storage_cost_export_table.csv",
-    "storage_costs_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\StorageCost"
+    "storage_costs_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\StorageCosts",
+    "resources_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\Resources"
 }

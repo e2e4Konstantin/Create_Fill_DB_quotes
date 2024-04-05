@@ -5,12 +5,12 @@ from icecream import ic
 from files_features import create_abspath_file
 
 from config import LocalData
-# from tools import parsing_raw_periods
+from sql_queries import sql_periods_queries
 
 from postgres_export.pg_sql_queries import pg_sql_queries
 from postgres_export.pg_config_db import PostgresDB
 from postgres_export.pg_config import AccessData, db_access
-
+from config import dbTolls
 
 from tools.periods.get_periods import get_periods_range
 
@@ -187,6 +187,47 @@ def export_resource_for_range_periods(
         period["resources_data_csv_file"] = Path(resources_csv_file).name
 
 
+
+
+def export_storage_cost_to_csv_for_period_range(
+        pgr_access: AccessData, csv_file: str, period_id_range: tuple[int, ...]=None
+) -> int:
+    """
+    Записывает ЗСР для списка id периодов  в CSV файл.
+    """
+    with PostgresDB(pgr_access) as db:
+        # larix.storage_cost
+        query = pg_sql_queries["get_storage_costs_for_period_id_range"]
+        query_parameter = {"period_id_range": period_id_range}
+        result = _query_to_csv(db, csv_file, query, query_parameter)
+        return result
+    return 1
+
+
+def export_storage_cost_for_index(
+    location: LocalData, pgr_access: AccessData
+) -> int:
+    """
+    Из Postgres Normative выгружает данные по %ЗСР в CSV файлы.
+    Выгружает для индексных периодов у которых номер индекса > 198
+    """
+    catalog_csv_file = create_abspath_file(
+        location.storage_costs_path, location.storage_costs_file
+    )
+    # получить id Normative периодов у которых номер индекса > 198
+    with dbTolls(location.db_file) as sqlite_db:
+        result = sqlite_db.go_select(sql_periods_queries["get_periods_normative_id_index_num_more"], (198, ))
+        period_range = tuple([x["basic_database_id"] for x in result])
+
+    # period_range = [ 150862302, 150996873, 151248691, 151569296, 151763529, 151902634,
+    #     151991579, 152473013, 152623191, 153689235, 166956935, 166998701, 167264731,]
+
+    export_storage_cost_to_csv_for_period_range(
+            pgr_access, catalog_csv_file, period_range
+    )
+
+
+
 if __name__ == "__main__":
     """
     Экспортируем таблицу из (Postgres Normative larix.period) периодов в csv файл.
@@ -196,18 +237,25 @@ if __name__ == "__main__":
     Экспортируем  Расценки и Ресурсы для созданного диапазона периодов в свои csv файлы,
     Сохраняем имена файлов и маршруты в конфиг (при закрытии контекстного менеджера ).
     """
-    with LocalData("office") as local:
-        # 1. Выгрузить таблицу периодов
-        export_table_periods_to_csv(
-            csv_file=local.periods_file, pgr_access=db_access["normative"]
-        )
-        # .... Сформируй диапазон периодов
-        # main_src_loading.py
+    # with LocalData("office") as local:
+    #     # 1. Выгрузить таблицу периодов
+    #     export_table_periods_to_csv(
+    #         csv_file=local.periods_file, pgr_access=db_access["normative"]
+    #     )
+    #     # .... Сформируй диапазон периодов
+    #     # main_src_loading.py
 
-        # 3. Выгрузить: каталог расценок и расценки для периодов,
-        #  данные которых записаны в конфиг. файл
-        export_quotes_for_range_periods(local, db_access["normative"])
+    #     # 3. Выгрузить: каталог расценок и расценки для периодов,
+    #     #  данные которых записаны в конфиг. файл
+    #     export_quotes_for_range_periods(local, db_access["normative"])
 
-        # 4. Выгрузить: каталог ресурсов и ресурсы для конфиг периодов
-        export_resource_for_range_periods(local, db_access["normative"])
+    #     # 4. Выгрузить: каталог ресурсов и ресурсы для конфиг периодов
+    #     export_resource_for_range_periods(local, db_access["normative"])
 
+    #     # 5. Выгрузить %ЗСР
+    #     export_storage_cost_for_index(local, db_access["normative"])
+
+# -- test --
+
+    # with LocalData("office") as local:
+    #     export_storage_cost_for_index(local, db_access["normative"])

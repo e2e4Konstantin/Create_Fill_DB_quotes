@@ -14,6 +14,7 @@ class LocalData:
         "config_file_name": CONFIG_FILE_NAME,
         "db_file_name": DB_FILE_NAME,
         "periods_file_name": "period_export_table.csv",
+        "storage_cost_file_name": "storage_cost_export_table.csv",
         "office": {
             "db_path": r"C:\Users\kazak.ke\Documents\PythonProjects\DB",
             "config_path": r"C:\Users\kazak.ke\Documents\PythonProjects\Create_Fill_DB_quotes\config",
@@ -21,6 +22,7 @@ class LocalData:
             "quote_catalog_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Quotes\QuotesCatalog",
             "quote_data_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Quotes\QuotesData",
             "resources_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Resources",
+            "storage_costs_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\StorageCost",
         },
         "home": {
             "db_path": r"..\DB",
@@ -29,6 +31,7 @@ class LocalData:
             "quote_catalog_path": r"\..\Quotes\QuotesCatalog",
             "quote_data_path": r"\..\Quotes\QuotesData",
             "resources_path": r"\..\Resources",
+            "storage_costs_path": r"..\StorageCosts",
         },
         # список периодов
         "periods_data": [],
@@ -45,9 +48,16 @@ class LocalData:
         self.periods_file: str = create_abspath_file(
             LocalData.SRC[location]["periods_path"], LocalData.SRC["periods_file_name"]
         )
+
+        self.storage_costs_file: str = create_abspath_file(
+            LocalData.SRC[location]["storage_costs_path"],
+            LocalData.SRC["storage_cost_file_name"],
+        )
         self.quote_catalog_path: str = LocalData.SRC[location]["quote_catalog_path"]
         self.quote_data_path: str = LocalData.SRC[location]["quote_data_path"]
         self.resources_path: str = LocalData.SRC[location]["resources_path"]
+        self.storage_costs_path: str = LocalData.SRC[location]["storage_costs_path"]
+
         # читаем конфиг из файла
         config = read_config_to_json(self.config_file)
         if config:
@@ -72,9 +82,12 @@ class LocalData:
         config["config_file"] = self.config_file
         config["db_file"] = self.db_file
         config["periods_file"] = self.periods_file
+        config["storage_costs_file"] = self.storage_costs_file
+        #
         config["quote_catalog_path"] = self.quote_catalog_path
         config["quote_data_path"] = self.quote_data_path
         config["resources_path"] = self.resources_path
+        config["storage_costs_path"] = self.storage_costs_path
         # сортируем периоды по убыванию номеров дополнений
         if self.periods_data:
             self.periods_data.sort(reverse=False, key=lambda x: x["supplement"])

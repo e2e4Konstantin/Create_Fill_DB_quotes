@@ -12,7 +12,7 @@ def _update_catalog_parent_himself(db: dbTolls, id: int) -> int | None:
     count = db.go_execute("""SELECT CHANGES() AS changes;""")
     if count:
         return count.fetchone()['changes']
-    output_message_exit(f"элемент каталога {id=}", f"не обновлен в таблице tblCatalogs")
+    output_message_exit(f"элемент каталога {id=}", "не обновлен в таблице tblCatalogs")
     return None
 
 

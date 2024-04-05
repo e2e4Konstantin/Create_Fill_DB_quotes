@@ -1,6 +1,6 @@
 from icecream import ic
 
-from config import dbTolls, items_catalog, period_directories, origin_items
+from config import dbTolls, items_catalog, origin_items
 from sql_queries import sql_items_creates, sql_items_queries, sql_origins
 
 
@@ -22,7 +22,7 @@ def fill_directory_catalog_items(db_file_name: str):
                 parent_id = db.get_row_id(sql_items_queries['select_items_id_team_name'], (item.team, item.parent))
 
             query_params = (item.team, item.name, item.title, parent_id, item.re_pattern, item.prefix)
-            inserted_id = db.go_insert(
+            db.go_insert(
                 query=sql_items_creates["insert_item"], src_data=query_params, message=message_item
             )
             # ic(inserted_id, item.team, item, item.name, parent_id)
@@ -35,15 +35,15 @@ def fill_directory_origins(db_file_name: str):
 
         db.go_execute(sql_origins["delete_all_data_origins"])
         for origin in origin_items:
-            inserted_id = db.go_insert(sql_origins['insert_origin'], origin, message_item)
+            db.go_insert(sql_origins['insert_origin'], origin, message_item)
 
 
 
 if __name__ == '__main__':
-    from data_path import set_data_location
+    from config import LocalData
 
-    location = "home"
-    di = set_data_location(location)
+    location = "office"  # office  # home
+    local = LocalData(location)
 
-    fill_directory_catalog_items(di.db_file)
-    fill_directory_origins(di.db_file)
+    fill_directory_catalog_items(local.db_file)
+    fill_directory_origins(local.db_file)

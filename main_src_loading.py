@@ -1,6 +1,11 @@
 from icecream import ic
 
-from tools import db_create_fill_directory, parsing_quotes, parsing_resources, delete_raw_table
+from tools import (
+    db_create_tables_and_fill_directory,
+    parsing_quotes,
+    parsing_resources,
+    delete_raw_table,
+)
 from tools import parsing_raw_periods, get_periods_range
 from config import LocalData
 from postgres_export import (
@@ -26,7 +31,7 @@ def db_data_prepare(location: str):
         db_file: str = local.db_file
         ic(location, db_file)
 
-        db_create_fill_directory(db_file)
+        db_create_tables_and_fill_directory(db_file)
 
         export_table_periods_to_csv(
             csv_file=local.periods_file, pgr_access=db_access["normative"]

@@ -374,8 +374,16 @@ def transfer_raw_items(
     # удалить item записи период которых меньше чем максимальный период
     delete_last_period_product_row(db, origin_id=origin_id, item_id=item_id)
 
+
+
 def delete_raw_table(db_file: str):
     """ Удаляет временную таблицу tblRawData. """
     with (dbTolls(db_file) as db):
         db.go_execute(sql_raw_queries["delete_table_raw_data"])
         ic("Удалили tblRawData.")
+
+
+def create_index_resources_raw_data(db_file_name: str):
+    """Создать индекс tblRawData когда туда прочитаны Ресурсы (1, 2, 13)."""
+    with dbTolls(db_file_name) as db:
+        db.go_execute(sql_raw_queries["create_index_raw_data"])

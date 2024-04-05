@@ -99,13 +99,19 @@ class PostgresDB:
 
 
 if __name__ == "__main__":
-
     from postgres_export.pg_sql_queries import pg_sql_queries
+    from pprint import pprint
 
-    with PostgresDB(db_access['vlad']) as db:
-        query = pg_sql_queries["get_all_periods"]
-        result = db.select_rows_dict_cursor(query)
+    # db_access['vlad']
+    with PostgresDB(db_access["normative"]) as db:
+        period_id_range = (150862302, 150996873)
+        query = pg_sql_queries["get_storage_costs_for_period_id_range"]
+        query_parameter = {"period_id_range": period_id_range}
+
+        result = db.select_rows_dict_cursor(query, query_parameter)
         print(len(result))
+
+        pprint([dict(x) for x in result])
 
         # with db.connection.cursor() as cur:
         #     with open( "test.csv", "w", encoding="utf-8") as file:

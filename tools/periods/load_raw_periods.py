@@ -120,15 +120,8 @@ def _ton_supplement_periods_parsing(db_file: str):
             # title, supplement_num, index_num, date_start, comment, ID_parent,
             # FK_Origin_tblOrigins_tblPeriods, FK_Category_tblItems_tblPeriods, basic_database_id
             data = (
-                title,
-                supplement,
-                index,
-                date,
-                comment,
-                ID_parent,
-                origin_id,
-                category_id,
-                basic_id,
+                title, supplement, index, date, comment,
+                ID_parent, origin_id, category_id, basic_id,
             )
             _insert_period(db, data)
     return 0
@@ -164,15 +157,8 @@ def _ton_index_periods_parsing(db_file: str) -> int:
             # title, supplement_num, index_num, date_start, comment, ID_parent,
             # FK_Origin_tblOrigins_tblPeriods, FK_Category_tblItems_tblPeriods, basic_database_id
             data = (
-                title,
-                supplement,
-                index,
-                date,
-                comment,
-                ID_parent,
-                origin_id,
-                category_id,
-                basic_id,
+                title, supplement, index, date, comment, ID_parent,
+                origin_id, category_id, basic_id,
             )
             _insert_period(db, data)
     return 0
@@ -308,10 +294,12 @@ def parsing_raw_periods(location: LocalData):
     # Удалить все периоды !!!!!!!!!!!!
     with dbTolls(db_file) as db:
         db.go_execute(sql_periods_queries["delete_all_data_periods"])
+
     # # переносим ТСН периоды
     _ton_supplement_periods_parsing(db_file)
     _ton_index_periods_parsing(db_file)
     _update_periods_parent(db_file, TON_ORIGIN)
+
     # переносим периоды для Оборудования
     _equipment_supplement_periods_parsing(db_file)
     _equipment_index_periods_parsing(db_file)
