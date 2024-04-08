@@ -42,7 +42,16 @@ WHERE sc.deleted_on IS NULL AND sc."period" IN (
 	167264731
 )
 ORDER BY per.created_on DESC 
-
 ;
 
+
+SELECT
+	per."title" "title_period", sc."id", 
+	sc."period" "id_period",
+	sc.*
+FROM larix.storage_cost sc
+INNER JOIN larix."period" per on per."id" = sc."period" AND per.deleted_on IS NULL
+WHERE sc.deleted_on IS NULL 
+ORDER BY per.created_on DESC 
+;
 
