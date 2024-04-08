@@ -37,14 +37,18 @@ sql_storage_costs_queries = {
         CREATE TABLE tblStorageCosts
             -- таблица для % Заготовительно-складских расходов (%ЗСР)
             (
-                ID_tblStorageCosts              INTEGER PRIMARY KEY NOT NULL,
+                ID_tblStorageCost               INTEGER PRIMARY KEY NOT NULL,
                 FK_tblStorageCosts_tblItems     INTEGER NOT NULL, -- тип материал/машина/расценка/оборудование
                 FK_tblStorageCosts_tblPeriods   INTEGER NOT NULL, -- id периода
-                name                            TEXT NOT NULL,  -- Наименование
+                name                            TEXT NOT NULL,    -- наименование
                 percent_storage_costs           REAL NOT NULL DEFAULT 0.0
                                                 CHECK(percent_storage_costs >= 0 AND percent_storage_costs <= 100), -- Процент ЗСР
                 description                     TEXT NOT NULL,  -- подробное описание
                 last_update                     INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')),
+                --
+                FOREIGN KEY (FK_tblStorageCosts_tblItems) REFERENCES tblItems (ID_tblItem),
+                FOREIGN KEY (FK_tblStorageCosts_tblPeriods) REFERENCES tblPeriods (ID_tblPeriod),
+                --
                 UNIQUE (FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name)
             );
         """,
@@ -92,7 +96,6 @@ sql_storage_costs_queries = {
             );
         END;
     """,
-
     "create_trigger_delete_storage_costs": """--sql
         CREATE TRIGGER tgrHistoryStorageCostsDelete
         AFTER DELETE ON tblStorageCosts
@@ -112,7 +115,6 @@ sql_storage_costs_queries = {
             );
         END;
     """,
-
     "create_trigger_update_storage_cost": """--sql
         -- обновление цены %ЗСР в таблице tblPropertiesMachines
         CREATE TRIGGER tgrHistoryStorageCostsUpdate
