@@ -11,17 +11,21 @@ sql_periods_queries = {
     #     ORDER BY p.supplement_num DESC, p.index_num DESC;
     # """,
     "select_period_id_by_normative_id": """--sql
-        SELECT ID_tblPeriod FROM tblPeriods WHERE basic_database_id = ?;
+        SELECT ID_tblPeriod FROM tblPeriods WHERE basic_database_id IS NOT NULL AND basic_database_id = ?;
     """,
-
     "get_periods_normative_id_index_num_more": """--sql
         -- получить список id индексных периодов для larix.Normative у которых index_num > нужного значения
         select basic_database_id
         from tblPeriods
         where
-            FK_Origin_tblOrigins_tblPeriods = (select o.ID_tblOrigin from tblOrigins o where o.name = 'ТСН') AND
-            FK_Category_tblItems_tblPeriods = (select i.ID_tblItem from tblItems i where i.team = 'periods_category' AND i.name = 'index') AND
+            FK_Origin_tblOrigins_tblPeriods is not null and
+            FK_Category_tblItems_tblPeriods is not null and
+            (select o.ID_tblOrigin from tblOrigins o where o.name = 'ТСН') is not null and
+            (select i.ID_tblItem from tblItems i where i.team = 'periods_category' and i.name = 'index') is not null and
+            FK_Origin_tblOrigins_tblPeriods = (select o.ID_tblOrigin from tblOrigins o where o.name = 'ТСН') and
+            FK_Category_tblItems_tblPeriods = (select i.ID_tblItem from tblItems i where i.team = 'periods_category' and i.name = 'index') and
             index_num >= ?;
+
     """,
     "get_periods_supplement_num": """--sql
         -- получить список периодов для заданного каталога и тпа периода в диапазоне n < дополнений < m
@@ -155,5 +159,9 @@ sql_periods_queries = {
     """,
     "select_period_by_id": """--sql
         SELECT * FROM tblPeriods WHERE ID_tblPeriod = ?;
+    """,
+
+    "select_period_by_normative_id": """--sql
+        SELECT * FROM tblPeriods WHERE basic_database_id = ?;
     """,
 }

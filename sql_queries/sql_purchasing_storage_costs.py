@@ -2,6 +2,31 @@
 # -- % Заготовительно-складских расходов (%ЗСР)
 #
 sql_storage_costs_queries = {
+    "insert_storage_cost": """--sql
+        INSERT INTO tblStorageCosts
+            (FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name, percent_storage_costs, description)
+        VALUES
+            (?, ?, ?, ?, ?);
+    """,
+    "update_storage_cost": """--sql
+        UPDATE tblStorageCosts
+        SET
+            FK_tblStorageCosts_tblItems = ?,
+            FK_tblStorageCosts_tblPeriods = ?,
+            name = ?,
+            percent_storage_costs = ?,
+            description = ?
+        WHERE
+            ID_tblStorageCosts = ?;
+
+    """,
+    "select_storage_costs_item_name": """--sql
+        SELECT p.index_num AS index_num, sc.*
+        FROM tblStorageCosts sc
+        JOIN tblPeriods p ON p.ID_tblPeriod = sc.FK_tblStorageCosts_tblPeriods
+        WHERE sc.FK_tblStorageCosts_tblItems = ? AND sc.name = ?;
+
+    """,
     "delete_table_storage_costs": """DROP TABLE IF EXISTS tblStorageCosts;""",
     "delete_index_storage_costs": """DROP INDEX IF EXISTS idxStorageCosts;""",
     "delete_table_history_storage_costs": """DROP TABLE IF EXISTS _tblHistoryStorageCosts;""",
@@ -24,7 +49,7 @@ sql_storage_costs_queries = {
             );
         """,
     "create_index_purchasing_storage_costs": """--sql
-        CREATE UNIQUE INDEX IF NOT EXISTS idxStorageCosts ON tblStorageCosts (FK_tblStorageCosts_tblPeriods, name);
+        CREATE UNIQUE INDEX IF NOT EXISTS idxStorageCosts ON tblStorageCosts (FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name);
     """,
     # -----------------------------------------------------------------------------------------------------------------
     "create_table_history_storage_costs": """--sql
@@ -48,7 +73,6 @@ sql_storage_costs_queries = {
     "create_index_history_storage_costs": """--sql
         CREATE INDEX IF NOT EXISTS idxHistoryStorageCosts ON _tblHistoryStorageCosts (_rowid);
     """,
-
     # -- ID_tblStorageCosts, FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name, percent_storage_costs, description, last_update
     "create_trigger_insert_storage_costs": """--sql
         CREATE TRIGGER tgrHistoryStorageCostsInsert
@@ -68,6 +92,7 @@ sql_storage_costs_queries = {
             );
         END;
     """,
+
     "create_trigger_delete_storage_costs": """--sql
         CREATE TRIGGER tgrHistoryStorageCostsDelete
         AFTER DELETE ON tblStorageCosts
@@ -87,6 +112,7 @@ sql_storage_costs_queries = {
             );
         END;
     """,
+
     "create_trigger_update_storage_cost": """--sql
         -- обновление цены %ЗСР в таблице tblPropertiesMachines
         CREATE TRIGGER tgrHistoryStorageCostsUpdate

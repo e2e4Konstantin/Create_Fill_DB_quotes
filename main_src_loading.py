@@ -6,7 +6,7 @@ from tools import (
     parsing_resources,
     delete_raw_table,
 )
-from tools import parsing_raw_periods, get_periods_range
+from tools import parsing_raw_periods, get_periods_range, parsing_storage_cost
 from config import LocalData
 from postgres_export import (
     db_access,
@@ -61,4 +61,5 @@ if __name__ == '__main__':
 
     parsing_quotes(local)
     parsing_resources(local)
+    parsing_storage_cost(local)
     delete_raw_table(local.db_file)

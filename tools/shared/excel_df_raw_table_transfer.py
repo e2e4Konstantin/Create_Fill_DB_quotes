@@ -60,12 +60,11 @@ def _load_df_to_db_table(df: pd.DataFrame, db_file: str, table_name: str) -> int
     return 0
 
 
-def load_csv_to_raw_table(csv_file: str, db_file: str, delimiter: str = ";") -> int:
-    """Заполняет таблицу tblRawData данными из csv файла."""
-    df: pd.DataFrame = _read_csv_to_df(csv_file, delimiter)
+def load_csv_to_raw_table(csv_path: str, db_path: str, delimiter: str = ";") -> int:
+    """Imports data from a CSV file to the tblRawData table."""
+    df = pd.read_csv(csv_path, delimiter=delimiter, index_col=False, dtype=str)
     # df.to_clipboard()
-    result = _load_df_to_db_table(df, db_file, "tblRawData")
-    return result
+    return _load_df_to_db_table(df, db_path, "tblRawData")
 
 
 def load_xlsx_to_raw_table(excel_file: str, sheet_name: str, db_file: str) -> int:

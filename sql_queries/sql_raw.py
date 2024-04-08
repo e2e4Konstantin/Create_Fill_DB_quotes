@@ -9,14 +9,24 @@ sql_raw_queries = {
     "create_index_raw_resources": """--sql
         CREATE INDEX IF NOT EXISTS idxRawCodeGrResources ON tblRawData (pressmark, id_group_resource);
     """,
+    "add_index_number_column": """--sql
+        ALTER TABLE tblRawData ADD COLUMN index_number INTEGER;
+    """,
     # --- > Удаление ------------------------------------------------------------------------------
     "delete_table_raw_data": """DROP TABLE IF EXISTS tblRawData;""",
     "delete_index_raw_data": """DROP INDEX IF EXISTS idxTmpMaterial;""",
     "delete_index_raw_resources": """DROP INDEX IF EXISTS idxRawCodeGrResources;""",
     "delete_index_raw_catalog_resources": """DROP INDEX IF EXISTS idxRawGwpCodeResources;""",
     # --- > Получение данных ----------------------------------------------------------------------
+    "update_index_number": """--sql
+        UPDATE tblRawData
+        SET index_number = CAST(substr(title_period,1,INSTR(title_period, ' ')) AS INTEGER);
+    """,
     "select_rwd_all": """--sql
         SELECT * FROM tblRawData;
+    """,
+    "select_rwd_all_sorted_by_index_number": """--sql
+        SELECT * FROM tblRawData ORDER BY index_number ASC;
     """,
     "select_rwd_code_regexp": """--sql
         SELECT

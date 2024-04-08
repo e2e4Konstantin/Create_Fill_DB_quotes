@@ -14,7 +14,7 @@ SELECT
 FROM larix.storage_cost sc
 INNER JOIN larix.type_resource tr ON tr.id = sc.type_resource 
 INNER JOIN larix."period" per on per."id" = sc.PERIOD AND per.deleted_on IS NULL
-WHERE sc.deleted_on IS NULL AND sc."period" IN (150862302, 150996873, 151248691,	151569296, 151763529)
+WHERE sc.deleted_on IS NULL AND sc."period" IN (150862302, 150996873, 151248691, 151569296, 151763529)
 ORDER BY per.created_on DESC 
 --LIMIT 10
 ;
