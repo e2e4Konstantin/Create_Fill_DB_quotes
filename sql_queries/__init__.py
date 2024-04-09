@@ -9,6 +9,29 @@ from sql_queries.sql_origins import sql_origins
 from sql_queries.sql_periods import sql_periods_queries
 
 from sql_queries.sql_purchasing_storage_costs import sql_storage_costs_queries
+from sql_queries.sql_transport_costs import sql_transport_costs
+
+#
+# from sql_queries.sql_quotes_chains import sql_quotes_chain_create
+# from sql_queries.sql_resources import sql_resources_create
+#
+# from sql_queries.sql_attributes_queries import (sql_attributes_creates, sql_attributes_select, sql_attributes_delete,
+#                                                 sql_attributes_insert_update)
+#
+# from sql_queries.sql_options_queries import sql_options_queries
+#
+#
+
+#
+# from sql_queries.sql_quotes_chains import sql_quotes_chain_create
+# from sql_queries.sql_resources import sql_resources_create
+#
+# from sql_queries.sql_attributes_queries import (sql_attributes_creates, sql_attributes_select, sql_attributes_delete,
+#                                                 sql_attributes_insert_update)
+#
+# from sql_queries.sql_options_queries import sql_options_queries
+#
+#
 
 #
 # from sql_queries.sql_quotes_chains import sql_quotes_chain_create

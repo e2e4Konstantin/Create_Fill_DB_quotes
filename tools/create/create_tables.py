@@ -8,6 +8,7 @@ from sql_queries import (
     sql_origins,
     sql_periods_queries,
     sql_storage_costs_queries,
+    sql_transport_costs,
 )
 
 from tools.create.fill_directory import (
@@ -117,6 +118,25 @@ def _create_storage_costs_environment(db: dbTolls) -> int:
     return 0
 
 
+def _create_transport_costs_environment(db):
+    """
+    Создать инфраструктуру для хранения транспортных расходов
+    """
+    db.go_execute(sql_transport_costs["delete_table_transport_costs"])
+    db.go_execute(sql_transport_costs["delete_view_transport_costs"])
+    db.go_execute(sql_transport_costs["delete_table_history_transport_costs"])
+
+    db.go_execute(sql_transport_costs["create_table_transport_costs"])
+    db.go_execute(sql_transport_costs["create_index_transport_costs"])
+    db.go_execute(sql_transport_costs["create_view_transport_costs"])
+
+    db.go_execute(sql_transport_costs["create_table_history_transport_costs"])
+    db.go_execute(sql_transport_costs["create_index_history_transport_costs"])
+    db.go_execute(sql_transport_costs["create_trigger_insert_transport_costs"])
+    db.go_execute(sql_transport_costs["create_trigger_delete_transport_costs"])
+    db.go_execute(sql_transport_costs["create_trigger_update_transport_costs"])
+
+
 def create_tables_indexes(db_file: str):
     """
     Создает таблицы:
@@ -133,6 +153,7 @@ def create_tables_indexes(db_file: str):
         _create_products_environment(db)
         _create_periods_environment(db)
         _create_storage_costs_environment(db)
+        _create_transport_costs_environment(db)
 
 
 def db_create_tables_and_fill_directory(db_file: str) -> int:
@@ -173,7 +194,6 @@ if __name__ == "__main__":
 
     # создать таблицы БД
     create_tables_indexes(local.db_file)
-
 
 
 

@@ -211,9 +211,8 @@ def export_storage_cost_for_index(
     Из Postgres Normative выгружает данные по %ЗСР в CSV файлы.
     Выгружает для индексных периодов у которых номер индекса > 198
     """
-    catalog_csv_file = create_abspath_file(
-        location.storage_costs_path, location.storage_costs_file
-    )
+    catalog_csv_file = location.storage_costs_file
+
     # получить id Normative периодов у которых номер индекса > 198
     with dbTolls(location.db_file) as sqlite_db:
         result = sqlite_db.go_select(sql_periods_queries["get_periods_normative_id_index_num_more"], (198, ))
@@ -226,6 +225,36 @@ def export_storage_cost_for_index(
             pgr_access, catalog_csv_file, period_range
     )
 
+
+def export_transport_cost_to_csv_for_period_range(
+        pgr_access: AccessData, csv_file: str, period_id_range: tuple[int, ...]=None
+) -> int:
+    with PostgresDB(pgr_access) as db:
+        # larix.transport_cost
+        query = pg_sql_queries["get_transport_costs_for_period_id_range"]
+        query_parameter = {"period_id_range": period_id_range}
+        result = _query_to_csv(db, csv_file, query, query_parameter)
+        return result
+    return 1
+
+
+def export_transport_cost_for_index(location: LocalData, pgr_access: AccessData) -> int:
+    """
+    Из Postgres Normative выгружает данные по Транспортным расходам в CSV файлы.
+    Выгружает для индексных периодов у которых номер индекса > 198
+    """
+    transport_cost_csv_file = location.transport_costs_file
+
+    # получить id Normative периодов у которых номер индекса > 198
+    with dbTolls(location.db_file) as sqlite_db:
+        result = sqlite_db.go_select(
+            sql_periods_queries["get_periods_normative_id_index_num_more"], (198,)
+        )
+        period_range = tuple([x["basic_database_id"] for x in result])
+
+    export_transport_cost_to_csv_for_period_range(
+        pgr_access, transport_cost_csv_file, period_range
+    )
 
 
 if __name__ == "__main__":
@@ -257,5 +286,5 @@ if __name__ == "__main__":
 
 # -- test --
 
-    # with LocalData("office") as local:
-    #     export_storage_cost_for_index(local, db_access["normative"])
+    with LocalData("office") as local:
+        export_transport_cost_for_index(local, db_access["normative"])

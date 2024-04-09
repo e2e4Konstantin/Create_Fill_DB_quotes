@@ -70,7 +70,6 @@ pg_sql_queries = {
         WHERE r."period" = %(period_id)s AND r.deleted = 0 AND r.pressmark ~ '^\s*[1|2]\.'
         ORDER BY r.pressmark_sort
     """,
-
     "get_storage_costs_for_period_id_range": """--sql
         SELECT
             tr.title "type",
@@ -87,7 +86,22 @@ pg_sql_queries = {
         WHERE sc.deleted_on IS NULL AND sc."period" IN %(period_id_range)s
         ORDER BY per.created_on DESC;
     """,
-
+    "get_transport_costs_for_period_id_range": """--sql
+        SELECT
+            tc."id" "id",
+            tc."period" "id_period",
+            per.title "title_period",
+            tc."title" "title",
+            tc.pressmark,
+            tc.price,
+            tc.cur_price,
+            tc.ratio,
+            tc.cmt
+            FROM larix.transport_cost tc
+        INNER JOIN larix."period" per ON per."id" = tc."period" AND per.deleted_on IS NULL
+        WHERE tc.deleted = 0 AND tc."period" IN %(period_id_range)s AND tc.pressmark ~ '(^\s*[1|2]\.)'
+        ORDER BY per.created_on DESC;
+    """,
     # -------------- test -----------------------
     "q_test_1": """--sql
         SELECT p.id AS period_id from larix.period p WHERE p.title = {0};

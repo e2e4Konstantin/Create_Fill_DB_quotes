@@ -53,7 +53,7 @@ sql_storage_costs_queries = {
             );
         """,
     "create_index_purchasing_storage_costs": """--sql
-        CREATE UNIQUE INDEX IF NOT EXISTS idxStorageCosts ON tblStorageCosts (FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name);
+        CREATE UNIQUE INDEX idxStorageCosts ON tblStorageCosts (FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name);
     """,
     # -----------------------------------------------------------------------------------------------------------------
     "create_table_history_storage_costs": """--sql
@@ -71,11 +71,11 @@ sql_storage_costs_queries = {
             last_update                     INTEGER,
             _version                        INTEGER NOT NULL,
             _updated                        INTEGER NOT NULL,
-            _mask                       INTEGER NOT NULL
+            _mask                           INTEGER NOT NULL
         );
         """,
     "create_index_history_storage_costs": """--sql
-        CREATE INDEX IF NOT EXISTS idxHistoryStorageCosts ON _tblHistoryStorageCosts (_rowid);
+        CREATE INDEX idxHistoryStorageCosts ON _tblHistoryStorageCosts (_rowid);
     """,
     # -- ID_tblStorageCosts, FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name, percent_storage_costs, description, last_update
     "create_trigger_insert_storage_costs": """--sql
