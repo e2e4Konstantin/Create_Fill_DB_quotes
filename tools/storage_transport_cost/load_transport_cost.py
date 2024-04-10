@@ -6,6 +6,7 @@ from tools.shared.excel_df_raw_table_transfer import load_csv_to_raw_table
 from tools.shared.code_tolls import (
     clear_code,
     get_float_value,
+    get_integer_value,
     text_cleaning,
 )
 from tools.shared.shared_features import get_product_by_code, get_origin_id
@@ -76,11 +77,13 @@ def _make_data_from_raw_transport_cost(db: dbTolls, raw_trans_cost: sqlite3.Row)
     actual_price = get_float_value(raw_trans_cost["cur_price"])
     numeric_ratio = get_float_value(raw_trans_cost["ratio"])
 
+    base_normative_id = get_integer_value(raw_trans_cost["id"])
+
     # FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods,
     # base_price, actual_price, numeric_ratio, description
     data = (
         FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods,
-        base_price, actual_price, numeric_ratio,
+        base_price, actual_price, numeric_ratio, base_normative_id,
         index_num
     )
     return data

@@ -287,4 +287,5 @@ if __name__ == "__main__":
 # -- test --
 
     with LocalData("office") as local:
+        export_storage_cost_for_index(local, db_access["normative"])
         export_transport_cost_for_index(local, db_access["normative"])

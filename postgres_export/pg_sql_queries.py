@@ -72,11 +72,11 @@ pg_sql_queries = {
     """,
     "get_storage_costs_for_period_id_range": """--sql
         SELECT
+            sc."id" "id",
             tr.title "type",
             sc.type_resource "id_type_resource",
             sc."period" "id_period",
             per."title" "title_period",
-            sc."id" "id",
             sc.title,
             sc.rate,
             sc.cmt

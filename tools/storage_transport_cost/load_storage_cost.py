@@ -90,13 +90,13 @@ def _make_data_from_raw_storage_cost(db: dbTolls, raw_sc: sqlite3.Row) -> tuple 
     else:
         percent_storage_costs = value
     description = text_cleaning(raw_sc["cmt"])
+    base_normative_id = get_integer_value(raw_sc["id"])
+
     # FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name, percent_storage_costs, description
     data = (
-        FK_tblStorageCosts_tblItems,
-        FK_tblStorageCosts_tblPeriods,
-        name,
-        percent_storage_costs,
-        description,
+        FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods,
+        name, percent_storage_costs, description,
+        base_normative_id,
         index_num
     )
     return data

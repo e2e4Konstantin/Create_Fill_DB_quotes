@@ -14,15 +14,15 @@ sql_transport_costs = {
     "insert_transport_cost": """--sql
         INSERT INTO tblTransportCosts
             (FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods,
-                base_price, actual_price, numeric_ratio)
+                base_price, actual_price, numeric_ratio, base_normative_id)
         VALUES
-            (?, ?, ?, ?, ?);
+            (?, ?, ?, ?, ?, ?);
     """,
     "update_transport_cost_id": """--sql
         UPDATE tblTransportCosts
         SET
             FK_tblTransportCosts_tblProducts = ?, FK_tblTransportCosts_tblPeriods = ?,
-            base_price = ?, actual_price = ?, numeric_ratio = ?
+            base_price = ?, actual_price = ?, numeric_ratio = ?, base_normative_id = ?
         WHERE ID_tblTransportCost = ?;
     """,
     "create_table_transport_costs": """--sql
@@ -39,7 +39,9 @@ sql_transport_costs = {
             inflation_ratio REAL GENERATED ALWAYS AS (
                 CASE WHEN base_price = 0 THEN 0 ELSE ROUND(actual_price / base_price, 2) END
             ) VIRTUAL,
-            last_update     INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')),
+            last_update         INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')),
+            --
+            base_normative_id   INTEGER,            -- id из основной бд (Postgres Normative)
             --
             FOREIGN KEY (FK_tblTransportCosts_tblProducts) REFERENCES tblProducts (ID_Product),
             FOREIGN KEY (FK_tblTransportCosts_tblPeriods) REFERENCES tblPeriods (ID_tblPeriod),

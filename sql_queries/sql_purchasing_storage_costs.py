@@ -3,19 +3,18 @@
 #
 sql_storage_costs_queries = {
     "insert_storage_cost": """--sql
-        INSERT INTO tblStorageCosts
-            (FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name, percent_storage_costs, description)
-        VALUES
-            (?, ?, ?, ?, ?);
+        INSERT INTO tblStorageCosts (
+            FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods,
+            name, percent_storage_costs, description, base_normative_id
+        )
+        VALUES (?, ?, ?, ?, ?, ?);
     """,
     "update_storage_cost": """--sql
         UPDATE tblStorageCosts
         SET
-            FK_tblStorageCosts_tblItems = ?,
-            FK_tblStorageCosts_tblPeriods = ?,
-            name = ?,
-            percent_storage_costs = ?,
-            description = ?
+            FK_tblStorageCosts_tblItems = ?, FK_tblStorageCosts_tblPeriods = ?,
+            name = ?, percent_storage_costs = ?, description = ?,
+            base_normative_id = ?
         WHERE
             ID_tblStorageCost = ?;
     """,
@@ -42,8 +41,10 @@ sql_storage_costs_queries = {
                 name                            TEXT NOT NULL,    -- наименование
                 percent_storage_costs           REAL NOT NULL DEFAULT 0.0
                                                 CHECK(percent_storage_costs >= 0 AND percent_storage_costs <= 100), -- Процент ЗСР
-                description                     TEXT NOT NULL,  -- подробное описание
+                description                     TEXT NOT NULL,      -- подробное описание
                 last_update                     INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')),
+                --
+                base_normative_id               INTEGER,            -- id из основной бд (Postgres Normative)
                 --
                 FOREIGN KEY (FK_tblStorageCosts_tblItems) REFERENCES tblItems (ID_tblItem),
                 FOREIGN KEY (FK_tblStorageCosts_tblPeriods) REFERENCES tblPeriods (ID_tblPeriod),
