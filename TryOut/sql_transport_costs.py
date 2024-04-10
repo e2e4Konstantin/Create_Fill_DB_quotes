@@ -14,15 +14,15 @@ sql_transport_costs = {
     "insert_transport_cost": """--sql
         INSERT INTO tblTransportCosts
             (FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods,
-                base_price, actual_price, numeric_ratio)
+                base_price, actual_price, numeric_ratio, description)
         VALUES
-            (?, ?, ?, ?, ?);
+            (?, ?, ?, ?, ?, ?);
     """,
     "update_transport_cost_id": """--sql
         UPDATE tblTransportCosts
         SET
             FK_tblTransportCosts_tblProducts = ?, FK_tblTransportCosts_tblPeriods = ?,
-            base_price = ?, actual_price = ?, numeric_ratio = ?
+            base_price = ?, actual_price = ?, description = ?
         WHERE ID_tblTransportCost = ?;
     """,
     "create_table_transport_costs": """--sql
@@ -36,6 +36,7 @@ sql_transport_costs = {
             base_price      REAL DEFAULT 0 NOT NULL,    -- БЦ: базовая цена перевозки 1 т. груза
             actual_price    REAL DEFAULT 0 NOT NULL,    -- ТЦ: текущая цена перевозки 1 т. груза
             numeric_ratio   REAL DEFAULT 1 NOT NULL,    -- коэффициент, применяется после сложения
+            description     TEXT,                       -- описание
             inflation_ratio REAL GENERATED ALWAYS AS (
                 CASE WHEN base_price = 0 THEN 0 ELSE ROUND(actual_price / base_price, 2) END
             ) VIRTUAL,
@@ -61,7 +62,8 @@ sql_transport_costs = {
                 tc.base_price AS 'базовая цена',
                 tc.actual_price AS 'текущая цена',
                 tc.inflation_ratio AS 'инфл.коэф',
-                tc.numeric_ratio AS 'коэф ?'
+                tc.numeric_ratio AS 'коэф ?',
+                tc.description AS 'описание'
             FROM tblTransportCosts tc
             LEFT JOIN tblProducts AS p ON p.ID_tblProduct = tc.FK_tblTransportCosts_tblProducts
             LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
@@ -78,6 +80,7 @@ sql_transport_costs = {
             base_price                       REAL,
             actual_price                     REAL,
             numeric_ratio                    REAL,
+            description                      TEXT,
             last_update                      INTEGER,
             _version                         INTEGER NOT NULL,
             _updated                         INTEGER NOT NULL,
@@ -94,13 +97,13 @@ sql_transport_costs = {
             INSERT INTO _tblHistoryTransportCosts (
                 _rowid, ID_tblTransportCost,
                 FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods,
-                base_price, actual_price, numeric_ratio, last_update,
+                base_price, actual_price, numeric_ratio, description, last_update,
                 _version, _updated, _mask
             )
             VALUES (
                 new.rowid, new.ID_tblTransportCost,
                 new.FK_tblTransportCosts_tblProducts, new.FK_tblTransportCosts_tblPeriods,
-                new.base_price, new.actual_price, new.numeric_ratio,
+                new.base_price, new.actual_price, new.numeric_ratio, new.description,
                 new.last_update, 1, unixepoch('now'), 0
             );
         END;
@@ -112,13 +115,13 @@ sql_transport_costs = {
             INSERT INTO _tblHistoryTransportCosts (
                 _rowid, ID_tblTransportCost,
                 FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods,
-                base_price, actual_price, numeric_ratio, last_update,
+                base_price, actual_price, numeric_ratio, description, last_update,
                 _version, _updated, _mask
             )
             VALUES (
                 old.rowid, old.ID_tblTransportCost,
                 old.FK_tblTransportCosts_tblProducts, old.FK_tblTransportCosts_tblPeriods,
-                old.base_price, old.actual_price, old.numeric_ratio, old.last_update,
+                old.base_price, old.actual_price, old.numeric_ratio, old.description, old.last_update,
                 (SELECT COALESCE(MAX(_version), 0) FROM _tblHistoryTransportCosts WHERE _rowid = old.rowid) + 1,
                 UNIXEPOCH('now'), -1
             );
@@ -132,7 +135,7 @@ sql_transport_costs = {
             INSERT INTO _tblHistoryTransportCosts (
                 _rowid, ID_tblTransportCost,
                 FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods,
-                base_price, actual_price, numeric_ratio, last_update,
+                base_price, actual_price, numeric_ratio, description, last_update,
                 _version, _updated, _mask
             )
             SELECT
@@ -143,6 +146,7 @@ sql_transport_costs = {
                 CASE WHEN old.base_price != new.base_price THEN new.base_price ELSE null END,
                 CASE WHEN old.actual_price != new.actual_price THEN new.actual_price ELSE null END,
                 CASE WHEN old.numeric_ratio != new.numeric_ratio THEN new.numeric_ratio ELSE null END,
+                CASE WHEN old.description != new.description THEN new.description ELSE null END,
                 CASE WHEN old.last_update != new.last_update THEN new.last_update ELSE null END,
                 (SELECT MAX(_version) FROM _tblHistoryTransportCosts WHERE _rowid = old.rowid) + 1,
                 UNIXEPOCH('now'),
@@ -152,7 +156,8 @@ sql_transport_costs = {
                 (CASE WHEN old.base_price != new.base_price then 8 else 0 END) +
                 (CASE WHEN old.actual_price != new.actual_price then 16 else 0 END) +
                 (CASE WHEN old.numeric_ratio != new.numeric_ratio then 32 else 0 END) +
-                (CASE WHEN old.last_update != new.last_update then 64 else 0 END)
+                (CASE WHEN old.description != new.description then 64 else 0 END) +
+                (CASE WHEN old.last_update != new.last_update then 128 else 0 END)
             WHERE
                 old.ID_tblTransportCost != new.ID_tblTransportCost OR
                 old.FK_tblTransportCosts_tblProducts != new.FK_tblTransportCosts_tblProducts OR
@@ -160,6 +165,7 @@ sql_transport_costs = {
                 old.base_price != new.base_price OR
                 old.actual_price != new.actual_price OR
                 old.numeric_ratio != new.numeric_ratio OR
+                old.description != new.description OR
                 old.last_update != new.last_update;
         END;
     """,

@@ -17,8 +17,7 @@ sql_storage_costs_queries = {
             percent_storage_costs = ?,
             description = ?
         WHERE
-            ID_tblStorageCosts = ?;
-
+            ID_tblStorageCost = ?;
     """,
     "select_storage_costs_item_name": """--sql
         SELECT p.index_num AS index_num, sc.*
@@ -58,11 +57,11 @@ sql_storage_costs_queries = {
     # -----------------------------------------------------------------------------------------------------------------
     "create_table_history_storage_costs": """--sql
         CREATE TABLE _tblHistoryStorageCosts (
-        -- ID_tblStorageCosts, FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods,
+        -- ID_tblStorageCost, FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods,
         -- name, percent_storage_costs, description, last_update
         -- таблица для хранения истории %ЗСР
             _rowid                          INTEGER,
-            ID_tblStorageCosts              INTEGER,
+            ID_tblStorageCost               INTEGER,
             FK_tblStorageCosts_tblItems     INTEGER,
             FK_tblStorageCosts_tblPeriods   INTEGER,
             name                            TEXT,
@@ -77,19 +76,19 @@ sql_storage_costs_queries = {
     "create_index_history_storage_costs": """--sql
         CREATE INDEX idxHistoryStorageCosts ON _tblHistoryStorageCosts (_rowid);
     """,
-    # -- ID_tblStorageCosts, FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name, percent_storage_costs, description, last_update
+    # -- ID_tblStorageCost, FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name, percent_storage_costs, description, last_update
     "create_trigger_insert_storage_costs": """--sql
         CREATE TRIGGER tgrHistoryStorageCostsInsert
         AFTER INSERT ON tblStorageCosts
         BEGIN
             INSERT INTO _tblHistoryStorageCosts (
-                _rowid, ID_tblStorageCosts,
+                _rowid, ID_tblStorageCost,
                 FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods,
                 name, percent_storage_costs, description, last_update,
                 _version, _updated, _mask
             )
             VALUES (
-                new.rowid, new.ID_tblStorageCosts,
+                new.rowid, new.ID_tblStorageCost,
                 new.FK_tblStorageCosts_tblItems, new.FK_tblStorageCosts_tblPeriods,
                 new.name, new.percent_storage_costs, new.description,
                 new.last_update, 1, unixepoch('now'), 0
@@ -101,13 +100,13 @@ sql_storage_costs_queries = {
         AFTER DELETE ON tblStorageCosts
         BEGIN
             INSERT INTO _tblHistoryStorageCosts (
-                _rowid, ID_tblStorageCosts,
+                _rowid, ID_tblStorageCost,
                 FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods,
                 name, percent_storage_costs, description, last_update,
                 _version, _updated, _mask
             )
             VALUES (
-                old.rowid, old.ID_tblStorageCosts,
+                old.rowid, old.ID_tblStorageCost,
                 old.FK_tblStorageCosts_tblItems, old.FK_tblStorageCosts_tblPeriods,
                 old.name, old.percent_storage_costs, old.description, old.last_update,
                 (SELECT COALESCE(MAX(_version), 0) FROM _tblHistoryStorageCosts WHERE _rowid = old.rowid) + 1,
@@ -122,14 +121,14 @@ sql_storage_costs_queries = {
         FOR EACH ROW
         BEGIN
             INSERT INTO _tblHistoryStorageCosts (
-                _rowid, ID_tblStorageCosts,
+                _rowid, ID_tblStorageCost,
                 FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods,
                 name, percent_storage_costs, description, last_update,
                 _version, _updated, _mask
             )
             SELECT
                 old.rowid,
-                CASE WHEN old.ID_tblStorageCosts != new.ID_tblStorageCosts THEN new.ID_tblStorageCosts ELSE null END,
+                CASE WHEN old.ID_tblStorageCost != new.ID_tblStorageCost THEN new.ID_tblStorageCost ELSE null END,
                 CASE WHEN old.FK_tblStorageCosts_tblItems != new.FK_tblStorageCosts_tblItems THEN new.FK_tblStorageCosts_tblItems ELSE null END,
                 CASE WHEN old.FK_tblStorageCosts_tblPeriods != new.FK_tblStorageCosts_tblPeriods THEN new.FK_tblStorageCosts_tblPeriods ELSE null END,
                 CASE WHEN old.name != new.name THEN new.name ELSE null END,
@@ -138,7 +137,7 @@ sql_storage_costs_queries = {
                 CASE WHEN old.last_update != new.last_update THEN new.last_update ELSE null END,
                 (SELECT MAX(_version) FROM _tblHistoryStorageCosts WHERE _rowid = old.rowid) + 1,
                 UNIXEPOCH('now'),
-                (CASE WHEN old.ID_tblStorageCosts != new.ID_tblStorageCosts then 1 else 0 END) +
+                (CASE WHEN old.ID_tblStorageCost != new.ID_tblStorageCost then 1 else 0 END) +
                 (CASE WHEN old.FK_tblStorageCosts_tblItems != new.FK_tblStorageCosts_tblItems then 2 else 0 END) +
                 (CASE WHEN old.FK_tblStorageCosts_tblPeriods != new.FK_tblStorageCosts_tblPeriods then 4 else 0 END) +
                 (CASE WHEN old.name != new.name then 8 else 0 END) +
@@ -146,7 +145,7 @@ sql_storage_costs_queries = {
                 (CASE WHEN old.description != new.description then 32 else 0 END) +
                 (CASE WHEN old.last_update != new.last_update then 64 else 0 END)
             WHERE
-                old.ID_tblStorageCosts != new.ID_tblStorageCosts OR
+                old.ID_tblStorageCost != new.ID_tblStorageCost OR
                 old.FK_tblStorageCosts_tblItems != new.FK_tblStorageCosts_tblItems OR
                 old.FK_tblStorageCosts_tblPeriods != new.FK_tblStorageCosts_tblPeriods OR
                 old.name != new.name OR
@@ -169,52 +168,4 @@ sql_storage_costs_queries = {
             ORDER BY FK_tblStorageCosts_tblPeriods, sc.name;
     """,
 }
-
-
-
-
-# "create_trigger_update_storage_cost": """--sql
-#         -- обновление цены %ЗСР в таблице tblPropertiesMachines
-#         CREATE TRIGGER tgrHistoryStorageCostsUpdate
-#         AFTER UPDATE ON tblStorageCosts
-#         FOR EACH ROW
-#         BEGIN
-#             UPDATE tblStorageCosts
-#             SET storage_costs = new.percent_storage_costs
-#             WHERE FK_tblPropertiesMachine_tblStorageCosts = new.ID_tblStorageCosts;
-
-
-#             -- History
-#             INSERT INTO _tblHistoryStorageCosts (
-#                 _rowid, ID_tblStorageCosts,
-#                 percent_storage_costs, name, description, last_update,
-#                 _version, _updated, _mask
-#             )
-#             SELECT
-#                 old.rowid,
-#                 CASE WHEN old.ID_tblStorageCosts != new.ID_tblStorageCosts THEN new.ID_tblStorageCosts ELSE null END,
-#                 CASE WHEN old.percent_storage_costs != new.percent_storage_costs THEN new.percent_storage_costs ELSE null END,
-#                 CASE WHEN old.name != new.name THEN new.name ELSE null END,
-#                 CASE WHEN old.description != new.description THEN new.description ELSE null END,
-#                 CASE WHEN old.last_update != new.last_update THEN new.last_update ELSE null END,
-#                 (SELECT MAX(_version) FROM _tblHistoryStorageCosts WHERE _rowid = old.rowid) + 1,
-#                 UNIXEPOCH('now'),
-#                 (CASE WHEN old.ID_tblStorageCosts != new.ID_tblStorageCosts then 1 else 0 END) +
-#                 (CASE WHEN old.percent_storage_costs != new.percent_storage_costs then 2 else 0 END) +
-#                 (CASE WHEN old.name != new.name then 4 else 0 END) +
-#                 (CASE WHEN old.description != new.description then 8 else 0 END) +
-#                 (CASE WHEN old.last_update != new.last_update then 16 else 0 END)
-#             WHERE
-#                 old.ID_tblStorageCosts != new.ID_tblStorageCosts OR
-#                 old.percent_storage_costs != new.percent_storage_costs OR
-#                 old.name != new.name OR
-#                 old.description != new.description OR
-#                 old.last_update != new.last_update;
-#         END;
-#     """,
-
-
-
-
-
 

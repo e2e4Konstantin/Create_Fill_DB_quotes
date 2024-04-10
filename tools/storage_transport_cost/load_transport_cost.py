@@ -1,9 +1,15 @@
 import sqlite3
 from icecream import ic
 
-from config import dbTolls, LocalData
+from config import dbTolls, LocalData, TON_ORIGIN
 from tools.shared.excel_df_raw_table_transfer import load_csv_to_raw_table
-from sql_queries import sql_raw_queries
+from tools.shared.code_tolls import (
+    clear_code,
+    get_float_value,
+    text_cleaning,
+)
+from tools.shared.shared_features import get_product_by_code, get_origin_id
+from sql_queries import sql_raw_queries, sql_periods_queries, sql_transport_costs
 from files_features import output_message_exit
 
 
@@ -26,107 +32,104 @@ def _get_raw_transport_costs(db: dbTolls) -> list[sqlite3.Row] | None:
         )
         return None
 
+def _get_period_by_basic_normative_id(db: dbTolls, normative_id: int) -> int | None:
+    """
+    Выбрать id периода по нужному normative_id
+    """
+    try:
+        results = db.go_select(
+            sql_periods_queries["select_period_by_normative_id"], (normative_id,)
+        )
+        if not results:
+            return None
+        return results[0]
+    except TypeError as err:
+        # results is None
+        return None
+    except KeyError as err:
+        # results[0]["ID_tblPeriod"] is missing
+        ic(repr(err))
+        return None
+    except Exception as err:
+        # unhandled exception
+        ic(err)
+        return None
 
-def _make_data_from_raw_transport_cost(db: dbTolls, raw_sc: sqlite3.Row) -> tuple | None:
+
+def _make_data_from_raw_transport_cost(db: dbTolls, raw_trans_cost: sqlite3.Row) -> tuple | None:
     """
-    Получает строку из таблицы tblRawData с записью Normative.StorageCost.
-    Возвращает кортеж с данными для вставки в таблицу StorageCosts.
-    Период id ищется по id периода из Normative.Periods (в боевой таблице периодов есть поле "basic_id").
+    Получает строку из таблицы tblRawData с записью Normative.TransportCost.
+    Возвращает кортеж с данными для вставки в таблицу TransportCosts.
+    Период id ищется по id периода из Normative.Periods (в таблице периодов tblPeriods есть поле "basic_id").
     """
-    match raw_sc["type"]:
-        case "Оборудование":
-            item_type = "material"
-        case "Материал":
-            item_type = "equipment"
-        case _:
-            output_message_exit(
-                "в RAW таблице с StorageCost не найден тип записи:",
-                f"в справочнике {raw_sc['type']}",
-            )
-    item_id = get_directory_id(db, "units", item_type)
-    if item_type is None:
-        return None
-    FK_tblStorageCosts_tblItems = item_id
-    period_id = _get_period_id_by_basic_normative_id(db, raw_sc["id_period"])
-    if period_id is None:
-        return None
-    FK_tblStorageCosts_tblPeriods = period_id
-    name = text_cleaning(raw_sc["title"])
-    value = get_float_value(raw_sc["rate"])
-    if value and value <= 1e-8:
-        percent_storage_costs = 0
-    else:
-        percent_storage_costs = value
-    description = text_cleaning(raw_sc["cmt"])
-    id_raw_period = get_integer_value(raw_sc["id_period"])
-    # FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name, percent_storage_costs, description
+    code = clear_code(raw_trans_cost["pressmark"])
+    origin_id = get_origin_id(db, origin_name=TON_ORIGIN)
+    FK_tblTransportCosts_tblProducts = get_product_by_code(db, origin_id, code)[
+        "ID_tblProduct"
+    ]
+    period = _get_period_by_basic_normative_id(
+        db, raw_trans_cost["id_period"]
+    )
+    index_num = period["index_num"]
+    FK_tblTransportCosts_tblPeriods = period["ID_tblPeriod"]
+    base_price = get_float_value(raw_trans_cost["price"])
+    actual_price = get_float_value(raw_trans_cost["cur_price"])
+    numeric_ratio = get_float_value(raw_trans_cost["ratio"])
+
+    # FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods,
+    # base_price, actual_price, numeric_ratio, description
     data = (
-        FK_tblStorageCosts_tblItems,
-        FK_tblStorageCosts_tblPeriods,
-        name,
-        percent_storage_costs,
-        description,
-        id_raw_period,
+        FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods,
+        base_price, actual_price, numeric_ratio,
+        index_num
     )
     return data
 
 
 def transfer_raw_transport_cost(db_file):
     """
-    Заполняет таблицу tblStorageCosts данными из RAW таблицы tblRawData.
+    Заполняет таблицу tblTransportCosts данными из RAW таблицы tblRawData.
     """
     with dbTolls(db_file) as db:
-        raw_storage_costs = _get_raw_transport_costs(db)
-        if raw_storage_costs is None:
-            return None
+        raw_transport_costs = _get_raw_transport_costs(db)
         inserted_success, updated_success = [], []
-        for line in raw_storage_costs:
+        for line in raw_transport_costs:
             # обрабатываем запись raw таблицы
             raw_data = _make_data_from_raw_transport_cost(db, line)
-            # ищем период по raw id
-            id_raw_period = raw_data[5]
-            period = db.go_select(
-                sql_periods_queries["select_period_by_normative_id"], (id_raw_period,)
+            raw_index_num = raw_data[-1]
+            # ищем такую же запись в tblTransportCost
+            product_id = raw_data[0]
+            transport_cost_line = db.go_select(
+                sql_transport_costs["select_transport_cost_by_product_id"], (product_id, )
             )
-            if period is None:
-                output_message_exit(
-                    "Не найден период для %ЗСР:", f"период: {id_raw_period}"
-                )
-            raw_index_num = period[0]["index_num"]
-            # ищем такую же запись в tblStorageCost
-            item_id = raw_data[0]
-            name = raw_data[2]
-            storage_cost_line = db.go_select(
-                sql_storage_costs_queries["select_storage_costs_item_name"],
-                (item_id, name),
-            )
-            if storage_cost_line:
+            if transport_cost_line:
                 # update
-                index_num = storage_cost_line[0]["index_num"]
+                index_num = transport_cost_line[0]["index_num"]
                 if raw_index_num >= index_num:
-                    data = (*raw_data[:-1], storage_cost_line[0]["ID_tblStorageCosts"])
-                    db.go_execute(
-                        sql_storage_costs_queries["update_storage_cost"], data
+                    data = (
+                        *raw_data[:-1],
+                        transport_cost_line[0]["ID_tblTransportCost"],
                     )
+                    db.go_execute(sql_transport_costs["update_transport_cost_id"], data)
                     updated_success.append(data)
                     # print(data)
                 else:
                     output_message_exit(
-                        f"Ошибка обновления %ЗСР: {tuple(storage_cost_line[0])}",
-                        f"номер индекса %ЗСР {index_num} больше загружаемого {raw_index_num}",
+                        f"Ошибка обновления 'Транспортных расходов': {tuple(transport_cost_line[0])}",
+                        f"номер индекса ТР {index_num} больше загружаемого {raw_index_num}",
                     )
             else:
                 # insert
-                message = f"INSERT tblStorageCosts: {raw_data[:-1]!r}"
+                message = f"INSERT tblTransportCosts: {raw_data[:-1]!r}"
                 db.go_insert(
-                    sql_storage_costs_queries["insert_storage_cost"],
+                    sql_transport_costs["insert_transport_cost"],
                     raw_data[:-1],
                     message,
                 )
                 inserted_success.append(raw_data)
                 # print(raw_data)
-            db.connection.commit()
-        ic(len(raw_storage_costs), len(inserted_success), len(updated_success))
+            # db.connection.commit()
+        ic(len(raw_transport_costs), len(inserted_success), len(updated_success))
 
 
 def parsing_transport_cost(location: LocalData) -> int:

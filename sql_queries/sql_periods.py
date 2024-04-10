@@ -13,6 +13,9 @@ sql_periods_queries = {
     "select_period_id_by_normative_id": """--sql
         SELECT ID_tblPeriod FROM tblPeriods WHERE basic_database_id IS NOT NULL AND basic_database_id = ?;
     """,
+    "select_period_by_normative_id": """--sql
+        SELECT * FROM tblPeriods WHERE basic_database_id IS NOT NULL AND basic_database_id = ?;
+    """,
     "get_periods_normative_id_index_num_more": """--sql
         -- получить список id индексных периодов для larix.Normative у которых index_num > нужного значения
         select basic_database_id
@@ -160,7 +163,6 @@ sql_periods_queries = {
     "select_period_by_id": """--sql
         SELECT * FROM tblPeriods WHERE ID_tblPeriod = ?;
     """,
-
     "select_period_by_normative_id": """--sql
         SELECT * FROM tblPeriods WHERE basic_database_id = ?;
     """,

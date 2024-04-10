@@ -81,8 +81,14 @@ class dbTolls(dbControl):
             result = self.connection.execute(query, src_data)
             if result:
                 return result.lastrowid
+            output_message(
+                f"ошибка INSERT запроса к БД Sqlite3: {src_data}", f"{message}",
+            )
         except sqlite3.Error as error:
-            output_message(f"ошибка INSERT запроса БД Sqlite3: {' '.join(error.args)}", f"{message}")
+            output_message(
+                f"ошибка INSERT запроса к БД Sqlite3: {' '.join(error.args)}",
+                f"{message}",
+            )
         return None
 
     # def go_select_chain(self, query: str, src_data: tuple) -> list[sqlite3.Row] | None:
