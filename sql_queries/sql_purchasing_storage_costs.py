@@ -2,6 +2,11 @@
 # -- % Заготовительно-складских расходов (%ЗСР)
 #
 sql_storage_costs_queries = {
+    "select_history_storage_costs_by_base_id": """--sql
+        SELECT ID_tblStorageCost
+        FROM _tblHistoryStorageCosts
+        WHERE base_normative_id = ?;
+    """,
     "insert_storage_cost": """--sql
         INSERT INTO tblStorageCosts (
             FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods,
@@ -69,6 +74,7 @@ sql_storage_costs_queries = {
             percent_storage_costs           REAL,
             description                     TEXT,
             last_update                     INTEGER,
+            base_normative_id               INTEGER,
             _version                        INTEGER NOT NULL,
             _updated                        INTEGER NOT NULL,
             _mask                           INTEGER NOT NULL
@@ -77,7 +83,8 @@ sql_storage_costs_queries = {
     "create_index_history_storage_costs": """--sql
         CREATE INDEX idxHistoryStorageCosts ON _tblHistoryStorageCosts (_rowid);
     """,
-    # -- ID_tblStorageCost, FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods, name, percent_storage_costs, description, last_update
+    # ID_tblStorageCost, FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods,
+    # name, percent_storage_costs, description, last_update, base_normative_id
     "create_trigger_insert_storage_costs": """--sql
         CREATE TRIGGER tgrHistoryStorageCostsInsert
         AFTER INSERT ON tblStorageCosts
@@ -85,14 +92,15 @@ sql_storage_costs_queries = {
             INSERT INTO _tblHistoryStorageCosts (
                 _rowid, ID_tblStorageCost,
                 FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods,
-                name, percent_storage_costs, description, last_update,
+                name, percent_storage_costs, description, last_update, base_normative_id,
                 _version, _updated, _mask
             )
             VALUES (
                 new.rowid, new.ID_tblStorageCost,
                 new.FK_tblStorageCosts_tblItems, new.FK_tblStorageCosts_tblPeriods,
-                new.name, new.percent_storage_costs, new.description,
-                new.last_update, 1, unixepoch('now'), 0
+                new.name, new.percent_storage_costs, new.description, new.last_update,
+                new.base_normative_id,
+                1, unixepoch('now'), 0
             );
         END;
     """,
@@ -103,13 +111,13 @@ sql_storage_costs_queries = {
             INSERT INTO _tblHistoryStorageCosts (
                 _rowid, ID_tblStorageCost,
                 FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods,
-                name, percent_storage_costs, description, last_update,
+                name, percent_storage_costs, description, last_update, base_normative_id,
                 _version, _updated, _mask
             )
             VALUES (
                 old.rowid, old.ID_tblStorageCost,
                 old.FK_tblStorageCosts_tblItems, old.FK_tblStorageCosts_tblPeriods,
-                old.name, old.percent_storage_costs, old.description, old.last_update,
+                old.name, old.percent_storage_costs, old.description, old.last_update, old.base_normative_id,
                 (SELECT COALESCE(MAX(_version), 0) FROM _tblHistoryStorageCosts WHERE _rowid = old.rowid) + 1,
                 UNIXEPOCH('now'), -1
             );
@@ -124,7 +132,7 @@ sql_storage_costs_queries = {
             INSERT INTO _tblHistoryStorageCosts (
                 _rowid, ID_tblStorageCost,
                 FK_tblStorageCosts_tblItems, FK_tblStorageCosts_tblPeriods,
-                name, percent_storage_costs, description, last_update,
+                name, percent_storage_costs, description, last_update, base_normative_id,
                 _version, _updated, _mask
             )
             SELECT
@@ -136,6 +144,7 @@ sql_storage_costs_queries = {
                 CASE WHEN old.percent_storage_costs != new.percent_storage_costs THEN new.percent_storage_costs ELSE null END,
                 CASE WHEN old.description != new.description THEN new.description ELSE null END,
                 CASE WHEN old.last_update != new.last_update THEN new.last_update ELSE null END,
+                CASE WHEN old.base_normative_id != new.base_normative_id THEN new.base_normative_id ELSE null END,
                 (SELECT MAX(_version) FROM _tblHistoryStorageCosts WHERE _rowid = old.rowid) + 1,
                 UNIXEPOCH('now'),
                 (CASE WHEN old.ID_tblStorageCost != new.ID_tblStorageCost then 1 else 0 END) +
@@ -144,7 +153,8 @@ sql_storage_costs_queries = {
                 (CASE WHEN old.name != new.name then 8 else 0 END) +
                 (CASE WHEN old.percent_storage_costs != new.percent_storage_costs then 16 else 0 END) +
                 (CASE WHEN old.description != new.description then 32 else 0 END) +
-                (CASE WHEN old.last_update != new.last_update then 64 else 0 END)
+                (CASE WHEN old.last_update != new.last_update then 64 else 0 END) +
+                (CASE WHEN old.base_normative_id != new.base_normative_id then 128 else 0 END)
             WHERE
                 old.ID_tblStorageCost != new.ID_tblStorageCost OR
                 old.FK_tblStorageCosts_tblItems != new.FK_tblStorageCosts_tblItems OR
@@ -152,7 +162,8 @@ sql_storage_costs_queries = {
                 old.name != new.name OR
                 old.percent_storage_costs != new.percent_storage_costs OR
                 old.description != new.description OR
-                old.last_update != new.last_update;
+                old.last_update != new.last_update OR
+                old.base_normative_id != new.base_normative_id;
         END;
     """,
     "create_view_storage_costs": """--sql
@@ -162,7 +173,8 @@ sql_storage_costs_queries = {
                 p.title AS 'период',
                 sc.percent_storage_costs AS '%ЗСР',
                 sc.name AS 'название',
-                sc.description AS 'описание'
+                sc.description AS 'описание',
+                sc.base_normative_id AS 'base_id'
             FROM tblStorageCosts sc
             LEFT JOIN tblItems AS i ON i.ID_tblItem = sc.FK_tblStorageCosts_tblItems
             LEFT JOIN tblPeriods AS p ON p.ID_tblPeriod = sc.FK_tblStorageCosts_tblPeriods

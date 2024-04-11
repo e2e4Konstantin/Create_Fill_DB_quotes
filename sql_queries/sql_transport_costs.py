@@ -2,6 +2,11 @@
 
 
 sql_transport_costs = {
+    "select_history_transport_cost_by_base_id": """--sql
+        SELECT ID_tblTransportCost
+        FROM _tblHistoryTransportCosts
+        WHERE base_normative_id = ?;
+    """,
     "select_transport_cost_by_product_id": """--sql
         SELECT p.index_num AS index_num, tc.*
         FROM tblTransportCosts tc
@@ -63,7 +68,8 @@ sql_transport_costs = {
                 tc.base_price AS 'базовая цена',
                 tc.actual_price AS 'текущая цена',
                 tc.inflation_ratio AS 'инфл.коэф',
-                tc.numeric_ratio AS 'коэф ?'
+                tc.numeric_ratio AS 'коэф ?',
+                tc.base_normative_id AS 'base_id'
             FROM tblTransportCosts tc
             LEFT JOIN tblProducts AS p ON p.ID_tblProduct = tc.FK_tblTransportCosts_tblProducts
             LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
@@ -81,6 +87,7 @@ sql_transport_costs = {
             actual_price                     REAL,
             numeric_ratio                    REAL,
             last_update                      INTEGER,
+            base_normative_id                INTEGER,
             _version                         INTEGER NOT NULL,
             _updated                         INTEGER NOT NULL,
             _mask                            INTEGER NOT NULL
@@ -96,14 +103,15 @@ sql_transport_costs = {
             INSERT INTO _tblHistoryTransportCosts (
                 _rowid, ID_tblTransportCost,
                 FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods,
-                base_price, actual_price, numeric_ratio, last_update,
+                base_price, actual_price, numeric_ratio, last_update, base_normative_id,
                 _version, _updated, _mask
             )
             VALUES (
                 new.rowid, new.ID_tblTransportCost,
                 new.FK_tblTransportCosts_tblProducts, new.FK_tblTransportCosts_tblPeriods,
-                new.base_price, new.actual_price, new.numeric_ratio,
-                new.last_update, 1, unixepoch('now'), 0
+                new.base_price, new.actual_price, new.numeric_ratio, new.last_update,
+                new.base_normative_id,
+                1, unixepoch('now'), 0
             );
         END;
     """,
@@ -114,13 +122,13 @@ sql_transport_costs = {
             INSERT INTO _tblHistoryTransportCosts (
                 _rowid, ID_tblTransportCost,
                 FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods,
-                base_price, actual_price, numeric_ratio, last_update,
+                base_price, actual_price, numeric_ratio, last_update, base_normative_id,
                 _version, _updated, _mask
             )
             VALUES (
                 old.rowid, old.ID_tblTransportCost,
                 old.FK_tblTransportCosts_tblProducts, old.FK_tblTransportCosts_tblPeriods,
-                old.base_price, old.actual_price, old.numeric_ratio, old.last_update,
+                old.base_price, old.actual_price, old.numeric_ratio, old.last_update, old.base_normative_id,
                 (SELECT COALESCE(MAX(_version), 0) FROM _tblHistoryTransportCosts WHERE _rowid = old.rowid) + 1,
                 UNIXEPOCH('now'), -1
             );
@@ -134,7 +142,7 @@ sql_transport_costs = {
             INSERT INTO _tblHistoryTransportCosts (
                 _rowid, ID_tblTransportCost,
                 FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods,
-                base_price, actual_price, numeric_ratio, last_update,
+                base_price, actual_price, numeric_ratio, last_update, base_normative_id,
                 _version, _updated, _mask
             )
             SELECT
@@ -146,6 +154,7 @@ sql_transport_costs = {
                 CASE WHEN old.actual_price != new.actual_price THEN new.actual_price ELSE null END,
                 CASE WHEN old.numeric_ratio != new.numeric_ratio THEN new.numeric_ratio ELSE null END,
                 CASE WHEN old.last_update != new.last_update THEN new.last_update ELSE null END,
+                CASE WHEN old.base_normative_id != new.base_normative_id THEN new.base_normative_id ELSE null END,
                 (SELECT MAX(_version) FROM _tblHistoryTransportCosts WHERE _rowid = old.rowid) + 1,
                 UNIXEPOCH('now'),
                 (CASE WHEN old.ID_tblTransportCost != new.ID_tblTransportCost then 1 else 0 END) +
@@ -154,7 +163,8 @@ sql_transport_costs = {
                 (CASE WHEN old.base_price != new.base_price then 8 else 0 END) +
                 (CASE WHEN old.actual_price != new.actual_price then 16 else 0 END) +
                 (CASE WHEN old.numeric_ratio != new.numeric_ratio then 32 else 0 END) +
-                (CASE WHEN old.last_update != new.last_update then 64 else 0 END)
+                (CASE WHEN old.last_update != new.last_update then 64 else 0 END) +
+                (CASE WHEN old.base_normative_id != new.base_normative_id then 128 else 0 END)
             WHERE
                 old.ID_tblTransportCost != new.ID_tblTransportCost OR
                 old.FK_tblTransportCosts_tblProducts != new.FK_tblTransportCosts_tblProducts OR
@@ -162,7 +172,8 @@ sql_transport_costs = {
                 old.base_price != new.base_price OR
                 old.actual_price != new.actual_price OR
                 old.numeric_ratio != new.numeric_ratio OR
-                old.last_update != new.last_update;
+                old.last_update != new.last_update OR
+                old.base_normative_id != new.base_normative_id;
         END;
     """,
 }

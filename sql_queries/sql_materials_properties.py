@@ -42,8 +42,8 @@ sql_materials = {
             base_price                          -- СБЦ: Сметная Базисная Цена (на 2000 год)
             actual_price                        -- ОТЦ: Отпускная Текущая Цена (от мониторинга)
             estimate_price                      -- СТЦ: Сметная Текущая Цена (расчетная)
-            inflation_ratio                     -- инфляция
-            calc_estimate_price                 -- обратный пересчет СТЦ (округленная)
+            inflation_ratio                     -- инфляция estimate_price/base_price
+            calc_estimate_price                 -- обратный пересчет СТЦ (estimate_price/base_price)*base_price
         */
         CREATE TABLE tblMaterials
         (

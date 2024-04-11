@@ -16,6 +16,7 @@ class LocalData:
         "periods_file_name": "period_export_table.csv",
         "storage_cost_file_name": "storage_cost_export_table.csv",
         "transport_cost_file_name": "transport_cost_export_table.csv",
+        "machine_properties_file_name": "machine_properties_export.csv",
         "office": {
             "db_path": r"C:\Users\kazak.ke\Documents\PythonProjects\DB",
             "config_path": r"C:\Users\kazak.ke\Documents\PythonProjects\Create_Fill_DB_quotes\config",
@@ -25,6 +26,7 @@ class LocalData:
             "resources_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\Resources",
             "storage_costs_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\StorageCost",
             "transport_costs_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\TransportCosts",
+            "machine_properties_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\MachineProperties",
         },
         "home": {
             "db_path": r"..\DB",
@@ -60,11 +62,19 @@ class LocalData:
             LocalData.SRC["transport_cost_file_name"],
         )
 
+        self.machine_properties_file: str = create_abspath_file(
+            LocalData.SRC[location]["machine_properties_path"],
+            LocalData.SRC["machine_properties_file_name"],
+        )
+
         self.quote_catalog_path: str = LocalData.SRC[location]["quote_catalog_path"]
         self.quote_data_path: str = LocalData.SRC[location]["quote_data_path"]
         self.resources_path: str = LocalData.SRC[location]["resources_path"]
         self.storage_costs_path: str = LocalData.SRC[location]["storage_costs_path"]
         self.transport_costs_path: str = LocalData.SRC[location]["transport_costs_path"]
+        self.machine_properties_path: str = LocalData.SRC[location][
+            "machine_properties_path"
+        ]
 
         # читаем конфиг из файла
         config = read_config_to_json(self.config_file)
@@ -93,6 +103,7 @@ class LocalData:
 
         config["storage_costs_file"] = self.storage_costs_file
         config["transport_costs_file"] = self.transport_costs_file
+        config["machine_properties_file"] = self.transport_costs_file
         #
         config["quote_catalog_path"] = self.quote_catalog_path
         config["quote_data_path"] = self.quote_data_path
@@ -100,7 +111,7 @@ class LocalData:
 
         config["storage_costs_path"] = self.storage_costs_path
         config["transport_costs_path"] = self.transport_costs_path
-
+        config["machine_properties_path"] = self.transport_costs_path
 
         # сортируем периоды по убыванию номеров дополнений
         if self.periods_data:

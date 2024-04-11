@@ -148,12 +148,12 @@ def create_tables_indexes(db_file: str):
     """
     # создает инфраструктуру
     with dbTolls(db_file) as db:
-        # _create_directory_environment(db)
-        # _create_catalog_environment(db)
-        # _create_products_environment(db)
-        # _create_periods_environment(db)
+        _create_directory_environment(db)
+        _create_catalog_environment(db)
+        _create_products_environment(db)
+        _create_periods_environment(db)
         _create_storage_costs_environment(db)
-        # _create_transport_costs_environment(db)
+        _create_transport_costs_environment(db)
 
 
 def db_create_tables_and_fill_directory(db_file: str) -> int:

@@ -26,7 +26,7 @@ sql_raw_queries = {
         SELECT * FROM tblRawData;
     """,
     "select_rwd_all_sorted_by_index_number": """--sql
-        SELECT * FROM tblRawData ORDER BY index_number ASC;
+        SELECT * FROM tblRawData ORDER BY index_number ASC LIMIT 5;
     """,
     "select_rwd_code_regexp": """--sql
         SELECT

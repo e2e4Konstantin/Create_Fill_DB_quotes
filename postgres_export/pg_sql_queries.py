@@ -102,6 +102,35 @@ pg_sql_queries = {
         WHERE tc.deleted = 0 AND tc."period" IN %(period_id_range)s AND tc.pressmark ~ '(^\s*[1|2]\.)'
         ORDER BY per.created_on DESC;
     """,
+    "get_materials_properties_for_period_id_range": """--sql
+        -- Выгрузка свойств материалов Глава 1,
+        -- кроме 0-й главы (транспортные расходы хранятся в tblTransportCost)
+        SELECT
+            per.title AS "title_period",
+            r.id,
+            r."period" AS "period_id",
+            r.transport_cost AS "transport_cost_id",
+            r.storage_cost AS "storage_cost_id",
+            --
+            r.pressmark,
+            r.cmt,
+            r.long_title,
+            r.title,
+            --
+            r.okp,
+            r.okpd2,
+            r.netto,
+            r.brutto,
+            r.use_to_calc_avg_rate,
+            --
+            r.price,
+            r.cur_price,
+            r.cur_sale_price
+        FROM larix.resources r
+        LEFT JOIN larix."period" per on per.id = r."period"
+        WHERE r.deleted = 0 AND r."period" IN %(period_id_range)s AND r.pressmark ~ '(^\s*1\.)' AND r.pressmark !~ '(^\s*1\.0)'
+        ORDER BY r.pressmark_sort;
+    """,
     # -------------- test -----------------------
     "q_test_1": """--sql
         SELECT p.id AS period_id from larix.period p WHERE p.title = {0};
