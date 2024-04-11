@@ -68,18 +68,15 @@ def _make_data_from_raw_storage_cost(db: dbTolls, raw_sc: sqlite3.Row) -> tuple 
     """
     match raw_sc["type"]:
         case "Оборудование":
-            item_type = "material"
-        case "Материал":
             item_type = "equipment"
+        case "Материал":
+            item_type = "material"
         case _ :
             output_message_exit(
                 "в RAW таблице с StorageCost не найден тип записи:",
                 f"в справочнике {raw_sc['type']}",
             )
-    item_id = get_directory_id(db, "units", item_type)
-    if item_type is None:
-        return None
-    FK_tblStorageCosts_tblItems = item_id
+    FK_tblStorageCosts_tblItems = get_directory_id(db, "units", item_type)
     period = _get_period_by_basic_normative_id(db, raw_sc["id_period"])
     index_num = period["index_num"]
     FK_tblStorageCosts_tblPeriods = period["ID_tblPeriod"]
@@ -113,7 +110,7 @@ def transfer_raw_storage_cost(db_file):
         for line in raw_storage_costs:
             # обрабатываем запись raw таблицы
             raw_data = _make_data_from_raw_storage_cost(db, line)
-            raw_index_num = raw_data[5]
+            raw_index_num = raw_data[6]
             # ищем такую же запись в tblStorageCost
             item_id = raw_data[0]
             name = raw_data[2]
