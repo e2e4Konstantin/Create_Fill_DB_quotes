@@ -61,5 +61,10 @@ if __name__ == '__main__':
 
     parsing_quotes(local)
     parsing_resources(local)
-    parsing_storage_cost(local)
+
+    index_periods: list[tuple[int, int]] = local.index_period_range
+
+    for index_period in index_periods:
+        parsing_storage_cost(local, index_period[0])
+
     delete_raw_table(local.db_file)

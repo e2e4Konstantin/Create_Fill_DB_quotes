@@ -12,15 +12,12 @@ from tools.shared.shared_features import get_directory_id, get_period_by_id
 from tools.shared.code_tolls import text_cleaning, get_float_value, get_integer_value
 
 
-def _get_raw_storage_costs(db: dbTolls, normative_period_id: int) -> list[sqlite3.Row] | None:
+def _get_raw_storage_costs(db: dbTolls) -> list[sqlite3.Row] | None:
     """
     Выбрать все записи %ЗСР из таблицы tblRawData отсортированные по индексу.
     """
     try:
-        results = db.go_select(
-            sql_raw_queries["select_rwd_for_normative_period_id"],
-            (normative_period_id,),
-        )
+        results = db.go_select(sql_raw_queries["select_rwd_all_sorted_by_index_number"])
         if not results:
             output_message_exit("в RAW таблице с %ЗСР нет записей:", "tblRawData пустая")
         return results
@@ -80,7 +77,7 @@ def _make_data_from_raw_storage_cost(db: dbTolls, raw_sc: sqlite3.Row) -> tuple 
                 f"в справочнике {raw_sc['type']}",
             )
     FK_tblStorageCosts_tblItems = get_directory_id(db, "units", item_type)
-    period = _get_period_by_basic_normative_id(db, raw_sc["period_id"])
+    period = _get_period_by_basic_normative_id(db, raw_sc["id_period"])
     index_num = period["index_num"]
     FK_tblStorageCosts_tblPeriods = period["ID_tblPeriod"]
     name =  text_cleaning(raw_sc["title"])
@@ -102,49 +99,13 @@ def _make_data_from_raw_storage_cost(db: dbTolls, raw_sc: sqlite3.Row) -> tuple 
     return data
 
 
-def delete_last_period_storage_cost(db_file: str):
-    """
-    Вычисляет максимальный период для таблицы tblStorageCosts.
-    Удаляет записи из таблицы tblStorageCosts у которых период < максимального.
-    """
-    with dbTolls(db_file) as db:
-        work_cursor = db.go_execute(
-            sql_storage_costs_queries["select_storage_costs_max_index_number"]
-        )
-        result = work_cursor.fetchone() if work_cursor else None
-        if result is None:
-            output_message_exit(
-                "Ошибка при получении максимального Номера Индекса периода",
-                "Свойств Материалов",
-            )
-            return None
-        max_index = result["max_index"]
-        ic(max_index)
 
-        count_records_to_be_deleted = db.go_execute(
-            sql_storage_costs_queries["select_storage_costs_count_less_index_number"],
-            (max_index,),
-        )
-
-        number = count_records_to_be_deleted.fetchone()["number"]
-        if number > 0:
-            # message = f"Будут удалены {number} продуктов с периодом меньше: {max_supplement_number} {query_info}"
-            # ic(message)
-            deleted_cursor = db.go_execute(
-                sql_storage_costs_queries["delete_storage_costs_less_max_idex"],
-                (max_index,),
-            )
-            message = f"удалено {deleted_cursor.rowcount} записей с период дополнения < {max_index}"
-            ic(message)
-
-
-def transfer_raw_storage_cost(db_file: str, normative_index_period_id: int):
+def transfer_raw_storage_cost(db_file):
     """
     Заполняет таблицу tblStorageCosts данными из RAW таблицы tblRawData.
-    только для периода normative_index_period_id
     """
     with dbTolls(db_file) as db:
-        raw_storage_costs = _get_raw_storage_costs(db, normative_index_period_id)
+        raw_storage_costs = _get_raw_storage_costs(db)
         inserted_success, updated_success = [], []
         for line in raw_storage_costs:
             # обрабатываем запись raw таблицы
@@ -178,17 +139,13 @@ def transfer_raw_storage_cost(db_file: str, normative_index_period_id: int):
                 # print(raw_data)
             # db.connection.commit()
         ic(len(raw_storage_costs), len(inserted_success), len(updated_success))
-    #  удалить записи старых периодов
-    delete_last_period_storage_cost(db_file)
 
 
-
-
-def parsing_storage_cost(location: LocalData, normative_index_period_id: int) -> int:
+def parsing_storage_cost(location: LocalData) -> int:
     """
     Заполняет tblStorageCosts %ЗСР. Читает данные из CSV файла в tblRawData.
     Добавляет столбец index_number в tblRawData.
-    Переносит данные из tblRawData в tblStorageCosts только для периода normative_index_period_id
+    Переносит данные из tblRawData в tblStorageCosts.
     """
     print()
     ic("===>>> Загружаем %ЗСР.")
@@ -198,12 +155,11 @@ def parsing_storage_cost(location: LocalData, normative_index_period_id: int) ->
         db.go_execute(sql_raw_queries["add_index_number_column"])
         db.go_execute(sql_raw_queries["update_index_number"])
 
-    transfer_raw_storage_cost(location.db_file, normative_index_period_id)
+    transfer_raw_storage_cost(location.db_file)
     return 0
 
 
 if __name__ == "__main__":
     local = LocalData("office")  # office  # home
-    normative_period_id = local.index_period_range[2][0]
 
-    parsing_storage_cost(local, normative_period_id)
+    parsing_storage_cost(local)

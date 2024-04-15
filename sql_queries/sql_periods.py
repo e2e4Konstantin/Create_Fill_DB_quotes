@@ -18,7 +18,7 @@ sql_periods_queries = {
     """,
     "get_periods_normative_id_index_num_more": """--sql
         -- получить список id индексных периодов для larix.Normative у которых index_num > нужного значения
-        select basic_database_id
+        select basic_database_id, index_num
         from tblPeriods
         where
             FK_Origin_tblOrigins_tblPeriods is not null and

@@ -208,7 +208,7 @@ def get_period_range(db_file: str, minimal_index_number: int) -> tuple[int, ...]
     Получить диапазон id.Normative периодов у которых
     номер индекса > minimal_index_number.
     id.Normative хранится в поле таблицы периодов SQLite.
-    period_range = [ 150862302, 150996873, 151248691,...]
+    period_range = [ (150862302, 198), (150996873, 199), ...]
     """
     if not db_file or not minimal_index_number:
         return None
@@ -216,10 +216,12 @@ def get_period_range(db_file: str, minimal_index_number: int) -> tuple[int, ...]
         with dbTolls(db_file) as sqlite_db:
             result = sqlite_db.go_select(
                 sql_periods_queries["get_periods_normative_id_index_num_more"],
-                (minimal_index_number,),
+                (minimal_index_number,)
             )
             if result:
-                return tuple([x["basic_database_id"] for x in result])
+                index_periods = [(x["basic_database_id"], x["index_num"]) for x in result]
+                index_periods.sort(reverse=False, key=lambda x: x[1])
+                return index_periods
     except (IOError, sqlite3.OperationalError) as e:
         print(
             f"get_period_range: db_file={db_file}, minimal_index_number={minimal_index_number}"
@@ -305,24 +307,21 @@ if __name__ == "__main__":
 # -- test --
 
     with LocalData("office") as local:
-        period_range = get_period_range(local.db_file, minimal_index_number=198)
+        local.index_period_range = get_period_range(local.db_file, minimal_index_number=198)
+        normative_index_periods = tuple([x[0] for x in local.index_period_range])
+        # ic(local.index_period_range)
 
         # export_storage_cost_to_csv_for_period_range(
-        #     db_access["normative"], local.storage_costs_file, period_range
+        #     db_access["normative"], local.storage_costs_file, normative_index_periods
         # )
 
         # export_transport_cost_to_csv_for_period_range(
-        #     db_access["normative"], local.transport_costs_file, period_range
+        #     db_access["normative"], local.transport_costs_file, normative_index_periods
         # )
 
         export_machine_properties_to_csv_for_period_range(
-            db_access["normative"],
-            local.machine_properties_file,
-            period_range
+            db_access["normative"], local.machine_properties_file, normative_index_periods
         )
-
-
-
 
 
 # -----------------------------------------------------------------------------------------

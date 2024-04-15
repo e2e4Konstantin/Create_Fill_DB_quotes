@@ -1,11 +1,40 @@
 
 
 sql_materials = {
-    # 12
+    #
     # FK_tblMaterials_tblProducts, FK_tblMaterials_tblPeriods, FK_tblMaterials_tblTransportCosts, FK_tblMaterials_tblStorageCosts,
     # description, RPC, RPCA2, net_weight, gross_weight, used_to_calc_avg_rate, base_price, actual_price, estimate_price
     #
-    "*": """--sql
+    "delete_materials_less_max_idex": """--sql
+        DELETE FROM tblMaterials
+        WHERE ID_tblMaterial IN (
+            SELECT m.ID_tblMaterial
+            FROM tblMaterials AS m
+            JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblMaterials_tblPeriods
+            WHERE
+                per.index_num IS NOT NULL
+                AND per.index_num > 0
+                AND per.index_num < ?
+                AND m.ID_tblMaterial IS NOT NULL
+                AND per.ID_tblPeriod IS NOT NULL
+        );
+    """,
+    "select_materials_count_less_index_number": """--sql
+        SELECT COUNT(*) AS number
+        FROM tblMaterials AS m
+        JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblMaterials_tblPeriods
+        WHERE per.index_num IS NOT NULL AND per.index_num > 0 AND per.index_num < ?;
+    """,
+    "select_materials_max_index_number": """--sql
+        SELECT MAX(per.index_num) AS max_index
+        FROM tblMaterials AS m
+        JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblMaterials_tblPeriods;
+    """,
+    "select_material_by_product_id": """--sql
+        SELECT p.index_num AS index_num, m.*
+        FROM tblMaterials m
+        JOIN tblPeriods p ON p.ID_tblPeriod = m.FK_tblMaterials_tblPeriods
+        WHERE m.FK_tblMaterials_tblProducts = ?;
     """,
     "insert_material": """--sql
         INSERT INTO tblMaterials (
@@ -14,7 +43,7 @@ sql_materials = {
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     """,
-    "update_material_id": """--sql
+    "update_material_by_id": """--sql
         UPDATE tblTransportCosts
         SET
             FK_tblMaterials_tblProducts = ?, FK_tblMaterials_tblPeriods = ?,

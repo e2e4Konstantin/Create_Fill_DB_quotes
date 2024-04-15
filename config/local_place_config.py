@@ -39,6 +39,7 @@ class LocalData:
         },
         # список периодов
         "periods_data": [],
+        "index_period_range": [],
     }
 
     def __init__(self, location: str):
@@ -80,8 +81,10 @@ class LocalData:
         config = read_config_to_json(self.config_file)
         if config:
             self.periods_data = config["periods_data"]
+            self.index_period_range = config["index_period_range"]
         else:
             self.periods_data = []
+            self.index_period_range = []
 
     def __enter__(self):
         return self
@@ -117,6 +120,9 @@ class LocalData:
         if self.periods_data:
             self.periods_data.sort(reverse=False, key=lambda x: x["supplement"])
         config["periods_data"] = self.periods_data
+        if self.index_period_range:
+            self.index_period_range.sort(reverse=False, key=lambda x: x[1])
+        config["index_period_range"] = self.index_period_range
 
         write_config_to_json(self.config_file, config)
 

@@ -75,7 +75,7 @@ pg_sql_queries = {
             sc."id" "id",
             tr.title "type",
             sc.type_resource "id_type_resource",
-            sc."period" "id_period",
+            sc."period" "period_id",
             per."title" "title_period",
             sc.title,
             sc.rate,

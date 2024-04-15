@@ -67,4 +67,103 @@ SELECT ID_tblTransportCost
         FROM _tblHistoryTransportCosts
         WHERE base_normative_id = 30210511;
 
+SELECT ID_tblStorageCost
+        FROM tblStorageCosts
+        WHERE base_normative_id = 30210511;
+
+SELECT *
+        FROM tblTransportCosts
+        WHERE base_normative_id = 33258793;
+
+SELECT p.index_num AS index_num, m.*
+        FROM tblMaterials m
+        JOIN tblPeriods p ON p.ID_tblPeriod = m.FK_tblMaterials_tblPeriods
+        WHERE m.FK_tblMaterials_tblProducts = ?;
+
+SELECT MAX(per.index_num) AS max_suppl
+        FROM tblMaterials AS m
+        JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblMaterials_tblPeriods;
+        
+SELECT COUNT(*) AS number
+        FROM tblMaterials AS m
+        JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblMaterials_tblPeriods
+        WHERE
+            per.index_num > 0 AND per.index_num < ?;
+
+DELETE FROM tblMaterials
+        WHERE ID_tblMaterial IN (
+            SELECT ID_tblMaterial
+            FROM tblMaterials AS m
+            JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblMaterials_tblPeriods
+            WHERE per.index_num > 0 AND per.index_num < ?
+        );
+        
+
+SELECT * FROM tblRawData WHERE period_id = 151248691;
+
+SELECT MAX(per.index_num) AS max_index
+        FROM tblStorageCosts AS sq
+        JOIN tblPeriods AS per ON per.ID_tblPeriod = sq.FK_tblStorageCosts_tblPeriods;
+        
+SELECT COUNT() AS number
+        FROM tblStorageCosts AS sq
+        LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = sq.FK_tblStorageCosts_tblPeriods
+        WHERE per.index_num IS NOT NULL AND per.index_num > 0 AND per.index_num < 199
+        AND sq.FK_tblStorageCosts_tblPeriods IS NOT NULL;
+        
+DELETE FROM tblStorageCosts
+        WHERE ID_tblStorageCost IN (
+            SELECT sq.ID_tblStorageCost
+            FROM tblStorageCosts AS sq
+            JOIN tblPeriods AS per ON per.ID_tblPeriod = sq.FK_tblStorageCosts_tblPeriods
+            WHERE
+                per.index_num IS NOT NULL
+                AND per.index_num > 0
+                AND per.index_num < 199
+                AND sq.ID_tblStorageCost IS NOT NULL
+                AND per.ID_tblPeriod IS NOT NULL
+        );
+
+
+SELECT COALESCE(MAX(per.index_num), 0) AS max_index
+        FROM tblTransportCosts AS tc
+        LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
+        WHERE per.index_num IS NOT NULL;
+        
+SELECT COUNT() AS number
+        FROM tblTransportCosts AS tc
+        LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
+        WHERE per.index_num IS NOT NULL AND per.index_num > 0 AND per.index_num < 211
+        AND tc.FK_tblTransportCosts_tblPeriods IS NOT NULL;
+        
+SELECT tc.ID_tblTransportCost
+FROM tblTransportCosts AS tc
+JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
+WHERE per.index_num > 0 AND per.index_num < 211
+;
+
+PRAGMA foreign_keys = OFF;
+DELETE FROM tblTransportCosts
+WHERE ID_tblTransportCost IN (1, 43, 48);
+PRAGMA foreign_keys = ON;
+
+
+
+
+
+
+/*
+SELECT tc.ID_tblTransportCost
+  FROM tblTransportCosts AS tc
+       JOIN
+       tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
+ WHERE per.index_num IS NOT NULL AND 
+       per.index_num > 0 AND 
+       per.index_num < 210 AND 
+       tc.ID_tblTransportCost IS NOT NULL AND 
+       per.ID_tblPeriod IS NOT NULL;
+*/
+
+
+
 

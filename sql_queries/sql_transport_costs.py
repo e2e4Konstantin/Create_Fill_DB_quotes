@@ -2,7 +2,40 @@
 
 
 sql_transport_costs = {
+    # ------------------------------------------------------------------------------------
+    "delete_transport_costs_less_max_idex": """--sql
+        DELETE FROM tblTransportCosts
+        WHERE ID_TransportCost IN (
+            SELECT tc.ID_TransportCost
+            FROM tblTransportCosts AS tc
+            JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
+            WHERE
+                per.index_num IS NOT NULL
+                AND per.index_num > 0
+                AND per.index_num < ?
+                AND tc.ID_TransportCost IS NOT NULL
+                AND per.ID_tblPeriod IS NOT NULL
+        );
+    """,
+    "select_transport_costs_count_less_index_number": """--sql
+        SELECT COUNT() AS number
+        FROM tblTransportCosts AS tc
+        LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
+        WHERE per.index_num IS NOT NULL AND per.index_num > 0 AND per.index_num < ?
+        AND tc.FK_tblTransportCosts_tblPeriods IS NOT NULL;
+    """,
+    "select_transport_costs_max_index_number": """--sql
+        SELECT COALESCE(MAX(per.index_num), 0) AS max_index
+        FROM tblTransportCosts AS tc
+        LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
+        WHERE per.index_num IS NOT NULL;
+    """,
+    # ------------------------------------------------------------------------------------
+    "select_transport_cost_by_base_id": """--sql
+        SELECT ID_tblTransportCost FROM tblTransportCosts WHERE base_normative_id = ?;
+    """,
     "select_history_transport_cost_by_base_id": """--sql
+        -- искать в истории
         SELECT ID_tblTransportCost
         FROM _tblHistoryTransportCosts
         WHERE base_normative_id = ?;
@@ -48,14 +81,14 @@ sql_transport_costs = {
             --
             base_normative_id   INTEGER,            -- id из основной бд (Postgres Normative)
             --
-            FOREIGN KEY (FK_tblTransportCosts_tblProducts) REFERENCES tblProducts (ID_Product),
+            FOREIGN KEY (FK_tblTransportCosts_tblProducts) REFERENCES tblProducts (ID_tblProduct),
             FOREIGN KEY (FK_tblTransportCosts_tblPeriods) REFERENCES tblPeriods (ID_tblPeriod),
             --
             UNIQUE (FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods)
         );
     """,
     "create_index_transport_costs": """--sql
-        CREATE UNIQUE INDEX idxTransportCosts ON tblTransportCosts (
+        CREATE INDEX idxTransportCosts ON tblTransportCosts (
             FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods
         );
     """,

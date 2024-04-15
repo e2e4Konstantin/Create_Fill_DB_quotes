@@ -1,7 +1,38 @@
 #
 # -- % Заготовительно-складских расходов (%ЗСР)
 #
+
 sql_storage_costs_queries = {
+    "delete_storage_costs_less_max_idex": """--sql
+        DELETE FROM tblStorageCosts
+        WHERE ID_tblStorageCost IN (
+            SELECT sq.ID_tblStorageCost
+            FROM tblStorageCosts AS sq
+            JOIN tblPeriods AS per ON per.ID_tblPeriod = sq.FK_tblStorageCosts_tblPeriods
+            WHERE
+                per.index_num IS NOT NULL
+                AND per.index_num > 0
+                AND per.index_num < ?
+                AND sq.ID_tblStorageCost IS NOT NULL
+                AND per.ID_tblPeriod IS NOT NULL
+        );
+    """,
+    "select_storage_costs_count_less_index_number": """--sql
+        SELECT COUNT() AS number
+        FROM tblStorageCosts AS sq
+        LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = sq.FK_tblStorageCosts_tblPeriods
+        WHERE per.index_num IS NOT NULL AND per.index_num > 0 AND per.index_num < ?
+        AND sq.FK_tblStorageCosts_tblPeriods IS NOT NULL;
+    """,
+    "select_storage_costs_max_index_number": """--sql
+        SELECT COALESCE(MAX(per.index_num), 0) AS max_index
+        FROM tblStorageCosts AS sq
+        LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = sq.FK_tblStorageCosts_tblPeriods
+        WHERE per.index_num IS NOT NULL;
+    """,
+    "select_storage_costs_by_base_id": """--sql
+        SELECT ID_tblStorageCost FROM tblStorageCosts WHERE base_normative_id = ?;
+    """,
     "select_history_storage_costs_by_base_id": """--sql
         SELECT ID_tblStorageCost
         FROM _tblHistoryStorageCosts

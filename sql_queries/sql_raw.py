@@ -26,7 +26,10 @@ sql_raw_queries = {
         SELECT * FROM tblRawData;
     """,
     "select_rwd_all_sorted_by_index_number": """--sql
-        SELECT * FROM tblRawData ORDER BY index_number ASC LIMIT 5;
+        SELECT * FROM tblRawData ORDER BY index_number ASC;
+    """,
+    "select_rwd_for_normative_period_id": """--sql
+        SELECT * FROM tblRawData WHERE period_id = ?;
     """,
     "select_rwd_code_regexp": """--sql
         SELECT

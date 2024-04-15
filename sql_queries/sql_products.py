@@ -12,7 +12,7 @@ sql_products_queries = {
     "delete_products_origin_item_less_max_supplement": """--sql
         DELETE FROM tblProducts
         WHERE ID_tblProduct IN (
-            SELECT ID_tblProduct
+            SELECT m.ID_tblProduct
             FROM tblProducts AS m
             JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblProducts_tblPeriods
             WHERE
