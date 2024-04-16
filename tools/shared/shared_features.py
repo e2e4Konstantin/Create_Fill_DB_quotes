@@ -231,7 +231,7 @@ def get_product_by_code(db: dbTolls, origin_id: int, product_code: str) -> sqlit
     products = db.go_select(sql_products_queries["select_products_origin_code"], (origin_id, product_code))
     if products:
         return products[0]
-    # output_message(f"в tblProducts не найден", f"продукт с шифром: {product_code}")
+    # message = f"в tblProducts не найдена запись с шифром: {product_code}")
     return None
 
 
@@ -387,3 +387,70 @@ def create_index_resources_raw_data(db_file_name: str):
     """Создать индекс tblRawData когда туда прочитаны Ресурсы (1, 2, 13)."""
     with dbTolls(db_file_name) as db:
         db.go_execute(sql_raw_queries["create_index_raw_data"])
+
+def get_period_range(db_file: str, minimal_index_number: int) -> tuple[int, ...] | None:
+    """
+    Из таблицы периодов tblPeriods SQLite получает диапазон периодов id.Normative у которых
+    номер индекса > minimal_index_number. id.Normative хранится в таблице tblPeriods.
+    Возвращает отсортированный список кортежей (id.Normative, номер индексного периода).
+    Сортировка по возрастанию номера индексного периода.
+    period_range = [ (150862302, 198), (150996873, 199), ...]
+    """
+    if not db_file or not minimal_index_number:
+        return None
+    try:
+        with dbTolls(db_file) as sqlite_db:
+            result = sqlite_db.go_select(
+                sql_periods_queries["get_periods_normative_id_index_num_more"],
+                (minimal_index_number,),
+            )
+            if result:
+                index_periods = [
+                    (x["basic_database_id"], x["index_num"], x["supplement_num"])
+                    for x in result
+                ]
+                index_periods.sort(reverse=False, key=lambda x: x[1])
+                return index_periods
+    except (IOError, sqlite3.OperationalError) as e:
+        print(
+            f"get_period_range: db_file={db_file}, minimal_index_number={minimal_index_number}"
+        )
+        print(f"Exception: {type(e).__name__}: {e}")
+    except Exception as e:
+        print("Unexpected error in get_period_range")
+        print(f"db_file={db_file}, minimal_index_number={minimal_index_number}")
+        print(f"Exception: {type(e).__name__}: {e}")
+        raise
+    return None
+
+def get_indexes_for_supplement(db_file: str, supplement_number: int
+) -> tuple[int, ...] | None:
+    """
+    Из таблицы периодов tblPeriods SQLite получает диапазон периодов id.Normative у которых
+    """
+    if not db_file or not supplement_number:
+        return None
+    try:
+        with dbTolls(db_file) as db:
+            result = db.go_select(
+                sql_periods_queries["get_index_periods_for_supplement_tsn"],
+                (supplement_number,),
+            )
+            if result:
+                index_periods = [
+                    (x["basic_database_id"], x["index_num"], x["supplement_num"])
+                    for x in result
+                ]
+                index_periods.sort(reverse=False, key=lambda x: x[1])
+                return index_periods
+    except (IOError, sqlite3.OperationalError) as e:
+        print(
+            f"get_indexes_for_supplement: db_file={db_file}, {supplement_number=}"
+        )
+        print(f"Exception: {type(e).__name__}: {e}")
+    except Exception as e:
+        print("Неожиданная ошибка в get_indexes_for_supplement")
+        print(f"{db_file=}, {supplement_number=}")
+        print(f"Exception: {type(e).__name__}: {e}")
+        raise
+    return None

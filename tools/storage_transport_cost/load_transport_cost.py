@@ -72,7 +72,7 @@ def _make_data_from_raw_transport_cost(db: dbTolls, raw_trans_cost: sqlite3.Row)
         "ID_tblProduct"
     ]
     period = _get_period_by_basic_normative_id(
-        db, raw_trans_cost["id_period"]
+        db, raw_trans_cost["period_id"]
     )
     index_num = period["index_num"]
     FK_tblTransportCosts_tblPeriods = period["ID_tblPeriod"]
@@ -99,29 +99,25 @@ def delete_last_period_transport_cost(db_file: str):
     """
     with dbTolls(db_file) as db:
         work_cursor = db.go_execute(
-            sql_storage_costs_queries["select_storage_costs_max_index_number"]
+            sql_transport_costs["select_transport_costs_max_index_number"]
         )
         result = work_cursor.fetchone() if work_cursor else None
         if result is None:
             output_message_exit(
                 "Ошибка при получении максимального Номера Индекса периода",
-                "Свойств Материалов",
+                "транспортные расходы",
             )
             return None
         max_index = result["max_index"]
         ic(max_index)
-
         count_records_to_be_deleted = db.go_execute(
-            sql_storage_costs_queries["select_storage_costs_count_less_index_number"],
+            sql_transport_costs["select_transport_costs_count_less_index_number"],
             (max_index,),
         )
-
         number = count_records_to_be_deleted.fetchone()["number"]
         if number > 0:
-            # message = f"Будут удалены {number} продуктов с периодом меньше: {max_supplement_number} {query_info}"
-            # ic(message)
             deleted_cursor = db.go_execute(
-                sql_storage_costs_queries["delete_storage_costs_less_max_idex"],
+                sql_transport_costs["delete_transport_costs_less_max_idex"],
                 (max_index,),
             )
             message = f"удалено {deleted_cursor.rowcount} записей с период дополнения < {max_index}"
@@ -175,21 +171,23 @@ def transfer_raw_transport_cost(db_file, normative_index_period_id: int):
         ic(len(raw_transport_costs), len(inserted_success), len(updated_success))
 
 
-def parsing_transport_cost(location: LocalData, normative_index_period_id: int) -> int:
+def parsing_transport_cost(location: LocalData, index_period: tuple) -> int:
     """
-    Заполняет tblStorageCosts %ЗСР. Читает данные из CSV файла в tblRawData.
+    Заполняет таблицу tblTransportCosts Транспортных расходов.
+    Читает данные из CSV файла в tblRawData.
     Добавляет столбец index_number в tblRawData.
-    Переносит данные из tblRawData в tblStorageCosts только для периода normative_index_period_id.
+    Переносит данные из tblRawData в tblTransportCosts только для периода index_period.
     """
     print()
-    ic("===>>> Загружаем Транспортные расходы.")
+    message = f"===>>> Загружаем Транспортные расходы для индексного периода: {index_period[1]}"
+    ic(message)
 
     load_csv_to_raw_table(location.transport_costs_file, location.db_file, delimiter=",")
     with dbTolls(location.db_file) as db:
         db.go_execute(sql_raw_queries["add_index_number_column"])
         db.go_execute(sql_raw_queries["update_index_number"])
 
-    transfer_raw_transport_cost(location.db_file, normative_index_period_id)
+    transfer_raw_transport_cost(location.db_file, index_period[0])
     return 0
 
 

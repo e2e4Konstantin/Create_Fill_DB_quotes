@@ -9,6 +9,7 @@ from sql_queries import (
     sql_periods_queries,
     sql_storage_costs_queries,
     sql_transport_costs,
+    sql_materials,
 )
 
 from tools.create.fill_directory import (
@@ -137,6 +138,23 @@ def _create_transport_costs_environment(db):
     db.go_execute(sql_transport_costs["create_trigger_update_transport_costs"])
 
 
+def _create_material_properties_environment(db):
+    """ Создать инфраструктуру для хранения свойств материалов """
+    db.go_execute(sql_materials["delete_table_materials"])
+    # db.go_execute(sql_materials["delete_view_material"])
+    # db.go_execute(sql_materials["delete_table_history_material"])
+
+    db.go_execute(sql_materials["create_table_materials"])
+    db.go_execute(sql_materials["create_index_materials"])
+    # db.go_execute(sql_materials["create_view_material"])
+
+    # db.go_execute(sql_transport_costs["create_table_history_transport_costs"])
+    # db.go_execute(sql_transport_costs["create_index_history_transport_costs"])
+    # db.go_execute(sql_transport_costs["create_trigger_insert_transport_costs"])
+    # db.go_execute(sql_transport_costs["create_trigger_delete_transport_costs"])
+    # db.go_execute(sql_transport_costs["create_trigger_update_transport_costs"])
+
+
 def create_tables_indexes(db_file: str):
     """
     Создает таблицы:
@@ -154,6 +172,7 @@ def create_tables_indexes(db_file: str):
         _create_periods_environment(db)
         _create_storage_costs_environment(db)
         _create_transport_costs_environment(db)
+        _create_material_properties_environment(db)
 
 
 def db_create_tables_and_fill_directory(db_file: str) -> int:

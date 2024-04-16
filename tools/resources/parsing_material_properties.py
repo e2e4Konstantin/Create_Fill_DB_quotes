@@ -20,12 +20,17 @@ from tools.shared.code_tolls import (
 from tools.shared.shared_features import get_product_by_code, get_origin_id
 
 
-def _get_raw_transport_costs(db: dbTolls) -> list[sqlite3.Row] | None:
+def _get_raw_transport_costs(
+    db: dbTolls, normative_period_id: int
+) -> list[sqlite3.Row] | None:
     """
     Выбрать все записи Свойства Материалов из таблицы tblRawData отсортированные по индексу (index_number).
     """
     try:
-        results = db.go_select(sql_raw_queries["select_rwd_all_sorted_by_index_number"])
+        results = db.go_select(
+            sql_raw_queries["select_rwd_for_normative_period_id"],
+            (normative_period_id,),
+        )
         if not results:
             output_message_exit(
                 "в RAW таблице с Транспортными Расходами нет записей:",
@@ -113,8 +118,8 @@ def _get_storage_cost_by_basic_normative_id(
         return None
 
 
-def _make_data_from_raw_machine_properties(
-    db: dbTolls, raw_machine: sqlite3.Row
+def _make_data_from_raw_material_properties(
+    db: dbTolls, raw_material: sqlite3.Row
 ) -> tuple | None:
     """
     Получает строку из таблицы tblRawData с записью Normative.resources.machines.
@@ -126,15 +131,15 @@ def _make_data_from_raw_machine_properties(
     # FK_tblMaterials_tblProducts, FK_tblMaterials_tblPeriods, FK_tblMaterials_tblTransportCosts, FK_tblMaterials_tblStorageCosts,
     # description, RPC, RPCA2, net_weight, gross_weight, used_to_calc_avg_rate, base_price, actual_price, estimate_price
     #
-    code = clear_code(raw_machine["pressmark"])
+    code = clear_code(raw_material["pressmark"])
     origin_id = get_origin_id(db, origin_name=TON_ORIGIN)
     product_id = get_product_by_code(db, origin_id, code)["ID_tblProduct"]
-    period = _get_period_by_basic_normative_id(db, raw_machine["period_id"])
+    period = _get_period_by_basic_normative_id(db, raw_material["period_id"])
     index_num = period["index_num"]
     period_id = period["ID_tblPeriod"]
     #
     transport_cost = _get_transport_cost_by_basic_normative_id(
-        db, raw_machine["transport_cost_id"]
+        db, raw_material["transport_cost_id"]
     )
     if transport_cost:
         transport_cost_id = transport_cost["ID_tblTransportCost"]
@@ -145,7 +150,7 @@ def _make_data_from_raw_machine_properties(
         )
 
     storage_cost = _get_storage_cost_by_basic_normative_id(
-        db, raw_machine["storage_cost_id"]
+        db, raw_material["storage_cost_id"]
     )
     if storage_cost:
         storage_cost_id = storage_cost["ID_tblStorageCost"]
@@ -155,21 +160,21 @@ def _make_data_from_raw_machine_properties(
             "не найдена запись складских расходов",
             f"для {code=}, период: {index_num=}",
         )
+    #
+    cmt = text_cleaning(raw_material["cmt"]) if text_cleaning(raw_material['cmt']) else ""
+    long_title = text_cleaning(raw_material['long_title']) if text_cleaning(raw_material['long_title']) else ""
+    temp_str = f"{cmt} {long_title}".strip()
+    description = temp_str if temp_str else None
 
-    cmt = text_cleaning(raw_machine["cmt"]) if text_cleaning(raw_machine['cmt']) else ""
-    long_title = text_cleaning(raw_machine['long_title']) if text_cleaning(raw_machine['long_title']) else ""
+    rpc = text_cleaning(raw_material["okp"])
+    rpca2 = text_cleaning(raw_material["okpd2"])
+    net_weight = get_float_value(raw_material["netto"])
+    gross_weight = get_float_value(raw_material["brutto"])
+    used_to_calc = get_integer_value(raw_material["use_to_calc_avg_rate"])
 
-    description = f"{cmt} {long_title}"
-
-    rpc = text_cleaning(raw_machine["okp"])
-    rpca2 = text_cleaning(raw_machine["okpd2"])
-    net_weight = get_float_value(raw_machine["netto"])
-    gross_weight = get_float_value(raw_machine["brutto"])
-    used_to_calc = get_integer_value(raw_machine["use_to_calc_avg_rate"])
-
-    base_price = get_float_value(raw_machine["price"])
-    actual_price = get_float_value(raw_machine["cur_sale_price"])
-    estimate_price = get_float_value(raw_machine["cur_price"])
+    base_price = get_float_value(raw_material["price"])
+    actual_price = get_float_value(raw_material["cur_sale_price"])
+    estimate_price = get_float_value(raw_material["cur_price"])
 
     # FK_tblMaterials_tblProducts, FK_tblMaterials_tblPeriods, FK_tblMaterials_tblTransportCosts, FK_tblMaterials_tblStorageCosts,
     # description, RPC, RPCA2, net_weight, gross_weight, used_to_calc_avg_rate, base_price, actual_price, estimate_price
@@ -183,7 +188,7 @@ def _make_data_from_raw_machine_properties(
     return data
 
 
-def delete_last_period_machine_properties(db_file: str):
+def delete_last_period_material_properties(db_file: str):
     """Удаляет записи из таблицы tblMaterials у которых период < максимального.
     Вычисляет максимальный период для таблицы tblMaterials."""
     with dbTolls(db_file) as db:
@@ -212,16 +217,17 @@ def delete_last_period_machine_properties(db_file: str):
             ic(message)
 
 
-def transfer_raw_machine_properties(db_file):
+def transfer_raw_material_properties(db_file, normative_index_period_id: int):
     """
-    Заполняет таблицу tblMachines данными из RAW таблицы tblRawData.
+    Заполняет таблицу tblMachines данными из RAW таблицы tblRawData
+    только для периода normative_index_period_id.
     """
     with dbTolls(db_file) as db:
-        raw_properties = _get_raw_transport_costs(db)
+        raw_properties = _get_raw_transport_costs(db, normative_index_period_id)
         inserted_success, updated_success = [], []
         for line in raw_properties:
             # обрабатываем запись raw таблицы
-            raw_data = _make_data_from_raw_machine_properties(db, line)
+            raw_data = _make_data_from_raw_material_properties(db, line)
             ic(raw_data)
             raw_index_num = raw_data[-1]
             # ищем такую же запись в tblMaterials
@@ -252,29 +258,33 @@ def transfer_raw_machine_properties(db_file):
             # db.connection.commit()
         ic(len(raw_properties), len(inserted_success), len(updated_success))
     #  удалить записи старых периодов
-    delete_last_period_machine_properties(db_file)
+    delete_last_period_material_properties(db_file)
 
 
-def parsing_load_machine_properties(location: LocalData) -> int:
+
+
+def parsing_material_properties(location: LocalData, index_period: tuple) -> int:
     """
     Заполняет tblMaterials свойствами материалов. Читает данные из CSV файла в tblRawData.
     Добавляет столбец index_number в tblRawData. Переносит данные из tblRawData в tblMaterials.
+    Переносит данные из tblRawData в tblMaterials только для периода index_period.
     """
     print()
-    ic("===>>> Загружаем Свойства Материалов.")
+    message = f"===>>> Загружаем Свойства Материалов для индексного периода: {index_period[1]}"
+    ic(message)
 
-    # load_csv_to_raw_table(
-    #     location.machine_properties_file, location.db_file, delimiter=","
-    # )
-    # with dbTolls(location.db_file) as db:
-    #     db.go_execute(sql_raw_queries["add_index_number_column"])
-    #     db.go_execute(sql_raw_queries["update_index_number"])
+    load_csv_to_raw_table(
+        location.material_properties_file, location.db_file, delimiter=","
+    )
+    with dbTolls(location.db_file) as db:
+        db.go_execute(sql_raw_queries["add_index_number_column"])
+        db.go_execute(sql_raw_queries["update_index_number"])
 
-    transfer_raw_machine_properties(location.db_file)
+    transfer_raw_material_properties(location.db_file, index_period[0])
     return 0
 
 
 if __name__ == "__main__":
     local = LocalData("office")  # office  # home
 
-    parsing_load_machine_properties(local)
+    parsing_material_properties(local)

@@ -184,21 +184,22 @@ def transfer_raw_storage_cost(db_file: str, normative_index_period_id: int):
 
 
 
-def parsing_storage_cost(location: LocalData, normative_index_period_id: int) -> int:
+def parsing_storage_cost(location: LocalData, index_period: tuple[int, int]) -> int:
     """
     Заполняет tblStorageCosts %ЗСР. Читает данные из CSV файла в tblRawData.
     Добавляет столбец index_number в tblRawData.
-    Переносит данные из tblRawData в tblStorageCosts только для периода normative_index_period_id
+    Переносит данные из tblRawData в tblStorageCosts только для периода index_period
     """
     print()
-    ic("===>>> Загружаем %ЗСР.")
+    message = f"===>>> Загружаем %ЗСР для индексного периода: {index_period[1]}"
+    ic(message)
     storage_cost_csv_file = location.storage_costs_file
     load_csv_to_raw_table(storage_cost_csv_file, location.db_file, delimiter=",")
     with dbTolls(location. db_file) as db:
         db.go_execute(sql_raw_queries["add_index_number_column"])
         db.go_execute(sql_raw_queries["update_index_number"])
 
-    transfer_raw_storage_cost(location.db_file, normative_index_period_id)
+    transfer_raw_storage_cost(location.db_file, index_period[0])
     return 0
 
 

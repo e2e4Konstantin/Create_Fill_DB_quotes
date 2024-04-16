@@ -89,7 +89,7 @@ pg_sql_queries = {
     "get_transport_costs_for_period_id_range": """--sql
         SELECT
             tc."id" "id",
-            tc."period" "id_period",
+            tc."period" "period_id",
             per.title "title_period",
             tc."title" "title",
             tc.pressmark,

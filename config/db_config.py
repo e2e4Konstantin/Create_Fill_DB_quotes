@@ -61,7 +61,11 @@ class dbTolls(dbControl):
         return f"db name: {self.path}, connect: {self.connection}"
 
     def __del__(self):
-        self.connection.close() if self.connection is not None else self.connection
+        if self.connection is not None:
+            try:
+                self.connection.close()
+            except Exception as e:
+                print(f"ERROR: dbTolls.__del__() не удалось закрыть соединение: {e}")
 
     def get_row_id(self, query: str, src_data: tuple) -> int | None:
         """ Выбрать id записи по запросу """

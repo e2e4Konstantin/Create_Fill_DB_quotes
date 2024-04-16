@@ -52,6 +52,8 @@ sql_materials = {
             used_to_calc_avg_rate = ?, base_price = ?, actual_price = ?, estimate_price = ?
         WHERE ID_tblMaterial = ?;
     """,
+    # ----------------------------------------------------------------------
+    "delete_table_materials": """DROP TABLE IF EXISTS tblMaterials;""",
     "create_table_materials": """--sql
         /*
             Таблица свойств Материалов Глава 1. Без Раздела 0 (Транспортные расходы)
@@ -100,14 +102,14 @@ sql_materials = {
             --
             last_update     INTEGER NOT NULL DEFAULT (UNIXEPOCH('now')) CHECK (last_update >= 0),
             --
-            FOREIGN KEY (FK_tblMaterials_tblProducts) REFERENCES tblProducts (ID_Product),
+            FOREIGN KEY (FK_tblMaterials_tblProducts) REFERENCES tblProducts (ID_tblProduct),
             FOREIGN KEY (FK_tblMaterials_tblPeriods) REFERENCES tblPeriods (ID_tblPeriod),
             FOREIGN KEY (FK_tblMaterials_tblTransportCosts) REFERENCES tblTransportCosts (ID_tblTransportCost),
             --
             UNIQUE (FK_tblMaterials_tblProducts, FK_tblMaterials_tblPeriods)
         );
     """,
-    "create_index_transport_costs": """--sql
+    "create_index_materials": """--sql
         CREATE UNIQUE INDEX idxMaterials ON tblMaterials (
             FK_tblMaterials_tblProducts, FK_tblMaterials_tblPeriods
         );

@@ -3,6 +3,15 @@
 
 # ---> Периоды -----------------------------------------------------------------------
 sql_periods_queries = {
+    "get_index_periods_for_supplement_tsn": """--sql
+        SELECT basic_database_id, index_num, supplement_num
+        FROM tblPeriods
+        WHERE
+            FK_Origin_tblOrigins_tblPeriods = (SELECT ID_tblOrigin FROM tblOrigins WHERE name = 'ТСН')
+            AND FK_Category_tblItems_tblPeriods = (SELECT ID_tblItem FROM tblItems WHERE team = 'periods_category' AND name = 'index')
+            AND supplement_num = ?;
+
+    """,
     # "get_periods_supplement_index_num": """--sql
     #     -- получить список периодов от n < дополнений < m и k < индексов < l
     #     SELECT p.ID_tblPeriod AS id, p.title AS title, p.basic_database_id AS basic_id
@@ -18,7 +27,7 @@ sql_periods_queries = {
     """,
     "get_periods_normative_id_index_num_more": """--sql
         -- получить список id индексных периодов для larix.Normative у которых index_num > нужного значения
-        select basic_database_id, index_num
+        select basic_database_id, index_num, supplement_num
         from tblPeriods
         where
             FK_Origin_tblOrigins_tblPeriods is not null and
@@ -140,6 +149,7 @@ sql_periods_queries = {
     "create_view_periods": """--sql
         CREATE VIEW viewPeriods AS
             SELECT
+                p.ID_tblPeriod AS [id],
                 o.name AS [Раздел],
                 i.title AS [Категория],
                 p.supplement_num AS [Дополнение],

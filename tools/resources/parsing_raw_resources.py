@@ -43,6 +43,38 @@ def parsing_resources(location: LocalData) -> int:
     return 0
 
 
+
+def parsing_resources_for_supplement(location: LocalData, supplement: dict) -> int:
+    """
+    Заполняет Таблицы БД (tblCatalogs, tblProducts) каталог/дерево
+    ресурсов и сами Ресурсы. Читает данные из CSV файлов в tblRawData.
+    Переносит данные из tblRawData в боевые таблицы
+    только для периода supplement.
+    """
+    resources_path: str = location.resources_path
+    db_file: str = location.db_file
+    period_id = supplement["id"]
+    print()
+    message = f"===>>> Для периода: {supplement['title']!r} {period_id=}"
+    ic(message)
+    ic("===>>> Загружаем Ресурсы (1 & 2).")
+
+    # грузим каталог
+    catalog_csv_file = create_abspath_file(
+        resources_path, supplement["resources_catalog_csv_file"]
+    )
+    load_csv_to_raw_table(catalog_csv_file, db_file, delimiter=",")
+    transfer_raw_resource_to_catalog(db_file, TON_ORIGIN, period_id)
+
+    # грузим ресурсы
+    data_csv_file = create_abspath_file(
+        resources_path, supplement["resources_data_csv_file"]
+    )
+    load_csv_to_raw_table(data_csv_file, db_file, delimiter=",")
+    transfer_raw_resource_to_products(db_file, TON_ORIGIN, period_id)
+    return 0
+
+
 if __name__ == "__main__":
     local = LocalData("office")  # office  # home
     parsing_resources(local)
