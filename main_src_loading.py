@@ -16,6 +16,7 @@ from tools import (
     parsing_storage_cost,
     parsing_transport_cost,
     get_indexes_for_supplement,
+    update_default_catalog_record,
 )
 
 from config import LocalData
@@ -25,6 +26,7 @@ from postgres_export import (
     export_quotes_for_range_periods,
     export_resource_for_range_periods,
 )
+
 
 
 def db_data_prepare(location: str):
@@ -41,9 +43,10 @@ def db_data_prepare(location: str):
     with LocalData(location) as local:
         db_file: str = local.db_file
         ic(location, db_file)
-
+        # создать таблицы, индексы .... заполнить справочники
         db_create_tables_and_fill_directory(db_file)
-        # 1. Выгрузить таблицу периодов из Postgres Normative
+
+        # выгрузить таблицу периодов из Postgres Normative
         export_table_periods_to_csv(
             csv_file=local.periods_file, pgr_access=db_access["normative"]
         )
@@ -67,16 +70,20 @@ if __name__ == '__main__':
 
     location = "office" # office  # home
     # db_data_prepare(location)
+    # восстанови из копии конфиг файл
 
     local = LocalData(location)
     ic()
     for supplement in local.periods_data[:1]:
         # parsing_quotes_for_supplement(local, supplement)
         # parsing_resources_for_supplement(local, supplement)
+        # update_default_catalog_record(
+        #     local.db_file, catalog="ТСН", period_id=supplement["id"]
+        # )
 
         ic(supplement["indexes"])
         for index_period in supplement["indexes"]:
             # parsing_storage_cost(local, index_period)
-            # parsing_transport_cost(local, index_period)
-            parsing_material_properties(local, index_period)
-    delete_raw_table(local.db_file)
+            parsing_transport_cost(local, index_period)
+    #         parsing_material_properties(local, index_period)
+    # delete_raw_table(local.db_file)

@@ -15,6 +15,7 @@ from tools.shared.shared_features import (
     delete_raw_table,
     get_period_range,
     get_indexes_for_supplement,
+    update_default_catalog_record,
 )
 from tools.periods.get_periods import get_periods_range
 

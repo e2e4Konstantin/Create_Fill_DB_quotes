@@ -228,9 +228,9 @@ def transfer_raw_material_properties(db_file, normative_index_period_id: int):
         for line in raw_properties:
             # обрабатываем запись raw таблицы
             raw_data = _make_data_from_raw_material_properties(db, line)
-            ic(raw_data)
+            # ic(raw_data)
             raw_index_num = raw_data[-1]
-            # ищем такую же запись в tblMaterials
+            # ищем запись в tblMaterials с таким же id Продукта
             product_id = raw_data[0]
             material_line = db.go_select(
                 sql_materials["select_material_by_product_id"],
@@ -255,7 +255,7 @@ def transfer_raw_material_properties(db_file, normative_index_period_id: int):
                 db.go_insert(sql_materials["insert_material"], raw_data[:-1], message)
                 inserted_success.append(raw_data)
                 # print(raw_data)
-            # db.connection.commit()
+            db.connection.commit()
         ic(len(raw_properties), len(inserted_success), len(updated_success))
     #  удалить записи старых периодов
     delete_last_period_material_properties(db_file)
@@ -273,12 +273,12 @@ def parsing_material_properties(location: LocalData, index_period: tuple) -> int
     message = f"===>>> Загружаем Свойства Материалов для индексного периода: {index_period[1]}"
     ic(message)
 
-    load_csv_to_raw_table(
-        location.material_properties_file, location.db_file, delimiter=","
-    )
-    with dbTolls(location.db_file) as db:
-        db.go_execute(sql_raw_queries["add_index_number_column"])
-        db.go_execute(sql_raw_queries["update_index_number"])
+    # load_csv_to_raw_table(
+    #     location.material_properties_file, location.db_file, delimiter=","
+    # )
+    # with dbTolls(location.db_file) as db:
+    #     db.go_execute(sql_raw_queries["add_index_number_column"])
+    #     db.go_execute(sql_raw_queries["update_index_number"])
 
     transfer_raw_material_properties(location.db_file, index_period[0])
     return 0
@@ -286,5 +286,5 @@ def parsing_material_properties(location: LocalData, index_period: tuple) -> int
 
 if __name__ == "__main__":
     local = LocalData("office")  # office  # home
-
-    parsing_material_properties(local)
+    period = [151763529, 202, 69]
+    parsing_material_properties(local, period)

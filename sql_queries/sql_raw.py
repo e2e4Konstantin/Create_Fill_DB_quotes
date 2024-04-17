@@ -31,6 +31,9 @@ sql_raw_queries = {
     "select_rwd_for_normative_period_id": """--sql
         SELECT * FROM tblRawData WHERE period_id = ?;
     """,
+    "select_rwd_for_normative_period_id_order_pressmark": """--sql
+        SELECT * FROM tblRawData WHERE period_id = ? ORDER BY pressmark;
+    """,
     "select_rwd_code_regexp": """--sql
         SELECT
             (SELECT p.pressmark FROM tblRawData AS p WHERE p.id = CAST(m.parent AS INT) ) AS [parent_pressmark],

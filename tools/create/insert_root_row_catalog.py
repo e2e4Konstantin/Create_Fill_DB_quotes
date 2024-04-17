@@ -1,8 +1,8 @@
 from icecream import ic
-from config import dbTolls
+from config import dbTolls, MAIN_RECORD_CODE, DEFAULT_RECORD_CODE
 from sql_queries import sql_items_queries, sql_catalog_queries
 from files_features import output_message_exit
-from tools.shared.shared_features import get_origin_id
+from tools.shared.shared_features import get_origin_id, get_catalog_id_by_origin_code
 from tools.shared.code_tolls import code_to_number
 
 
@@ -39,3 +39,43 @@ def insert_root_record_to_catalog(db_filename: str, catalog: str, code: str, per
             ic(log)
             return inserted_id
     output_message_exit("Не добавлена", f"корневая запись для Каталога {code}")
+
+
+def insert_default_value_entry_to_catalog(
+    db_filename: str, catalog: str, period: int
+) -> int | None:
+    """
+    Вставляет в каталог запись с шифром '0.0-0-0', для любых значений по умолчанию.
+    Родителем корневая запись справочника.
+    """
+    with dbTolls(db_filename) as db:
+        target_item = ("default", "default")
+        item_id = db.get_row_id(sql_items_queries["select_items_id_team_name"], target_item)
+        if item_id is None:
+            log = f"в справочнике tblItems: не найдена запись {target_item!r}"
+            ic(log)
+            return None
+        origin_id = get_origin_id(db, origin_name=catalog)
+        # получаем ссылку на корневую запись каталога
+        parent_id = get_catalog_id_by_origin_code(db, origin_id, code=MAIN_RECORD_CODE)
+        description = "Значение по умолчанию"
+        code = DEFAULT_RECORD_CODE
+        # FK_tblCatalogs_tblOrigins, ID_parent, period, code, description, FK_tblCatalogs_tblItems, digit_code
+        data = (
+            origin_id,
+            parent_id,
+            period,
+            code,
+            description,
+            item_id,
+            2,
+        )
+        message = f"Вставка записи '0.0-0-0' {description!r} в Каталог"
+        inserted_id = db.go_insert(sql_catalog_queries["insert_catalog"], data, message)
+        if inserted_id:
+            log = f"добавлена запись в каталог {catalog}: {description!r} id: {inserted_id}"
+            ic(log)
+            return inserted_id
+    output_message_exit(
+        "Не добавлена", f"В Каталог не добавлена запись {description} {code}"
+    )

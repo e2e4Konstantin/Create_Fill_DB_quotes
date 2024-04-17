@@ -1,7 +1,7 @@
 {
     "config_file": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\Create_Fill_DB_quotes\\config\\config_quotes_parsing.json",
     "db_file": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\DB\\Normative.sqlite3",
-    "last_date": "16-04-2024 16:58:52",
+    "last_date": "17-04-2024 14:29:07",
     "material_properties_file": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\MaterialProperties\\material_properties_export.csv",
     "material_properties_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\MaterialProperties",
     "periods_data": [
@@ -13,17 +13,20 @@
                 [
                     151763529,
                     202,
-                    69
+                    69,
+                    154
                 ],
                 [
                     151902634,
                     203,
-                    69
+                    69,
+                    162
                 ],
                 [
                     151991579,
                     204,
-                    69
+                    69,
+                    157
                 ]
             ],
             "quotes_catalog_csv_file": "Catalog_Quotes_Дополнение_69_id_151427079.csv",
@@ -41,17 +44,20 @@
                 [
                     152473013,
                     205,
-                    70
+                    70,
+                    155
                 ],
                 [
                     152623191,
                     206,
-                    70
+                    70,
+                    151
                 ],
                 [
                     153689235,
                     207,
-                    70
+                    70,
+                    164
                 ]
             ],
             "quotes_catalog_csv_file": "Catalog_Quotes_Дополнение_70_id_152472566.csv",
@@ -69,17 +75,20 @@
                 [
                     166956935,
                     208,
-                    71
+                    71,
+                    165
                 ],
                 [
                     166998701,
                     209,
-                    71
+                    71,
+                    163
                 ],
                 [
                     167264731,
                     210,
-                    71
+                    71,
+                    166
                 ]
             ],
             "quotes_catalog_csv_file": "Catalog_Quotes_Дополнение_71_id_166954793.csv",
@@ -97,7 +106,8 @@
                 [
                     167403321,
                     211,
-                    72
+                    72,
+                    167
                 ]
             ],
             "quotes_catalog_csv_file": "Catalog_Quotes_Дополнение_72_id_167085727.csv",

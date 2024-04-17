@@ -22,7 +22,7 @@ sql_items_queries = {
         WHERE team IS ?;
     """,
 
-    "select_items_dual_teams": """
+    "select_items_dual_teams": """--sql
         SELECT * FROM tblItems WHERE team IN (?, ?);
     """,
 }

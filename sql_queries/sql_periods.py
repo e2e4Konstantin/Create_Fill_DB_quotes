@@ -4,7 +4,7 @@
 # ---> Периоды -----------------------------------------------------------------------
 sql_periods_queries = {
     "get_index_periods_for_supplement_tsn": """--sql
-        SELECT basic_database_id, index_num, supplement_num
+        SELECT *
         FROM tblPeriods
         WHERE
             FK_Origin_tblOrigins_tblPeriods = (SELECT ID_tblOrigin FROM tblOrigins WHERE name = 'ТСН')

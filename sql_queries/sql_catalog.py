@@ -1,5 +1,4 @@
 sql_catalog_queries = {
-
     # -- >  DELETE ----------------------------------------------------------------------
     "delete_catalog_last_periods": """
         DELETE FROM tblCatalogs
@@ -8,7 +7,6 @@ sql_catalog_queries = {
                 FROM tblCatalogs
                 WHERE FK_tblCatalogs_tblPeriods < ?);
     """,
-
     "delete_catalog_less_than_specified_supplement_period": """--sql
         /*
         удаляет записи каталога у которых родитель code=?, тип origin=?
@@ -36,31 +34,25 @@ sql_catalog_queries = {
             --
         );
     """,
-
     # -- >  SELECT ----------------------------------------------------------------------
     "select_catalog_id_code": """--sql
         SELECT ID_tblCatalog FROM tblCatalogs WHERE FK_tblCatalogs_tblOrigins = ? AND code = ?;
     """,
-
     "select_catalog_id": """
         SELECT * FROM tblCatalogs WHERE ID_tblCatalog = ?;
     """,
-
     "select_catalog_code": """--sql
         SELECT * FROM tblCatalogs WHERE FK_tblCatalogs_tblOrigins = ? AND code = ?;
         """,
     "select_catalog_max_period": """
         SELECT MAX(FK_tblCatalogs_tblPeriods) AS max_period FROM tblCatalogs WHERE FK_tblCatalogs_tblOrigins = ?;
     """,
-
     "select_count_last_period": """
         SELECT COUNT(*) FROM tblCatalogs WHERE FK_tblCatalogs_tblOrigins = ? AND FK_tblCatalogs_tblPeriods < ?;
     """,
-
     "select_changes": """--sql
         SELECT CHANGES() AS changes;
     """,
-
     # выводит все дочерние записи каталога для записи с нужным code
     # все записи для которых родителем является запись с code
     "select_catalog_level": """--sql
@@ -74,7 +66,6 @@ sql_catalog_queries = {
         )
         SELECT ID_tblCatalog from CatalogLevel;
      """,
-
     # "select_catalog_max_level_period": """--sql
     #     SELECT MAX(m.FK_tblCatalogs_tblPeriods) AS max_period
     #     FROM tblCatalogs m
@@ -88,7 +79,6 @@ sql_catalog_queries = {
     #         SELECT ID_tblCatalog from CatalogLevel
     #     );
     # """,
-
     "select_catalog_max_supplement_period": """--sql
         /*
         считает максимальное значение дополнения для периода
@@ -111,8 +101,6 @@ sql_catalog_queries = {
             --
         );
     """,
-
-
     "select_catalog_count_period_supplement": """--sql
         /*
         считает количество записей каталога у которых родитель code=? тип origin=?
@@ -136,8 +124,6 @@ sql_catalog_queries = {
        ) AND
         per.supplement_num < ?;
     """,
-
-
     # -- >  INSERT ----------------------------------------------------------------------
     "insert_catalog": """--sql
         INSERT INTO tblCatalogs (
@@ -145,8 +131,10 @@ sql_catalog_queries = {
         )
         VALUES (?, ?, ?, ?, ?, ?, ?);
     """,
-
     # -- >  UPDATE ----------------------------------------------------------------------
+    "update_catalog_period_by_id": """--sql
+        UPDATE tblCatalogs SET (FK_tblCatalogs_tblPeriods) = (?) WHERE ID_tblCatalog = ?;
+    """,
     "update_catalog_id": """--sql
         UPDATE tblCatalogs
         SET (
@@ -154,16 +142,12 @@ sql_catalog_queries = {
         ) = (?, ?, ?, ?, ?, ?, ?)
         WHERE ID_tblCatalog = ?;
     """,
-
     "update_catalog_period_main_row": """
         UPDATE tblCatalogs SET (FK_tblCatalogs_tblPeriods) = (?) WHERE code = ? AND FK_tblCatalogs_tblOrigins = ?;
     """,
-
     "update_catalog_parent_himself": """--sql
         UPDATE tblCatalogs SET (ID_parent) = (ROWID) WHERE ID_tblCatalog = ?;
     """,
-
-
 }
 
 sql_catalog_creates = {

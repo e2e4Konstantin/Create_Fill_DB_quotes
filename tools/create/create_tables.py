@@ -16,7 +16,10 @@ from tools.create.fill_directory import (
     fill_directory_origins,
     fill_directory_catalog_items,
 )
-from tools.create.insert_root_row_catalog import insert_root_record_to_catalog
+from tools.create.insert_root_row_catalog import (
+    insert_root_record_to_catalog,
+    insert_default_value_entry_to_catalog,
+)
 
 
 def _create_directory_environment(db: dbTolls):
@@ -187,7 +190,6 @@ def db_create_tables_and_fill_directory(db_file: str) -> int:
     create_tables_indexes(db_file)
     fill_directory_origins(db_file)
     fill_directory_catalog_items(db_file)
-
     insert_root_record_to_catalog(
         db_file,
         catalog=TON_ORIGIN,
@@ -195,6 +197,8 @@ def db_create_tables_and_fill_directory(db_file: str) -> int:
         period=0,
         description="Справочник нормативов ТСН",
     )
+    insert_default_value_entry_to_catalog(db_file, catalog=TON_ORIGIN, period=0)
+    #
     insert_root_record_to_catalog(
         db_file,
         catalog=PNWC_ORIGIN,
@@ -202,6 +206,7 @@ def db_create_tables_and_fill_directory(db_file: str) -> int:
         period=0,
         description="Справочник ресурсов НЦКР",
     )
+    insert_default_value_entry_to_catalog(db_file, catalog=PNWC_ORIGIN, period=0)
     return 0
 
 
@@ -211,75 +216,6 @@ if __name__ == "__main__":
     location = "office"  # office  # home
     local = LocalData(location)
 
-    # создать таблицы БД
-    create_tables_indexes(local.db_file)
+    db_create_tables_and_fill_directory(local.db_file)
 
 
-
-
-# ----------------------------------------------------------------------------
-# """
-#     Создает таблицы:
-#         Атрибутов и Параметров продуктов tblAttributes, tblOptions
-#         > Иерархия расценок -- tblQuotesChains ---
-# """
-
-# def _create_quotes_chains_environment(db: dbTolls):
-#     """ Создать инфраструктуру для Иерархии расценок. Таблицы, индексы и триггеры. """
-#     db.go_execute(sql_quotes_chain_create["delete_table_quotes_chains"])
-#     db.go_execute(sql_quotes_chain_create["delete_index_quotes_chains"])
-#     db.go_execute(sql_quotes_chain_create["delete_quotes_history_quotes_chains"])
-#     db.go_execute(sql_quotes_chain_create["delete_index_history_quotes_chains"])
-#
-#     db.go_execute(sql_quotes_chain_create["create_table_quotes_chains"])
-#     db.go_execute(sql_quotes_chain_create["create_index_quotes_chain"])
-#     db.go_execute(sql_quotes_chain_create["create_table_history_quotes_chains"])
-#     db.go_execute(sql_quotes_chain_create["create_index_history_quotes_chain"])
-#
-#     db.go_execute(sql_quotes_chain_create["create_trigger_history_quotes_chain_insert"])
-#     db.go_execute(sql_quotes_chain_create["create_trigger_history_quotes_chain_delete"])
-#     db.go_execute(sql_quotes_chain_create["create_trigger_history_quotes_chain_update"])
-
-
-# from sql_queries import sql_attributes_queries, sql_options_queries
-
-# _create_attributes_environment(db)
-# _create_options_environment(db)
-# _create_quotes_chains_environment(db)
-# _create_resources_environment(db)
-
-
-# def _create_attributes_environment(db: dbTolls):
-#     """ Инфраструктура для Атрибутов. """
-#     db.go_execute(sql_attributes_queries["delete_table_attributes"])
-#     db.go_execute(sql_attributes_queries["delete_index_attributes"])
-#     db.go_execute(sql_attributes_queries["delete_view_attributes"])
-#     db.go_execute(sql_attributes_queries["delete_table_history_attributes"])
-
-#     db.go_execute(sql_attributes_queries["create_table_attributes"])
-#     db.go_execute(sql_attributes_queries["create_index_attributes"])
-#     db.go_execute(sql_attributes_queries["create_view_attributes"])
-
-#     db.go_execute(sql_attributes_queries["create_table_history_attributes"])
-#     db.go_execute(sql_attributes_queries["create_index_history_attributes"])
-#     db.go_execute(sql_attributes_queries["create_trigger_history_attributes_insert"])
-#     db.go_execute(sql_attributes_queries["create_trigger_history_attributes_delete"])
-#     db.go_execute(sql_attributes_queries["create_trigger_history_attributes_update"])
-
-
-# def _create_options_environment(db: dbTolls):
-#     """ Инфраструктура для Параметров. """
-#     db.go_execute(sql_options_queries["delete_table_options"])
-#     db.go_execute(sql_options_queries["delete_index_options"])
-#     db.go_execute(sql_options_queries["delete_view_options"])
-#     db.go_execute(sql_options_queries["delete_table_history_options"])
-
-#     db.go_execute(sql_options_queries["create_table_options"])
-#     db.go_execute(sql_options_queries["create_index_options"])
-#     db.go_execute(sql_options_queries["create_view_options"])
-
-#     db.go_execute(sql_options_queries["create_table_history_options"])
-#     db.go_execute(sql_options_queries["create_index_history_options"])
-#     db.go_execute(sql_options_queries["create_trigger_history_options_insert"])
-#     db.go_execute(sql_options_queries["create_trigger_history_options_delete"])
-#     db.go_execute(sql_options_queries["create_trigger_history_options_update"])

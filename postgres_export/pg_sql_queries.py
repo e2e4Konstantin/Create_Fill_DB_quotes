@@ -99,7 +99,10 @@ pg_sql_queries = {
             tc.cmt
             FROM larix.transport_cost tc
         INNER JOIN larix."period" per ON per."id" = tc."period" AND per.deleted_on IS NULL
-        WHERE tc.deleted = 0 AND tc."period" IN %(period_id_range)s AND tc.pressmark ~ '(^\s*[1|2]\.)'
+        WHERE
+            tc.deleted = 0
+            AND tc."period" IN %(period_id_range)s
+            AND (tc.pressmark ~ '(^\s*[1|2]\.)' OR tc.pressmark='0.0-0-0')
         ORDER BY per.created_on DESC;
     """,
     "get_materials_properties_for_period_id_range": """--sql

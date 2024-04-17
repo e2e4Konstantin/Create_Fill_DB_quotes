@@ -1,7 +1,7 @@
 import sqlite3
 from icecream import ic
 
-from config import dbTolls, LocalData, TON_ORIGIN
+from config import dbTolls, LocalData, TON_ORIGIN, MINIMUM_VALUE
 from tools.shared.excel_df_raw_table_transfer import load_csv_to_raw_table
 from tools.shared.code_tolls import (
     clear_code,
@@ -17,11 +17,11 @@ from files_features import output_message_exit
 
 def _get_raw_transport_costs(db: dbTolls, normative_period_id: int) -> list[sqlite3.Row] | None:
     """
-    Выбрать все записи %ЗСР из таблицы tblRawData отсортированные по индексу.
+    Выбрать все записи из таблицы tblRawData отсортированные по индексу.
     """
     try:
         results = db.go_select(
-            sql_raw_queries["select_rwd_for_normative_period_id"],
+            sql_raw_queries["select_rwd_for_normative_period_id_order_pressmark"],
             (normative_period_id,),
         )
         if not results:
@@ -80,6 +80,14 @@ def _make_data_from_raw_transport_cost(db: dbTolls, raw_trans_cost: sqlite3.Row)
     actual_price = get_float_value(raw_trans_cost["cur_price"])
     numeric_ratio = get_float_value(raw_trans_cost["ratio"])
 
+
+    base_price, actual_price, numeric_ratio = tuple(
+        [
+            x if x >= MINIMUM_VALUE else 0
+            for x in (base_price, actual_price, numeric_ratio)
+        ]
+    )
+
     base_normative_id = get_integer_value(raw_trans_cost["id"])
 
     # FK_tblTransportCosts_tblProducts, FK_tblTransportCosts_tblPeriods,
@@ -133,6 +141,7 @@ def transfer_raw_transport_cost(db_file, normative_index_period_id: int):
         raw_transport_costs = _get_raw_transport_costs(db, normative_index_period_id)
         inserted_success, updated_success = [], []
         for line in raw_transport_costs:
+            code = line["pressmark"]
             # обрабатываем запись raw таблицы
             raw_data = _make_data_from_raw_transport_cost(db, line)
             raw_index_num = raw_data[-1]
@@ -182,10 +191,10 @@ def parsing_transport_cost(location: LocalData, index_period: tuple) -> int:
     message = f"===>>> Загружаем Транспортные расходы для индексного периода: {index_period[1]}"
     ic(message)
 
-    load_csv_to_raw_table(location.transport_costs_file, location.db_file, delimiter=",")
-    with dbTolls(location.db_file) as db:
-        db.go_execute(sql_raw_queries["add_index_number_column"])
-        db.go_execute(sql_raw_queries["update_index_number"])
+    # load_csv_to_raw_table(location.transport_costs_file, location.db_file, delimiter=",")
+    # with dbTolls(location.db_file) as db:
+    #     db.go_execute(sql_raw_queries["add_index_number_column"])
+    #     db.go_execute(sql_raw_queries["update_index_number"])
 
     transfer_raw_transport_cost(location.db_file, index_period[0])
     return 0
@@ -193,5 +202,5 @@ def parsing_transport_cost(location: LocalData, index_period: tuple) -> int:
 
 if __name__ == "__main__":
     local = LocalData("office")  # office  # home
-
-    parsing_transport_cost(local)
+    period = [151763529, 202, 69, 154]
+    parsing_transport_cost(local, period)

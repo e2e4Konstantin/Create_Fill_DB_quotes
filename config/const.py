@@ -7,9 +7,12 @@ MONITORING_ORIGIN = "мониторинг"
 
 
 MAIN_RECORD_CODE = "0.0"
+DEFAULT_RECORD_CODE = "0.0-0-0"
 
 
 LOCATIONS = ("home", "office")
 
 CONFIG_FILE_NAME = 'config_quotes_parsing.json'
 DB_FILE_NAME = 'Normative.sqlite3'
+
+MINIMUM_VALUE = 0E-2

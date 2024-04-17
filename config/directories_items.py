@@ -25,11 +25,13 @@ teams = (
     "pnwc_materials",
     "pnwc_machines",
     "pnwc_equipments",
+    "default",
 )
 
 # team, name, title, ID_parent, re_pattern, re_prefix
 src_catalog_items = [
     (teams[0], "main", "справочник", None, r"^\s*0000\s*$", None),
+    (teams[9], "default", "значение", None, r"^\s*0.0-0-0\s*$", None),
     # список хранимых объектов
     (teams[1], "Quote", "Расценка", None, r"^\s*((\d+)\.(\d+)(-(\d+)){2})\s*$", None),
     (

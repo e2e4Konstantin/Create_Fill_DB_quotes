@@ -2,7 +2,7 @@ import pandas as pd
 from icecream import ic
 import sqlite3
 
-from config import dbTolls, DirectoryItem
+from config import dbTolls, DirectoryItem, DEFAULT_RECORD_CODE
 from sql_queries import sql_items_queries, sql_catalog_queries, sql_products_queries, sql_raw_queries, sql_origins, sql_periods_queries
 from files_features import output_message, output_message_exit
 from tools.shared.code_tolls import clear_code
@@ -78,7 +78,10 @@ def get_parent_catalog_id(db: dbTolls, origin_id: int, raw_parent_id: int) -> in
 
 
 def get_catalog_id_by_origin_code(db: dbTolls, origin: int, code: str) -> int | None:
-    """ Ищет в Каталоге tblCatalogs запись по id каталога и шифру. Возвращает id. """
+    """
+    Ищет запись в таблице 'tblCatalogs', используя идентификатор и код каталога.
+    Если запись найдена, она возвращает идентификатор, в противном случае возвращает None.
+    """
     row_id = db.get_row_id(sql_catalog_queries["select_catalog_id_code"], (origin, code))
     if row_id:
         return row_id
@@ -438,7 +441,12 @@ def get_indexes_for_supplement(db_file: str, supplement_number: int
             )
             if result:
                 index_periods = [
-                    (x["basic_database_id"], x["index_num"], x["supplement_num"])
+                    (
+                        x["basic_database_id"],
+                        x["index_num"],
+                        x["supplement_num"],
+                        x["ID_tblPeriod"],
+                    )
                     for x in result
                 ]
                 index_periods.sort(reverse=False, key=lambda x: x[1])
@@ -454,3 +462,19 @@ def get_indexes_for_supplement(db_file: str, supplement_number: int
         print(f"Exception: {type(e).__name__}: {e}")
         raise
     return None
+
+def update_default_catalog_record(db_file: str, catalog: str, period_id: int) -> int | None:
+    """
+    Обновляет период у запись каталога 'Значение по умолчанию'.
+    """
+    with dbTolls(db_file) as db:
+        code = DEFAULT_RECORD_CODE
+        origin_id = get_origin_id(db, origin_name=catalog)
+        default_record_id = get_catalog_id_by_origin_code(db, origin_id, code)
+        db.go_execute(
+            sql_catalog_queries["update_catalog_period_by_id"],
+            (period_id, default_record_id),
+        )
+        count = db.go_execute(sql_catalog_queries["select_changes"])
+        return count.fetchone()["changes"] if count else None
+    
