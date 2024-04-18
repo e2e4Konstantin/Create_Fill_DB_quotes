@@ -55,7 +55,6 @@ def parsing_quotes_for_supplement(location: LocalData, supplement: dict) -> int:
     message = f"===>>> Для периода: {supplement['title']!r} {period_id=}"
     ic(message)
 
-
     # грузим каталог
     catalog_csv_file = create_abspath_file(
         catalog_path, supplement["quotes_catalog_csv_file"]

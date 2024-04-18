@@ -6,6 +6,7 @@ from config import dbTolls, DirectoryItem, DEFAULT_RECORD_CODE
 from sql_queries import sql_items_queries, sql_catalog_queries, sql_products_queries, sql_raw_queries, sql_origins, sql_periods_queries
 from files_features import output_message, output_message_exit
 from tools.shared.code_tolls import clear_code
+from files_features import output_message_exit
 
 
 def update_catalog(db: dbTolls, catalog_id: int, raw_catalog_data: tuple) -> int | None:
@@ -463,18 +464,25 @@ def get_indexes_for_supplement(db_file: str, supplement_number: int
         raise
     return None
 
-def update_default_catalog_record(db_file: str, catalog: str, period_id: int) -> int | None:
+def update_product_default_value_record(
+    db_file: str, catalog: str, period_id: int
+) -> int | None:
     """
-    Обновляет период у запись каталога 'Значение по умолчанию'.
+    Обновляет период у запись tblProducts 'Значение по умолчанию'.
     """
     with dbTolls(db_file) as db:
-        code = DEFAULT_RECORD_CODE
+        code = clear_code(DEFAULT_RECORD_CODE)
         origin_id = get_origin_id(db, origin_name=catalog)
-        default_record_id = get_catalog_id_by_origin_code(db, origin_id, code)
-        db.go_execute(
-            sql_catalog_queries["update_catalog_period_by_id"],
-            (period_id, default_record_id),
+        default_record = get_product_by_code(db, origin_id, code)
+
+        if code and origin_id and default_record:
+            db.go_execute(
+                sql_products_queries["update_product_period_by_id"],
+                (period_id, default_record["ID_tblProduct"]),
+            )
+            count = db.go_execute(sql_products_queries["select_changes"])
+            return count.fetchone()["changes"] if count else None
+        output_message_exit(
+            "Непредвиденная ошибка", "Обновления периода у default запись tblProducts"
         )
-        count = db.go_execute(sql_catalog_queries["select_changes"])
-        return count.fetchone()["changes"] if count else None
-    
+

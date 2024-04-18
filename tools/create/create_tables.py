@@ -16,10 +16,9 @@ from tools.create.fill_directory import (
     fill_directory_origins,
     fill_directory_catalog_items,
 )
-from tools.create.insert_root_row_catalog import (
-    insert_root_record_to_catalog,
-    insert_default_value_entry_to_catalog,
-)
+from tools.create.insert_root_row_catalog import insert_root_record_to_catalog
+from tools.create.insert_default_value import insert_default_value_record_to_product
+
 
 
 def _create_directory_environment(db: dbTolls):
@@ -144,18 +143,19 @@ def _create_transport_costs_environment(db):
 def _create_material_properties_environment(db):
     """ Создать инфраструктуру для хранения свойств материалов """
     db.go_execute(sql_materials["delete_table_materials"])
-    # db.go_execute(sql_materials["delete_view_material"])
-    # db.go_execute(sql_materials["delete_table_history_material"])
-
+    db.go_execute(sql_materials["delete_view_materials"])
+    db.go_execute(sql_materials["delete_table_history_materials"])
+    #
     db.go_execute(sql_materials["create_table_materials"])
     db.go_execute(sql_materials["create_index_materials"])
-    # db.go_execute(sql_materials["create_view_material"])
-
-    # db.go_execute(sql_transport_costs["create_table_history_transport_costs"])
-    # db.go_execute(sql_transport_costs["create_index_history_transport_costs"])
-    # db.go_execute(sql_transport_costs["create_trigger_insert_transport_costs"])
-    # db.go_execute(sql_transport_costs["create_trigger_delete_transport_costs"])
-    # db.go_execute(sql_transport_costs["create_trigger_update_transport_costs"])
+    db.go_execute(sql_materials["create_view_materials"])
+    #
+    db.go_execute(sql_materials["create_table_history_materials"])
+    db.go_execute(sql_materials["create_index_history_materials"])
+    #
+    db.go_execute(sql_materials["create_trigger_insert_materials"])
+    db.go_execute(sql_materials["create_trigger_delete_materials"])
+    db.go_execute(sql_materials["create_trigger_update_materials"])
 
 
 def create_tables_indexes(db_file: str):
@@ -197,7 +197,6 @@ def db_create_tables_and_fill_directory(db_file: str) -> int:
         period=0,
         description="Справочник нормативов ТСН",
     )
-    insert_default_value_entry_to_catalog(db_file, catalog=TON_ORIGIN, period=0)
     #
     insert_root_record_to_catalog(
         db_file,
@@ -206,7 +205,9 @@ def db_create_tables_and_fill_directory(db_file: str) -> int:
         period=0,
         description="Справочник ресурсов НЦКР",
     )
-    insert_default_value_entry_to_catalog(db_file, catalog=PNWC_ORIGIN, period=0)
+    #
+    insert_default_value_record_to_product(db_file, catalog=TON_ORIGIN, period=0)
+    insert_default_value_record_to_product(db_file, catalog=PNWC_ORIGIN, period=0)
     return 0
 
 

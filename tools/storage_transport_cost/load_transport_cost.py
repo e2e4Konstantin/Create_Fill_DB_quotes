@@ -191,10 +191,10 @@ def parsing_transport_cost(location: LocalData, index_period: tuple) -> int:
     message = f"===>>> Загружаем Транспортные расходы для индексного периода: {index_period[1]}"
     ic(message)
 
-    # load_csv_to_raw_table(location.transport_costs_file, location.db_file, delimiter=",")
-    # with dbTolls(location.db_file) as db:
-    #     db.go_execute(sql_raw_queries["add_index_number_column"])
-    #     db.go_execute(sql_raw_queries["update_index_number"])
+    load_csv_to_raw_table(location.transport_costs_file, location.db_file, delimiter=",")
+    with dbTolls(location.db_file) as db:
+        db.go_execute(sql_raw_queries["add_index_number_column"])
+        db.go_execute(sql_raw_queries["update_index_number"])
 
     transfer_raw_transport_cost(location.db_file, index_period[0])
     return 0
@@ -202,5 +202,5 @@ def parsing_transport_cost(location: LocalData, index_period: tuple) -> int:
 
 if __name__ == "__main__":
     local = LocalData("office")  # office  # home
-    period = [151763529, 202, 69, 154]
+    period = local.periods_data[0]["indexes"][0]  # [151763529, 202, 69, 154]
     parsing_transport_cost(local, period)

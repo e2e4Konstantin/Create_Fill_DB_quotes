@@ -1,5 +1,4 @@
 sql_products_queries = {
-
     # "delete_products_last_periods": """
     #     DELETE FROM tblProducts
     #     WHERE ID_tblProduct IN (
@@ -8,7 +7,6 @@ sql_products_queries = {
     #         WHERE period > 0 AND period < ?
     #     );
     # """,
-
     "delete_products_origin_item_less_max_supplement": """--sql
         DELETE FROM tblProducts
         WHERE ID_tblProduct IN (
@@ -21,35 +19,27 @@ sql_products_queries = {
                 AND (per.supplement_num > 0 AND per.supplement_num < ?)
         );
     """,
-
     "select_product_id_origin_code": """--sql
         SELECT ID_tblProduct FROM tblProducts WHERE FK_tblProducts_tblOrigins = ? AND code = ?;
     """,
-
     "select_product_all_code": """--sql
         SELECT * FROM tblProducts WHERE code = ?;
     """,
-
     "select_products_origin_code": """--sql
         SELECT * FROM tblProducts WHERE FK_tblProducts_tblOrigins = ? AND code = ?;
     """,
-
     "select_products_id": """--sql
         SELECT * FROM tblProducts WHERE ID_tblProduct = ?;
     """,
-
-
     "select_products_max_supplement_origin_item": """--sql
         SELECT MAX(per.supplement_num) AS max_suppl
         FROM tblProducts AS m
         JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblProducts_tblPeriods
         WHERE m.FK_tblProducts_tblOrigins = ? AND m.FK_tblProducts_tblItems = ?;
     """,
-
     # "select_products_count_period_less": """
     #     SELECT COUNT(*) FROM tblProducts WHERE WHERE FK_tblProducts_tblOrigins = ? AND (period > 0 AND period < ?);
     # """,
-
     "select_products_count_origin_item_less_supplement": """--sql
         SELECT COUNT(*) AS number
         FROM tblProducts AS m
@@ -59,20 +49,17 @@ sql_products_queries = {
             m.FK_tblProducts_tblItems = ? AND
             (per.supplement_num > 0 AND per.supplement_num < ?);
     """,
-
     "select_changes": """SELECT CHANGES() AS changes;""",
-
     # --->
-#               FK_tblProducts_tblCatalogs  INTEGER NOT NULL, -- родитель каталога
-#                 FK_tblProducts_tblItems     INTEGER NOT NULL, -- тип материал/машина/расценка/оборудование
-#                 FK_tblProducts_tblOrigins   INTEGER NOT NULL, -- происхождение ТСН/ПСМ...
-#                 --
-#                 period      INTEGER NOT NULL,   -- период
-#                 code	 	TEXT NOT NULL,		-- шифр
-#                 description TEXT NOT NULL,      -- описание
-#                 measurer    TEXT,               -- единица измерения
-#                 digit_code  INTEGER NOT NULL,   -- шифр преобразованный в число
-
+    #               FK_tblProducts_tblCatalogs  INTEGER NOT NULL, -- родитель каталога
+    #                 FK_tblProducts_tblItems     INTEGER NOT NULL, -- тип материал/машина/расценка/оборудование
+    #                 FK_tblProducts_tblOrigins   INTEGER NOT NULL, -- происхождение ТСН/ПСМ...
+    #                 --
+    #                 period      INTEGER NOT NULL,   -- период
+    #                 code	 	TEXT NOT NULL,		-- шифр
+    #                 description TEXT NOT NULL,      -- описание
+    #                 measurer    TEXT,               -- единица измерения
+    #                 digit_code  INTEGER NOT NULL,   -- шифр преобразованный в число
     "insert_product": """--sql
         INSERT INTO tblProducts (
             FK_tblProducts_tblCatalogs, FK_tblProducts_tblItems,
@@ -81,7 +68,6 @@ sql_products_queries = {
         )
         VALUES ( ?, ?, ?, ?, ?, ?, ?, ?);
     """,
-
     "update_product_id": """--sql
         UPDATE tblProducts
         SET
@@ -89,6 +75,9 @@ sql_products_queries = {
             FK_tblProducts_tblOrigins = ?, FK_tblProducts_tblPeriods = ?,
             code = ?, description = ?, measurer = ?, digit_code = ?
         WHERE ID_tblProduct = ?;
+    """,
+    "update_product_period_by_id": """--sql
+        UPDATE tblProducts SET (FK_tblProducts_tblPeriods) = (?) WHERE ID_tblProduct = ?;
     """,
 }
 

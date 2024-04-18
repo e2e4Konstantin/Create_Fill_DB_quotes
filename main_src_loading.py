@@ -16,7 +16,7 @@ from tools import (
     parsing_storage_cost,
     parsing_transport_cost,
     get_indexes_for_supplement,
-    update_default_catalog_record,
+    update_product_default_value_record,
 )
 
 from config import LocalData
@@ -74,16 +74,16 @@ if __name__ == '__main__':
 
     local = LocalData(location)
     ic()
-    for supplement in local.periods_data[:1]:
-        # parsing_quotes_for_supplement(local, supplement)
-        # parsing_resources_for_supplement(local, supplement)
-        # update_default_catalog_record(
-        #     local.db_file, catalog="ТСН", period_id=supplement["id"]
-        # )
+    for supplement in local.periods_data:    #[:1]:
+        parsing_quotes_for_supplement(local, supplement)
+        parsing_resources_for_supplement(local, supplement)
 
         ic(supplement["indexes"])
         for index_period in supplement["indexes"]:
-            # parsing_storage_cost(local, index_period)
+            update_product_default_value_record(
+                local.db_file, catalog="ТСН", period_id=index_period[3]
+            )
+            parsing_storage_cost(local, index_period)
             parsing_transport_cost(local, index_period)
-    #         parsing_material_properties(local, index_period)
-    # delete_raw_table(local.db_file)
+            parsing_material_properties(local, index_period)
+    delete_raw_table(local.db_file)

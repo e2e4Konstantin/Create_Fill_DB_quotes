@@ -186,6 +186,7 @@ if __name__ == "__main__":
     for x in codes:
         print(f"{x:<15} {code_to_number(x)}")
 
+    print(f"'0.0-0-0' {code_to_number('0.0-0-0')}")
     # for s in codes:
     #     x = code_to_number(s)
     #     out = f"{s:30} ==> {x:22} "

@@ -266,12 +266,12 @@ if __name__ == "__main__":
         #     csv_file=local.periods_file, pgr_access=db_access["normative"]
         # )
 
-        # 3. Выгрузить: каталог расценок и расценки для периодов,
-        #  данные которых записаны в конфиг. файл
-        export_quotes_for_range_periods(local, db_access["normative"])
+        # # 3. Выгрузить: каталог расценок и расценки для периодов,
+        # #  данные которых записаны в конфиг. файл
+        # export_quotes_for_range_periods(local, db_access["normative"])
 
-        # 4. Выгрузить: каталог ресурсов и ресурсы для конфиг периодов
-        export_resource_for_range_periods(local, db_access["normative"])
+        # # 4. Выгрузить: каталог ресурсов и ресурсы для конфиг периодов
+        # export_resource_for_range_periods(local, db_access["normative"])
 
         # 5. Создать диапазон Normative_id индексных периодов
         normative_index_periods = tuple([
@@ -280,14 +280,14 @@ if __name__ == "__main__":
             for indexes in supplement["indexes"]
         ])
         print(normative_index_periods)
-        # 6. Выгрузить %ЗСР
-        export_storage_cost_to_csv_for_period_range(
-            db_access["normative"], local.storage_costs_file, normative_index_periods
-        )
-        # 6. Выгрузить Транспортные расходы
-        export_transport_cost_to_csv_for_period_range(
-            db_access["normative"], local.transport_costs_file, normative_index_periods
-        )
+        # # 6. Выгрузить %ЗСР
+        # export_storage_cost_to_csv_for_period_range(
+        #     db_access["normative"], local.storage_costs_file, normative_index_periods
+        # )
+        # # 6. Выгрузить Транспортные расходы
+        # export_transport_cost_to_csv_for_period_range(
+        #     db_access["normative"], local.transport_costs_file, normative_index_periods
+        # )
         # 7. Выгрузить Свойства Материалов Глава 1,
         export_material_properties_to_csv_for_period_range(
             db_access["normative"],
