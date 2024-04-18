@@ -29,6 +29,53 @@ LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPer
 where tc.FK_tblTransportCosts_tblPeriods = 
 ;
 
+-- code = '1.0-1-21'
+select ID_tblProduct from tblProducts where code='1.0-1-21';
+-- 44495
+select ID_tblTransportCost from tblTransportCosts where FK_tblTransportCosts_tblProducts = 44495;
+-- 6
+select per.title, tc.* 
+from _tblHistoryTransportCosts tc 
+LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
+where tc._rowid=6
+order by _version desc
+limit 5
+;
+
+
+-- ОПРЕДЕЛИТЬ МАКСИМАЛЬНЫЙ ИНДЕКСНЫЙ ПЕРИОД
+SELECT COALESCE(MAX(per.index_num), 0) AS max_index
+FROM tblTransportCosts AS tc
+LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
+WHERE per.index_num IS NOT NULL;
+-- 211
+-- получить id периода
+select per.ID_tblPeriod from tblPeriods per where per.index_num = 211;
+--167
+
+-- получить id транспортных расходов для максимального индекса у которых базовая цена != 0
+select FK_tblTransportCosts_tblProducts from tblTransportCosts tc
+LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
+where per.ID_tblPeriod = 167 and base_price > 0;
+;
+--
+-- получить id периода транспортных расходов
+-- для максимального индекса у которых базовая цена > 0
+SELECT p.ID_tblPeriod
+        FROM tblPeriods p
+        WHERE p.index_num = (
+            SELECT COALESCE(MAX(p2.index_num), 0)
+            FROM tblTransportCosts tc
+            JOIN tblPeriods p2 ON p2.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
+            WHERE
+                p2.index_num IS NOT NULL
+                AND tc.base_price > 0
+        );
+
+
+
+
+
 
 
 
