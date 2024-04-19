@@ -54,7 +54,7 @@ select per.ID_tblPeriod from tblPeriods per where per.index_num = 211;
 --167
 
 -- получить id транспортных расходов для максимального индекса у которых базовая цена != 0
-select FK_tblTransportCosts_tblProducts from tblTransportCosts tc
+select FK_tblTransportCosts_tblProducts AS id_tc from tblTransportCosts tc
 LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
 where per.ID_tblPeriod = 167 and base_price > 0;
 ;
@@ -72,7 +72,10 @@ SELECT p.ID_tblPeriod
                 AND tc.base_price > 0
         );
 
-
+SELECT FK_tblTransportCosts_tblProducts
+        FROM tblTransportCosts tc
+        LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = tc.FK_tblTransportCosts_tblPeriods
+        WHERE per.ID_tblPeriod = 167 AND base_price > 0;
 
 
 
