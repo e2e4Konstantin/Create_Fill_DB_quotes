@@ -53,7 +53,7 @@ def db_data_prepare(location: str):
         parsing_raw_periods(local)
 
         # создать диапазон дополнений. (начиная с 69 дополнения изменилась модель расчета)
-        supplement_min, supplement_max = 69, 71
+        supplement_min, supplement_max = 69, 70
         local.periods_data = get_periods_range(
             db_file=local.db_file, origin_name="ТСН", period_item_type="supplement",
             supplement_min=supplement_min, supplement_max=supplement_max,
