@@ -17,6 +17,7 @@ sql_raw_queries = {
     "delete_index_raw_data": """DROP INDEX IF EXISTS idxTmpMaterial;""",
     "delete_index_raw_resources": """DROP INDEX IF EXISTS idxRawCodeGrResources;""",
     "delete_index_raw_catalog_resources": """DROP INDEX IF EXISTS idxRawGwpCodeResources;""",
+    "delete_raw_data_old_periods": """DELETE FROM tblRawData WHERE DATE(date_start) <= '2020-01-01';""",
     # --- > Получение данных ----------------------------------------------------------------------
     "update_index_number": """--sql
         UPDATE tblRawData

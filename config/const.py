@@ -16,3 +16,19 @@ CONFIG_FILE_NAME = 'config_quotes_parsing.json'
 DB_FILE_NAME = 'Normative.sqlite3'
 
 MINIMUM_VALUE = 0E-2
+
+
+MONTHS = {
+    "январь": 1,
+    "февраль": 2,
+    "март": 3,
+    "апрель": 4,
+    "май": 5,
+    "июнь": 6,
+    "июль": 7,
+    "август": 8,
+    "сентябрь": 9,
+    "октябрь": 10,
+    "ноябрь": 11,
+    "декабрь": 12,
+}

@@ -142,7 +142,7 @@ sql_periods_queries = {
     );
     """,
     "create_index_periods": """--sql
-        CREATE UNIQUE INDEX IF NOT EXISTS idxPeriods ON tblPeriods (
+        CREATE INDEX idxPeriods ON tblPeriods (
             FK_Origin_tblOrigins_tblPeriods, FK_Category_tblItems_tblPeriods, supplement_num, index_num
         );
     """,
@@ -173,7 +173,7 @@ sql_periods_queries = {
     "select_period_by_id": """--sql
         SELECT * FROM tblPeriods WHERE ID_tblPeriod = ?;
     """,
-    "select_period_by_normative_id": """--sql
-        SELECT * FROM tblPeriods WHERE basic_database_id = ?;
+    "select_period_by_origin_and_numbers": """--sql
+         SELECT * FROM tblPeriods WHERE FK_Origin_tblOrigins_tblPeriods = ? AND supplement_num = ? AND index_num = ?;
     """,
 }

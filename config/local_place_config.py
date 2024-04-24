@@ -27,6 +27,7 @@ class LocalData:
             "storage_costs_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\StorageCost",
             "transport_costs_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\TransportCosts",
             "material_properties_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\MaterialProperties",
+            "monitoring_path": r"C:\Users\kazak.ke\Documents\Задачи\5_Надя\Выгрузки",
         },
         "home": {
             "db_path": r"..\DB",
@@ -75,6 +76,7 @@ class LocalData:
         self.material_properties_path: str = LocalData.SRC[location][
             "material_properties_path"
         ]
+        self.monitoring_path: str = LocalData.SRC[location]["monitoring_path"]
 
         # читаем конфиг из файла
         config = read_config_to_json(self.config_file)
@@ -112,6 +114,7 @@ class LocalData:
         config["storage_costs_path"] = self.storage_costs_path
         config["transport_costs_path"] = self.transport_costs_path
         config["material_properties_path"] = self.material_properties_path
+        config["monitoring_path"] = self.monitoring_path
 
         # сортируем периоды по убыванию номеров дополнений
         if self.periods_data:

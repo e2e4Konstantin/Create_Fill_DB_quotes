@@ -1,7 +1,8 @@
 import pandas as pd
-from icecream import ic
 
-from files_features import create_abspath_file
+# from icecream import ic
+# from files_features import create_abspath_file
+
 from config import dbTolls
 
 
@@ -61,7 +62,7 @@ def _load_df_to_db_table(df: pd.DataFrame, db_file: str, table_name: str) -> int
 
 
 def load_csv_to_raw_table(csv_path: str, db_path: str, delimiter: str = ";") -> int:
-    """Imports data from a CSV file to the tblRawData table."""
+    """Импорт данных из файла CSV в таблицу tblRawData"""
     df = pd.read_csv(csv_path, delimiter=delimiter, index_col=False, dtype=str)
     # df.to_clipboard()
     return _load_df_to_db_table(df, db_path, "tblRawData")
@@ -72,3 +73,10 @@ def load_xlsx_to_raw_table(excel_file: str, sheet_name: str, db_file: str) -> in
     df: pd.DataFrame = _read_excel_to_df(excel_file, sheet_name)
     # df.to_clipboard()
     return _load_df_to_db_table(df, db_file, "tblRawData")
+
+
+def load_parquet_to_raw_table(parquet_data: str, db_path: str) -> int:
+    """Импортирует данные из файла Parquet в таблицу 'tblRawData'."""
+    raw_data = pd.read_parquet(parquet_data)
+    return _load_df_to_db_table(raw_data, db_path, "tblRawData")
+

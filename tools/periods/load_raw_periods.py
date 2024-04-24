@@ -7,16 +7,16 @@ from typing import Literal
 from pathlib import Path
 
 # --
-from config import dbTolls
+from config import dbTolls, MONTHS
 from tools.shared.excel_df_raw_table_transfer import load_csv_to_raw_table
 
-from config import LocalData, TON_ORIGIN, EQUIPMENTS_ORIGIN
+from config import LocalData, TON_ORIGIN, EQUIPMENTS_ORIGIN, MONITORING_ORIGIN
 from tools.shared.shared_features import (
     get_origin_id,
     get_directory_id
 )
 from tools.shared.code_tolls import text_cleaning, get_integer_value, date_parse
-from sql_queries import sql_periods_queries
+from sql_queries import sql_periods_queries, sql_raw_queries
 from files_features import output_message, output_message_exit
 
 
@@ -50,7 +50,11 @@ def _insert_period(db: dbTolls, data) -> int | None:
 
 def _get_supplement_index_numbers(
     kind: Literal[
-        "equipment_supplement", "equipment_index", "ton_supplement", "ton_index"
+        "equipment_supplement",
+        "equipment_index",
+        "ton_supplement",
+        "ton_index",
+        "monitoring_index",
     ],
     text: str,
 ) -> PairSI | None:
@@ -84,6 +88,15 @@ def _get_supplement_index_numbers(
             # 209 индекс/дополнение 71 (мониторинг Февраль 2024)
             pattern = r"^\s*(\d+)\s+индекс\/дополнение\s+(\d+)"
             result = re.match(pattern, text)
+            if result:
+                index_number = get_integer_value(result.groups()[0])
+                supplement_number = get_integer_value(result.groups()[1])
+                return PairSI(supplement_number, index_number)
+            return None
+        case "monitoring_index":
+            # Мониторинг Февраль 2024 (209 сборник/дополнение 71)
+            pattern = r"\((\d+)\s+сборник\/дополнение\s+(\d+).*\)"
+            result = re.search(pattern, text)
             if result:
                 index_number = get_integer_value(result.groups()[0])
                 supplement_number = get_integer_value(result.groups()[1])
@@ -254,18 +267,21 @@ def _update_periods_parent(db_file: str, origin_name: str) -> int:
     индекс для Дополнений - предыдущий (последний) индексный период.
     """
     with dbTolls(db_file) as db:
-        # получить id типа справочника ТСН/Оборудование/...
+        # получить id типа справочника ТСН/Оборудование/Мониторинг
         origin_id = get_origin_id(db, origin_name=origin_name)
         dir_name = "periods_category"
         # получить id справочника "periods_category" для дополнений и индексов
         supplement_id = get_directory_id(db, dir_name, "supplement")
         index_id = get_directory_id(db, dir_name, "index")
+
         # обновить родителей для дополнений
         query = sql_periods_queries["update_periods_supplement_parent"]
         db.go_execute(query, {"id_origin": origin_id, "id_item": supplement_id})
+
         # обновить родителей для индексов
         query = sql_periods_queries["update_periods_index_parent"]
         db.go_execute(query, {"id_origin": origin_id, "id_item": index_id})
+
         # обновить номер индекса для дополнений - максимальный индекс для прошлого дополнения
         query = sql_periods_queries["update_periods_index_num_by_max"]
         db.go_execute(
@@ -279,6 +295,65 @@ def _update_periods_parent(db_file: str, origin_name: str) -> int:
     return 0
 
 
+
+
+
+def _monitoring_index_periods_parsing(db_file: str) -> int | None:
+    """Запись периодов 'Мониторинга' категории Индекс' из tblRawData в таблицу tblPeriods."""
+    with dbTolls(db_file) as db:
+        # Мониторинг Декабрь 2023 (207 сборник/дополнение 70)
+        date_pattern = re.compile(
+            "^.+(Январь|Февраль|Март|Апрель|Май|Июнь|Июль|Август|Сентябрь|Октябрь|Ноябрь|Декабрь)\s+(\d+)"
+        )
+
+        pattern = "^\s*Мониторинг"
+        monitoring = _get_raw_data_by_pattern(
+            db, column_name="[title]", pattern=pattern
+        )
+        if monitoring is None:
+            return None
+        origin_id = get_origin_id(db, origin_name=MONITORING_ORIGIN)
+        category_id = get_directory_id(
+            db, directory_team="periods_category", item_name="index"
+        )
+        for line in monitoring:
+            title = text_cleaning(line["title"])
+
+            result = _get_supplement_index_numbers("monitoring_index", title)
+            if result:
+                supplement_num, index_num = result
+            else:
+                output_message_exit("не смогли определить период мониторинга", f"{title}")
+
+            result = date_pattern.match(title)
+            if result:
+                month = result.groups()[0]
+                year = get_integer_value(result.groups()[1])
+            else:
+                output_message_exit("не смогли определить период мониторинга", f"{title}")
+            monitor_number = (year % 100) * 1000 + MONTHS.get(month.lower(), 0)
+            title = f"Мониторинг {month} {year} (индекс {index_num}/дополнение {supplement_num}) - {monitor_number}"
+
+            date_start = date_parse(text_cleaning(line["date_start"]))
+            comment = text_cleaning(line["cmt"])
+            ID_parent = None
+            basic_database_id = line["id"]
+            data = (
+                title,
+                supplement_num,
+                index_num,
+                date_start,
+                comment,
+                ID_parent,
+                origin_id,
+                category_id,
+                basic_database_id,
+            )
+            _insert_period(db, data)
+    return 0
+
+
+# ----------------------------------------------------------------------------------------
 def parsing_raw_periods(location: LocalData):
     """
     Читает данные о периодах из файла выгруженного из Postgres Normative
@@ -291,9 +366,10 @@ def parsing_raw_periods(location: LocalData):
     load_csv_to_raw_table(csv_periods_file, db_file, delimiter=",")
     # message = f"Данные по периодам прочитаны в tblRawData из файла {csv_periods_file!r}"
     # ic(message)
-    # Удалить все периоды !!!!!!!!!!!!
+    # Удалить все периоды !!!!!!!!!!!! и в tblRawData периоды старше 2020-01-01
     with dbTolls(db_file) as db:
         db.go_execute(sql_periods_queries["delete_all_data_periods"])
+        db.go_execute(sql_raw_queries["delete_raw_data_old_periods"])
 
     # # переносим ТСН периоды
     _ton_supplement_periods_parsing(db_file)
@@ -304,8 +380,14 @@ def parsing_raw_periods(location: LocalData):
     _equipment_supplement_periods_parsing(db_file)
     _equipment_index_periods_parsing(db_file)
     _update_periods_parent(db_file, EQUIPMENTS_ORIGIN)
+
+    # переносим периоды Мониторинга
+    _monitoring_index_periods_parsing(db_file)
+    _update_periods_parent(db_file, MONITORING_ORIGIN)
+    #
     message = f"Периоды загружены из файла {Path(csv_periods_file).name!r}"
     ic(message)
+
     return 0
 
 

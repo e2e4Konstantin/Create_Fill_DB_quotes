@@ -2,7 +2,8 @@ import pandas as pd
 from icecream import ic
 import sqlite3
 
-from config import dbTolls, DirectoryItem, DEFAULT_RECORD_CODE
+from config import dbTolls, DirectoryItem, DEFAULT_RECORD_CODE, Period
+
 from sql_queries import sql_items_queries, sql_catalog_queries, sql_products_queries, sql_raw_queries, sql_origins, sql_periods_queries
 from files_features import output_message, output_message_exit
 from tools.shared.code_tolls import clear_code
@@ -254,6 +255,16 @@ def get_period_by_id(db: dbTolls, period_id: int) -> sqlite3.Row | None:
         return period[0]
     return None
 
+def get_period_by_origin_and_numbers(db: dbTolls, origin_id: int, period: Period) -> sqlite3.Row | None:
+    """Получает строку из tblPeriods по справочнику и номерам."""
+    period_result = db.go_select(
+        sql_periods_queries["select_period_by_origin_and_numbers"],
+        (origin_id, period.supplement, period.index)
+    )
+    if period_result:
+        return period[0]
+    return None
+
 
 def delete_last_period_product_row(db: dbTolls, origin_id: int, item_id: int):
     """ Удаляет все записи у которых период < максимального.
@@ -287,11 +298,15 @@ def delete_last_period_product_row(db: dbTolls, origin_id: int, item_id: int):
 
 def get_raw_data(db: dbTolls) -> list[sqlite3.Row] | None:
     """ Выбрать все записи из сырой таблицы. """
-    rows = db.go_select(sql_raw_queries["select_rwd_all"])
-    if not rows:
+    try:
+        rows = db.go_select(sql_raw_queries["select_rwd_all"])
+    except AttributeError as e:
+        output_message_exit("Ошибка при получении данных из RAW таблицы:",
+                            repr(e))
+        return None
+    if rows is None:
         output_message_exit("в RAW таблице не найдено ни одной записи:",
                             "tblRawData пустая.")
-        return None
     return rows
 
 

@@ -8,6 +8,10 @@ DirectoryItem.__annotations__ = {
     'id': int, 'item_name': str, 'directory_name': str, 're_pattern': str, 're_prefix': str
 }
 
+Period = namedtuple(typename="Period", field_names=["supplement", "index"])
+Period.__annotations__ = {"supplement": int, "index": str,}
+
+
 if __name__ == '__main__':
     from icecream import ic
 
