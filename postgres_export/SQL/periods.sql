@@ -19,4 +19,9 @@ ORDER BY per.created_on DESC
 ;
 --167264731
 
-SELECT per.*  FROM larix."period" per WHERE per.deleted_on IS NULL AND per."id" = 167264731
+SELECT per.*  FROM larix."period" per WHERE per.deleted_on IS NULL AND per."id" = 167264731;
+
+SELECT per.*  FROM larix."period" per WHERE per.deleted_on IS NULL AND per.title ~'^\s*Мониторинг'
+ORDER BY per.created_on DESC 
+;
+--

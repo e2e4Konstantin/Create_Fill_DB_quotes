@@ -19,6 +19,9 @@ sql_raw_queries = {
     "delete_index_raw_catalog_resources": """DROP INDEX IF EXISTS idxRawGwpCodeResources;""",
     "delete_raw_data_old_periods": """DELETE FROM tblRawData WHERE DATE(date_start) <= '2020-01-01';""",
     # --- > Получение данных ----------------------------------------------------------------------
+    "round_supplier_price_for_monitoring": """--sql
+        UPDATE tblRawData SET supplier_price = ROUND(supplier_price, ?);
+    """,
     "update_index_number": """--sql
         UPDATE tblRawData
         SET index_number = CAST(substr(title_period,1,INSTR(title_period, ' ')) AS INTEGER);

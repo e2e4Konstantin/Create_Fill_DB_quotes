@@ -262,7 +262,7 @@ def get_period_by_origin_and_numbers(db: dbTolls, origin_id: int, period: Period
         (origin_id, period.supplement, period.index)
     )
     if period_result:
-        return period[0]
+        return period_result[0]
     return None
 
 

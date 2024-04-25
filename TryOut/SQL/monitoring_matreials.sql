@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS tblMonitoringMaterials
+CREATE TABLE tblMonitoringMaterials
             (
                 ID_tblMonitoringMaterial              INTEGER PRIMARY KEY NOT NULL,
                 FK_tblMonitoringMaterial_tblProducts  INTEGER NOT NULL,
@@ -13,11 +13,11 @@ CREATE TABLE IF NOT EXISTS tblMonitoringMaterials
                 FOREIGN KEY (FK_tblMonitoringMaterial_tblPeriods) REFERENCES tblPeriods (ID_tblPeriod),
                 UNIQUE (FK_tblMonitoringMaterial_tblProducts, FK_tblMonitoringMaterial_tblPeriods)
             );
-
+        
 CREATE UNIQUE INDEX idxMonitoringMaterials ON tblMonitoringMaterials (
-            FK_tblMonitoringMaterial_tblProducts, FK_tblMonitoringMaterial_tblPeriods
-            );        
-
+    FK_tblMonitoringMaterial_tblProducts, FK_tblMonitoringMaterial_tblPeriods
+            );
+            
 CREATE VIEW viewMonitoringMaterials AS
             SELECT
                 per.title AS period,
@@ -42,9 +42,8 @@ CREATE TABLE _tblHistoryMonitoringMaterials (
             _version      INTEGER NOT NULL,
             _updated      INTEGER NOT NULL,
             _mask         INTEGER NOT NULL
-        );       
+        );            
         
-
 CREATE INDEX idxHistoryMonitoringMaterials ON _tblHistoryMonitoringMaterials (_rowid);
 
 
@@ -100,6 +99,7 @@ CREATE TRIGGER tgrHistoryMonitoringMaterialsDelete
             );
         END;
         
+
 CREATE TRIGGER tgrHistoryMonitoringMaterialsUpdate
         AFTER UPDATE ON tblMonitoringMaterials
         FOR EACH ROW
