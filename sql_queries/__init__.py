@@ -9,5 +9,6 @@ from sql_queries.sql_periods import sql_periods_queries
 from sql_queries.sql_purchasing_storage_costs import sql_storage_costs_queries
 from sql_queries.sql_transport_costs import sql_transport_costs
 from sql_queries.sql_materials_properties import sql_materials
-from sql_queries.sql_monitoring import sql_monitoring
+from sql_queries.sql_monitoring_materials import sql_monitoring_materials
+from sql_queries.sql_monitoring_transport_costs import sql_monitoring_transport_costs
 

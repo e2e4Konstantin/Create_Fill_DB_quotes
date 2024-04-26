@@ -1,27 +1,10 @@
-sql_monitoring = {
+sql_monitoring_materials = {
     "select_monitoring_materials_by_product_and_period": """--sql
         SELECT * FROM tblMonitoringMaterials WHERE FK_tblMonitoringMaterial_tblProducts = ? AND FK_tblMonitoringMaterial_tblPeriods = ?;
     """,
     "select_monitoring_materials_by_product": """--sql
         SELECT * FROM tblMonitoringMaterials WHERE FK_tblMonitoringMaterial_tblProducts = ?;
     """,
-    #
-    "insert_monitoring_materials": """--sql
-        INSERT INTO tblMonitoringMaterials (
-            FK_tblMonitoringMaterial_tblProducts, FK_tblMonitoringMaterial_tblPeriods,
-            supplier_price, delivery, title
-        )
-        VALUES (?, ?, ?, ?, ?);
-    """,
-    #
-    "update_monitoring_materials_by_id": """--sql
-            UPDATE tblMonitoringMaterials
-            SET
-                FK_tblMonitoringMaterial_tblProducts = ?,
-                FK_tblMonitoringMaterial_tblPeriods = ?,
-                supplier_price = ?, delivery = ?, title = ?
-            WHERE ID_tblMonitoringMaterial = ?;
-        """,
     #
     "select_monitoring_materials_max_index_number": """--sql
         SELECT MAX(per.index_num) AS max_index
@@ -50,6 +33,29 @@ sql_monitoring = {
                 AND per.ID_tblPeriod IS NOT NULL
         );
     """,
+    # -----------------------------------------------------------------------------------
+    #
+    "delete_table_monitoring_materials": """--sql DROP TABLE IF EXISTS tblMonitoringMaterials;""",
+    "delete_table_history_monitoring_materials": """--sql DROP TABLE IF EXISTS _tblHistoryMonitoringMaterials;""",
+    "delete_view_monitoring_materials": """--sql DROP VIEW IF EXISTS viewMonitoringMaterials;""",
+    #
+    "insert_monitoring_materials": """--sql
+        INSERT INTO tblMonitoringMaterials (
+            FK_tblMonitoringMaterial_tblProducts, FK_tblMonitoringMaterial_tblPeriods,
+            supplier_price, delivery, title
+        )
+        VALUES (?, ?, ?, ?, ?);
+    """,
+    #
+    "update_monitoring_materials_by_id": """--sql
+            UPDATE tblMonitoringMaterials
+            SET
+                FK_tblMonitoringMaterial_tblProducts = ?,
+                FK_tblMonitoringMaterial_tblPeriods = ?,
+                supplier_price = ?, delivery = ?, title = ?
+            WHERE ID_tblMonitoringMaterial = ?;
+        """,
+    #
     # --- > Базовая таблица для хранения мониторинга цен поставщиков на материалы
     "create_table_monitoring_materials": """--sql
         CREATE TABLE tblMonitoringMaterials
@@ -88,7 +94,7 @@ sql_monitoring = {
             ORDER BY prd.digit_code;
 
     """,
-    # --- > История базовой таблицы -----------------------------------------------------
+    # --- > История ----------------------------------------------------------------------
     "create_table_history_monitoring_materials": """--sql
         CREATE TABLE _tblHistoryMonitoringMaterials (
             _rowid                               INTEGER,

@@ -27,7 +27,7 @@ class LocalData:
             "storage_costs_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\StorageCost",
             "transport_costs_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\TransportCosts",
             "material_properties_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Postgres_Direct\MaterialProperties",
-            "monitoring_path": r"C:\Users\kazak.ke\Documents\Задачи\5_Надя\Выгрузки",
+            "monitoring_path": r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Мониторинг",
         },
         "home": {
             "db_path": r"..\DB",

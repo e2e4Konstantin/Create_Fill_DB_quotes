@@ -1,7 +1,7 @@
 import sqlite3
 from icecream import ic
 
-from config import dbTolls, LocalData, MONITORING_ORIGIN, TON_ORIGIN, Period
+from config import dbTolls, LocalData, MONITORING_ORIGIN, TON_ORIGIN, ROUNDING, Period
 from tools.shared.excel_df_raw_table_transfer import load_csv_to_raw_table
 from sql_queries import (
     sql_raw_queries,
@@ -9,7 +9,7 @@ from sql_queries import (
     sql_transport_costs,
     sql_storage_costs_queries,
     sql_materials,
-    sql_monitoring,
+    sql_monitoring_materials,
 )
 from files_features import output_message_exit, create_abspath_file
 from tools.shared.code_tolls import (
@@ -65,12 +65,12 @@ def _make_data_from_raw_monitoring_materials(db: dbTolls, raw_line: sqlite3.Row,
     return data
 
 
-def delete_last_period_monitoring_material_properties(db_file: str):
+def delete_last_period_monitoring_material(db_file: str):
     """Удаляет записи из таблицы tblMonitoringMaterials у которых период < максимального.
     Вычисляет максимальный период для таблицы tblMonitoringMaterials."""
     with dbTolls(db_file) as db:
         work_cursor = db.go_execute(
-            sql_monitoring["select_monitoring_materials_max_index_number"]
+            sql_monitoring_materials["select_monitoring_materials_max_index_number"]
         )
         result = work_cursor.fetchone() if work_cursor else None
         if result is None:
@@ -82,7 +82,7 @@ def delete_last_period_monitoring_material_properties(db_file: str):
         max_index = result["max_index"]
         ic(max_index)
         count_records_to_be_deleted = db.go_execute(
-            sql_monitoring["select_monitoring_materials_count_less_index_number"],
+            sql_monitoring_materials["select_monitoring_materials_count_less_index_number"],
             (max_index,),
         )
         number = count_records_to_be_deleted.fetchone()["number"]
@@ -90,7 +90,7 @@ def delete_last_period_monitoring_material_properties(db_file: str):
             # message = f"Будут удалены {number} продуктов с периодом меньше: {max_supplement_number} {query_info}"
             # ic(message)
             deleted_cursor = db.go_execute(
-                sql_monitoring["delete_monitoring_materials_less_max_idexx"],
+                sql_monitoring_materials["delete_monitoring_materials_less_max_idex"],
                 (max_index,),
             )
             message = f"удалено {deleted_cursor.rowcount} записей с период дополнения < {max_index}"
@@ -107,12 +107,12 @@ def update_monitoring_material(db: dbTolls, material: sqlite3.Row, data: tuple) 
     if raw_index >= index_num:
         data = (*data[:-1], material_id)
         db.go_execute(
-            sql_monitoring["update_monitoring_materials_by_id"], data
+            sql_monitoring_materials["update_monitoring_materials_by_id"], data
         )
         return 0
     else:
         output_message_exit(
-            f"Ошибка обновления 'Свойств Мониторинга Материала': {tuple(material[0])}",
+            f"Ошибка обновления 'Мониторинга Материала': {tuple(material)}",
             f"номер индекса {index_num} больше загружаемого {raw_index}",
         )
     return None
@@ -120,9 +120,9 @@ def update_monitoring_material(db: dbTolls, material: sqlite3.Row, data: tuple) 
 
 def insert_monitoring_material(db: dbTolls, data: tuple):
     """ Вставляет новый материал мониторинга в tblMonitoringMaterials из data. """
-    message = f"INSERT tblMaterials: {data[:-1]!r}"
+    message = f"INSERT tblMonitoringMaterials: {data[:-1]!r}"
     db.go_insert(
-        sql_monitoring["insert_monitoring_materials"], data, message,
+        sql_monitoring_materials["insert_monitoring_materials"], data, message,
     )
 
 
@@ -139,7 +139,7 @@ def transfer_raw_monitoring_materials(db_file, period: Period):
             # ic(raw_data)
             product_id = raw_data[0]
             material = db.go_select(
-                sql_monitoring["select_monitoring_materials_by_product"], (product_id,)
+                sql_monitoring_materials["select_monitoring_materials_by_product"], (product_id,)
             )
             if material:
                 update_monitoring_material(db, material[0], raw_data)
@@ -150,13 +150,14 @@ def transfer_raw_monitoring_materials(db_file, period: Period):
             # db.connection.commit()
         ic(len(raw_data_monitoring), len(inserted_success), len(updated_success))
     #  удалить записи старых периодов
-    delete_last_period_monitoring_material_properties(db_file)
+    delete_last_period_monitoring_material(db_file)
 
 def round_raw_supplier_price(db_file: str, rounding_digits):
     """Округлить до rounding_digits знаков цену продавца."""
     with dbTolls(db_file) as db:
         db.go_execute(
-            sql_raw_queries["round_supplier_price_for_monitoring"], (rounding_digits,)
+            sql_raw_queries["round_supplier_price_for_monitoring_materials"],
+            (rounding_digits,),
         )
 
 
@@ -171,7 +172,7 @@ def parsing_monitoring_materials(
     ic(message)
     file = create_abspath_file(location.monitoring_path, monitoring_csv_file)
     load_csv_to_raw_table(file, location.db_file, delimiter=",")
-    round_raw_supplier_price(location.db_file, 2)
+    round_raw_supplier_price(location.db_file, ROUNDING)
     #
     transfer_raw_monitoring_materials(location.db_file, period)
     return 0
@@ -181,5 +182,5 @@ if __name__ == "__main__":
     local = LocalData("office")  # office  # home
 
     monitoring_period = Period(71,210)
-    data_file = "Мониторинг_Март_2024_210_71_result.csv"
+    data_file = "materials_monitoring_result_71_210.csv"
     parsing_monitoring_materials(local, data_file, monitoring_period)

@@ -10,6 +10,8 @@ from sql_queries import (
     sql_storage_costs_queries,
     sql_transport_costs,
     sql_materials,
+    sql_monitoring_materials,
+    sql_monitoring_transport_costs,
 )
 
 from tools.create.fill_directory import (
@@ -158,6 +160,45 @@ def _create_material_properties_environment(db):
     db.go_execute(sql_materials["create_trigger_update_materials"])
 
 
+def _create_monitoring_material_environment(db):
+    """Создать инфраструктуру для хранения мониторинга материалов"""
+    queries = [
+        "delete_table_monitoring_materials",
+        "delete_table_history_monitoring_materials",
+        "delete_view_monitoring_materials",
+        "create_table_monitoring_materials",
+        "create_index_monitoring_materials",
+        "create_view_monitoring_materials",
+        "create_table_history_monitoring_materials",
+        "create_index_history_monitoring_materials",
+        "create_trigger_history_monitoring_materials_insert",
+        "create_trigger_history_monitoring_materials_delete",
+        "create_trigger_history_monitoring_materials_update",
+    ]
+    for query in queries:
+        db.go_execute(sql_monitoring_materials[query])
+
+def _create_monitoring_transport_costs_environment(db):
+    """Создать инфраструктуру для хранения мониторинга материалов"""
+    queries = [
+        "delete_table_monitoring_transport_costs",
+        "delete_table_history_monitoring_transport_costs",
+        "delete_view_monitoring_transport_costs",
+        #
+        "create_table_monitoring_transport_costs",
+        "create_index_monitoring__transport_costs",
+        "create_view_monitoring_transport_costs",
+        #
+        "create_table_history_monitoring_transport_costs",
+        "create_index_history_monitoring_transport_costs",
+        "create_trigger_history_monitoring_transport_costs_insert",
+        "create_trigger_history_monitoring_transport_costs_delete",
+        "create_trigger_history_monitoring_transport_costs_update",
+    ]
+    for query in queries:
+        db.go_execute(sql_monitoring_transport_costs[query])
+
+
 def create_tables_indexes(db_file: str):
     """
     Создает таблицы:
@@ -176,6 +217,9 @@ def create_tables_indexes(db_file: str):
         _create_storage_costs_environment(db)
         _create_transport_costs_environment(db)
         _create_material_properties_environment(db)
+        # monitoring
+        _create_monitoring_material_environment(db)
+        _create_monitoring_transport_costs_environment(db)
 
 
 def db_create_tables_and_fill_directory(db_file: str) -> int:
