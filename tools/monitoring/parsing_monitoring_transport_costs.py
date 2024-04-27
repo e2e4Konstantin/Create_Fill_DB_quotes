@@ -194,12 +194,12 @@ def parsing_monitoring_transport_costs(
 
 
 if __name__ == "__main__":
-    from tools.create.create_tables import _create_monitoring_transport_costs_environment
+    # from tools.create.create_tables import _create_monitoring_transport_costs_environment
 
     local = LocalData("office")  # office  # home
 
-    with dbTolls(local.db_file) as db:
-        _create_monitoring_transport_costs_environment(db)
+    # with dbTolls(local.db_file) as db:
+    #     _create_monitoring_transport_costs_environment(db)
 
     monitoring_period = Period(71, 208)
     data_file = "transport_monitoring_result_71_208.csv"
