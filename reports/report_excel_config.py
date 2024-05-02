@@ -38,6 +38,7 @@ class ExcelReport(ExcelBase):
         self.worksheet = self.workbook[sheet_name]
 
         self.worksheet.append(header)
+
         for col in range(1, len(header) + 1):
             self.worksheet.cell(row=row, column=col).fill = PatternFill(
                 "solid", fgColor=self.tab_colors["header"]
@@ -53,10 +54,10 @@ class ExcelReport(ExcelBase):
     def write_format(self, sheet_name: str, row_index: int = 2):
         """записывает строку в лист"""
         worksheet = self.workbook[sheet_name]
-        for column_index in range(14, 18):
-            worksheet.cell(
-                row=row_index, column=column_index
-            ).number_format = numbers.FORMAT_NUMBER_00
+        # for column_index in range(14, 18):
+        #     worksheet.cell(
+        #         row=row_index, column=column_index
+        #     ).number_format = numbers.FORMAT_NUMBER_00
         #
         worksheet.cell(row=row_index, column=1).font = Font(
             name="Arial", size=8, bold=True,
@@ -72,5 +73,7 @@ class ExcelReport(ExcelBase):
             worksheet.cell(row=row_index, column=col).font = Font(
                 name="Arial", size=8, bold=False, color=Color("808080")
             )
+
+        #
         # worksheet.cell(row=row_index, column=2).number_format = "# ##0,00"
         # worksheet.cell(row=row_index, column=10).number_format = "# ##0,00"

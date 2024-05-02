@@ -28,6 +28,16 @@ from postgres_export import (
 )
 
 
+def export_parsing_periods(local: LocalData):
+    """
+    Экспортирует периоды из Postgres.Normative larix.period в csv файл.
+    Загружает периоды из scv файла в таблицу периодов tblPeriods.
+    """
+    export_table_periods_to_csv(
+        csv_file=local.periods_file, pgr_access=db_access["normative"]
+    )
+    parsing_raw_periods(local)
+
 
 def db_data_prepare(location: str):
     """
@@ -41,19 +51,18 @@ def db_data_prepare(location: str):
     Данные из LocalData записываются в файл конфигурации.
     """
     with LocalData(location) as local:
-        db_file: str = local.db_file
-        ic(location, db_file)
+        ic(location, local.db_file)
         # создать таблицы, индексы .... заполнить справочники
-        db_create_tables_and_fill_directory(db_file)
-
-        # выгрузить таблицу периодов из Postgres Normative
-        export_table_periods_to_csv(
-            csv_file=local.periods_file, pgr_access=db_access["normative"]
-        )
-        parsing_raw_periods(local)
+        db_create_tables_and_fill_directory(local.db_file)
+        export_parsing_periods(local)
+        # # выгрузить таблицу периодов из Postgres Normative
+        # export_table_periods_to_csv(
+        #     csv_file=local.periods_file, pgr_access=db_access["normative"]
+        # )
+        # parsing_raw_periods(local)
 
         # создать диапазон дополнений. (начиная с 69 дополнения изменилась модель расчета)
-        supplement_min, supplement_max = 69, 71
+        supplement_min, supplement_max = 69, 72
         local.periods_data = get_periods_range(
             db_file=local.db_file, origin_name="ТСН", period_item_type="supplement",
             supplement_min=supplement_min, supplement_max=supplement_max,

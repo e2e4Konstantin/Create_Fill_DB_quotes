@@ -1,10 +1,10 @@
 {
     "config_file": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\Create_Fill_DB_quotes\\config\\config_quotes_parsing.json",
     "db_file": "C:\\Users\\kazak.ke\\Documents\\PythonProjects\\DB\\Normative.sqlite3",
-    "last_date": "25-04-2024 09:37:50",
+    "last_date": "02-05-2024 17:12:52",
     "material_properties_file": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\MaterialProperties\\material_properties_export.csv",
     "material_properties_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\MaterialProperties",
-    "monitoring_path": "C:\\Users\\kazak.ke\\Documents\\Задачи\\5_Надя\\Выгрузки",
+    "monitoring_path": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Мониторинг",
     "periods_data": [
         {
             "basic_id": 151427079,
@@ -98,6 +98,25 @@
             "resources_data_csv_file": "Resources_Дополнение_71_id_166954793.csv",
             "supplement": 71,
             "title": "Дополнение 71"
+        },
+        {
+            "basic_id": 167085727,
+            "id": 17,
+            "index": 210,
+            "indexes": [
+                [
+                    167403321,
+                    211,
+                    72,
+                    69
+                ]
+            ],
+            "quotes_catalog_csv_file": "Catalog_Quotes_Дополнение_72_id_167085727.csv",
+            "quotes_data_csv_file": "Quotes_Дополнение_72_id_167085727.csv",
+            "resources_catalog_csv_file": "Resources_Catalog_Дополнение_72_id_167085727.csv",
+            "resources_data_csv_file": "Resources_Дополнение_72_id_167085727.csv",
+            "supplement": 72,
+            "title": "Дополнение 72"
         }
     ],
     "periods_file": "C:\\Users\\kazak.ke\\Documents\\АИС_Выгрузка\\Postgres_Direct\\Periods\\period_export_table.csv",

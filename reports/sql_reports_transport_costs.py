@@ -97,6 +97,6 @@ sql_transport_costs_reports = {
         LEFT JOIN tblProducts AS products ON products.ID_tblProduct = tc.FK_tblTransportCosts_tblProducts
         LEFT JOIN tblMonitoringTransportCosts AS monitoring ON monitoring.FK_tblMonitoringTransportCosts_tblProducts = products.ID_tblProduct
         WHERE period.ID_tblPeriod = (select pid from vars) AND base_price > 0
-        ORDER BY products.digit_code DESC;
+        ORDER BY products.digit_code ASC;
     """,
 }
