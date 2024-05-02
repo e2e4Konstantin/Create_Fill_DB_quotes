@@ -37,9 +37,11 @@ sql_transport_costs_reports = {
     #
     "select_historical_prices_for_transport_cost_id_not_empty_actual_price": """--sql
         /*
-        получить историю изменения цен транс.расхода по id по периодам
+        получить историю изменения цен транс.расхода по id. для периодов.
         только тогда когда меняется период. Если нет актуальной цены то берем ближайшую цену из истории
         ? id записи для которой строится история
+        ? кол-во истории
+        сортировка от большего к меньшему иначе получим раннюю историю а не последнюю в глубину
         */
         SELECT
             period.index_num,
@@ -54,7 +56,8 @@ sql_transport_costs_reports = {
         WHERE
             htc._rowid = ?
             AND htc.FK_tblTransportCosts_tblPeriods IS NOT NULL
-        ORDER BY _version ASC;
+        ORDER BY _version DESC
+        LIMIT ?;
     """,
     #
     "select_records_for_max_index": """--sql
