@@ -74,8 +74,9 @@ def get_transport_cost_with_monitoring(
 
 def report_output(table):
     """Напечатать отчет"""
-    file = ExcelReport("report.xlsx")
+    file = ExcelReport("report_1.xlsx")
     file.open_file()
+    file.create_sheets()
     sheet = file.sheet_names[0]
     #
     header = ["шифр", "базовая стоимость", "actual index", "actual price", "monitoring index", "monitoring price"]
@@ -85,20 +86,35 @@ def report_output(table):
     mod_header = [*header[:2], *history_header, *header[2:], *header_index]
 
     file.write_header(sheet, mod_header)
-    #
-    # row = 3
-    # for line in table:
-    #     history_value = [x.history_price for x in line.history]
-    #     row_value  = [line.code, line.base_price, line.index_num, line.actual_price, line.monitoring_index, line.monitoring_price]
-    #     formulas = ["", "=J3/B3", "=L3/B3", "=O3-N3", "=(O3*100)/N3-100"]
 
-    #     mod_row = [*row_value[:2], *history_value, *row_value[2:], *formulas]
-    #     file.write_row(sheet, mod_row, row)
-    #     #
-    #     # file.write_format(sheet, row)
+    row = 3
+    for line in table:
 
-    #     row += 1
+        row_value = [
+            line.code,
+            line.base_price,
+            line.index_num,
+            line.actual_price,
+            line.monitoring_index,
+            line.monitoring_price,
+        ]
+        history_value = [x.history_price for x in line.history]
+        formulas = [
+            "",
+            f"=J{row}/B{row}",
+            f"=L{row}/B{row}",
+            f"=O{row}-N{row}",
+            f"=(O{row}*100)/N{row}-100",
+        ]
+        mod_row = [*row_value[:2], *history_value, *row_value[2:], *formulas]
+        file.write_row(sheet, mod_row, row)
+        file.write_format(sheet, row, len(mod_row))
+
+        row += 1
+
+
     file.save_file()
+    file.close_file()
 
 
 
