@@ -1,4 +1,8 @@
 sql_products_queries = {
+    "select_history_products_origin_code": """--sql
+        SELECT ID_tblProduct FROM _tblHistoryProducts WHERE FK_tblProducts_tblOrigins = ? AND code = ? LIMIT 1;
+
+    """,
     # "delete_products_last_periods": """
     #     DELETE FROM tblProducts
     #     WHERE ID_tblProduct IN (

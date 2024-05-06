@@ -16,6 +16,7 @@ from tools.shared.shared_features import (
     get_period_range,
     get_indexes_for_supplement,
     update_product_default_value_record,
+    get_history_product_by_code,
 )
 from tools.periods.get_periods import get_periods_range
 

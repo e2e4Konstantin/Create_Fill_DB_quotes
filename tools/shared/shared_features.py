@@ -232,8 +232,19 @@ def get_product_all_catalog_by_code(db: dbTolls, product_code: str) -> sqlite3.R
 
 
 def get_product_by_code(db: dbTolls, origin_id: int, product_code: str) -> sqlite3.Row | None:
-    """ Получает строку из tblProducts у которой каталог и шифр равен параметрам. """
+    """ Получает строку из tblProducts по каталогу и шифру равен параметрам. """
     products = db.go_select(sql_products_queries["select_products_origin_code"], (origin_id, product_code))
+    if products:
+        return products[0]
+    # message = f"в tblProducts не найдена запись с шифром: {product_code}")
+    return None
+
+def get_history_product_by_code(db: dbTolls, origin_id: int, product_code: str) -> sqlite3.Row | None:
+    """Получает 1 строку из _tblHistoryProducts по каталогу и шифру."""
+    products = db.go_select(
+        sql_products_queries["select_history_products_origin_code"],
+        (origin_id, product_code),
+    )
     if products:
         return products[0]
     # message = f"в tblProducts не найдена запись с шифром: {product_code}")

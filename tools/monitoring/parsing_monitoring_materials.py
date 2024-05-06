@@ -24,6 +24,7 @@ from tools.shared.shared_features import (
     get_raw_data,
     get_period_by_origin_and_numbers,
     get_period_by_id,
+    get_history_product_by_code,
 )
 
 
@@ -51,10 +52,13 @@ def _make_data_from_raw_monitoring_materials(db: dbTolls, raw_line: sqlite3.Row,
     ton_origin_id = get_origin_id(db, origin_name=TON_ORIGIN)
     real_product = get_product_by_code(db, ton_origin_id, code)
     if not real_product:
-        output_message_exit(
-            f"Продукт {code} не найден в таблице tblProducts",
-            f"период {period} { origin_message}",
-        )
+        # ищем в истории
+        real_product = get_history_product_by_code(db, ton_origin_id, code)
+        if not real_product:
+            output_message_exit(
+                f"Продукт: {code} не найден в таблице tblProducts ни в _tblHistoryProducts",
+                f"для периода: {period} {origin_message}, {period_id=} {ton_origin_id=}",
+            )
     product_id = real_product["ID_tblProduct"]
     #
     supplier_price = raw_line["supplier_price"]
@@ -96,13 +100,13 @@ def delete_last_period_monitoring_material(db_file: str):
             message = f"удалено {deleted_cursor.rowcount} записей с период дополнения < {max_index}"
             ic(message)
 
-def update_monitoring_material(db: dbTolls, material: sqlite3.Row, data: tuple) -> int:
+def _update_monitoring_material(db: dbTolls, material: sqlite3.Row, data: tuple) -> int:
     """ Обновляет материал мониторинга данными из data. """
     material_id = material["ID_tblMonitoringMaterial"]
     material_period = get_period_by_id(
         db, material["FK_tblMonitoringMaterial_tblPeriods"]
     )
-    index_num = material_period[0]["index_num"]
+    index_num = material_period["index_num"]
     raw_index = data[5].index
     if raw_index >= index_num:
         data = (*data[:-1], material_id)
@@ -118,7 +122,7 @@ def update_monitoring_material(db: dbTolls, material: sqlite3.Row, data: tuple) 
     return None
 
 
-def insert_monitoring_material(db: dbTolls, data: tuple):
+def _insert_monitoring_material(db: dbTolls, data: tuple):
     """ Вставляет новый материал мониторинга в tblMonitoringMaterials из data. """
     message = f"INSERT tblMonitoringMaterials: {data[:-1]!r}"
     db.go_insert(
@@ -126,7 +130,7 @@ def insert_monitoring_material(db: dbTolls, data: tuple):
     )
 
 
-def transfer_raw_monitoring_materials(db_file, period: Period):
+def _transfer_raw_monitoring_materials(db_file, period: Period):
     """
     Заполняет таблицу tblMonitoringMaterials данными из таблицы tblRawData
     только для периода period.
@@ -142,10 +146,10 @@ def transfer_raw_monitoring_materials(db_file, period: Period):
                 sql_monitoring_materials["select_monitoring_materials_by_product"], (product_id,)
             )
             if material:
-                update_monitoring_material(db, material[0], raw_data)
+                _update_monitoring_material(db, material[0], raw_data)
                 updated_success.append(raw_data)
             else:
-                insert_monitoring_material(db, raw_data[:-1])
+                _insert_monitoring_material(db, raw_data[:-1])
                 inserted_success.append(raw_data)
             # db.connection.commit()
         ic(len(raw_data_monitoring), len(inserted_success), len(updated_success))
@@ -161,7 +165,7 @@ def round_raw_supplier_price(db_file: str, rounding_digits):
         )
 
 
-def parsing_monitoring_materials(
+def _parsing_monitoring_materials(
     location: LocalData, monitoring_csv_file: str, period: Period) -> int:
     """
     Заполняет tblMonitoringMaterials мониторинга материалов.
@@ -174,13 +178,22 @@ def parsing_monitoring_materials(
     load_csv_to_raw_table(file, location.db_file, delimiter=",")
     round_raw_supplier_price(location.db_file, ROUNDING)
     #
-    transfer_raw_monitoring_materials(location.db_file, period)
+    _transfer_raw_monitoring_materials(location.db_file, period)
     return 0
 
 
 if __name__ == "__main__":
     local = LocalData("office")  # office  # home
 
-    monitoring_period = Period(71,210)
-    data_file = "materials_monitoring_result_71_210.csv"
-    parsing_monitoring_materials(local, data_file, monitoring_period)
+    # monitoring_period = Period(71,210)
+    # data_file = "materials_monitoring_result_71_210.csv"
+    # _parsing_monitoring_materials(local, data_file, monitoring_period)
+
+    files = [
+        ("materials_monitoring_result_71_208.csv", Period(71, 208)),
+        ("materials_monitoring_result_71_209.csv", Period(71, 209)),
+        ("materials_monitoring_result_71_210.csv", Period(71, 210)),
+        ("materials_monitoring_result_72_211.csv", Period(72, 211)),
+    ]
+    for file in files:
+        _parsing_monitoring_materials(local, file[0], file[1])

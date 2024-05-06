@@ -1,4 +1,6 @@
 import os
+from operator import methodcaller
+
 
 
 def get_file_list(directory):
@@ -12,3 +14,10 @@ def get_file_list(directory):
 directory = r"C:\Users\kazak.ke\Documents\АИС_Выгрузка\Мониторинг"
 file_list = get_file_list(directory)
 print(file_list)
+
+
+
+
+starts_with_b = methodcaller("startswith", "m")
+filter_files = filter(starts_with_b, file_list)
+print(list(filter_files))
