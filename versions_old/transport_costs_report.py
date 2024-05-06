@@ -1,7 +1,7 @@
 import sqlite3
 from icecream import ic
 from config import dbTolls, LocalData
-from reports.sql_reports_transport_costs import sql_transport_costs_reports
+from reports.sql_transport_costs_reports import sql_transport_costs_reports
 from itertools import groupby
 from collections import namedtuple
 from dataclasses import dataclass, field

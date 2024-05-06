@@ -14,19 +14,20 @@ sql_materials = {
             m.RPC AS 'ОКП',
             m.RPCA2  AS 'ОКПД2',
             pr.description AS 'название',
-            pr.measurer AS 'ед.измер',
+            pr.measurer AS 'ед. измер.',
             --
             m.net_weight AS 'нетто',
             m.gross_weight AS 'брутто',
-            m.base_price AS 'баз.цена',
-            m.actual_price AS 'отп.тек.цена',                        -- ОТЦ: Отпускная Текущая Цена (от мониторинга)
-            m.estimate_price AS 'смет.тек.цена',                     -- СТЦ: Сметная Текущая Цена (расчетная)
-            m.inflation_ratio AS 'коэф.инфл',                        -- инфляция estimate_price/base_price
+            m.base_price AS 'баз. цена',
+            m.actual_price AS 'отп.тек. цена',                        -- ОТЦ: Отпускная Текущая Цена (от мониторинга)
+            m.estimate_price AS 'смет.тек. цена',                     -- СТЦ: Сметная Текущая Цена (расчетная)
+            m.inflation_ratio AS 'коэф. инфл',                        -- инфляция estimate_price/base_price
             m.calc_estimate_price AS 'смет.обрат.цена',              -- обратный пересчет СТЦ (estimate_price/base_price)*base_price
             --
-            COALESCE(tc.base_price, 0) AS "Транс.Баз.цена",
-            COALESCE(tc.actual_price, 0) AS "Транс.Тек.цена",
-            COALESCE(tc.inflation_ratio, 0) AS "Транс.Коэф.Инф"
+            (SELECT ptr.code FROM tblProducts AS ptr WHERE ptr.ID_tblProduct = tc.FK_tblTransportCosts_tblProducts) AS 'код транспортировки',
+            COALESCE(tc.base_price, 0) AS "Транс.Баз. цена",
+            COALESCE(tc.actual_price, 0) AS "Транс.Тек. цена",
+            COALESCE(tc.inflation_ratio, 0) AS "Транс.Коэф. Инф"
         FROM tblMaterials m
         LEFT JOIN tblProducts AS pr ON pr.ID_tblProduct = m.FK_tblMaterials_tblProducts
         LEFT JOIN tblPeriods AS per ON per.ID_tblPeriod = m.FK_tblMaterials_tblPeriods
