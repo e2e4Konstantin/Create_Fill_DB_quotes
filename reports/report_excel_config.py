@@ -10,17 +10,26 @@ class ExcelReport(ExcelBase):
             "transport",
             "materials",
         ]
-        self.tab_colors = {
+        self.colors = {
             "transport": "00FF9900",
             "materials": "0099CC00",
             "header": "00E4DFEC",
             "default": "0099CCFF",
+            "calculate": "00F7F7F7",
         }
-        self.default_font = Font(name="Arial", size=8, bold=False, italic=False)
-        self.bold_font = Font(name="Arial", size=8, bold=True, italic=False)
-        self.green_font = Font(name="Arial", size=8, bold=True, color="006600")
-        self.grey_font = Font(name="Arial", size=8, bold=False, color=Color("808080"))
-        self.blue_font = Font(name="Arial", size=8, bold=False, color="1F497D")
+        self.fonts = {
+            "default": Font(name="Arial", size=8, bold=False, italic=False),
+            "default_bold": Font(name="Arial", size=8, bold=True, italic=False),
+            "green_bold": Font(name="Arial", size=8, bold=True, color="006600"),
+            "grey": Font(name="Arial", size=8, bold=False, color=Color("808080")),
+            "blue": Font(name="Arial", size=8, bold=False, color="1F497D"),
+            "result_bold": Font(name="Arial", size=8, bold=True, color="990000"),
+        }
+        self.fills = {
+            "calculate": PatternFill("solid", fgColor=self.colors["calculate"]),
+            "header": PatternFill("solid", fgColor=self.colors["header"]),
+        }
+        self.number_format = "# ##0.00"
 
     #
     def __enter__(self):
@@ -38,11 +47,11 @@ class ExcelReport(ExcelBase):
         if sheet_name in (x.title for x in self.workbook.worksheets):
             self.workbook.remove(self.workbook[sheet_name])
         self.sheet = self.workbook.create_sheet(sheet_name)
-        self.sheet.font = self.default_font
-        if sheet_name in self.tab_colors.keys():
-            self.sheet.sheet_properties.tabColor = self.tab_colors[sheet_name]
+        self.sheet.font = self.fonts["default"]
+        if sheet_name in self.colors.keys():
+            self.sheet.sheet_properties.tabColor = self.colors[sheet_name]
         else:
-            self.sheet.sheet_properties.tabColor = self.tab_colors["default"]
+            self.sheet.sheet_properties.tabColor = self.colors["default"]
         return self.sheet
 
 
@@ -51,11 +60,11 @@ class ExcelReport(ExcelBase):
         if self.workbook:
             for sheet in self.workbook.worksheets:
                 self.workbook.remove(sheet)
-            # DEFAULT_FONT = self.default_font
+            # DEFAULT_FONT = self.fonts["default"]
             for i, name in enumerate(self.sheet_names):
                 self.sheet = self.workbook.create_sheet(name)
-                self.sheet.font = self.default_font
-                self.sheet.sheet_properties.tabColor = self.tab_colors[name]
+                self.sheet.font = self.fonts["default"]
+                self.sheet.sheet_properties.tabColor = self.colors[name]
 
 
     def write_header(self, sheet_name: str, header: list, row: int = 1):
@@ -65,11 +74,11 @@ class ExcelReport(ExcelBase):
         # self.worksheet.append(header)
 
         for col in range(1, len(header) + 1):
-            self.worksheet.cell(row=row, column=col).value = header[col - 1]
-            self.worksheet.cell(row=row, column=col).font = self.default_font
-            self.worksheet.cell(row=row, column=col).fill = PatternFill(
-                "solid", fgColor=self.tab_colors["header"]
-            )
+            cell = self.worksheet.cell(row=row, column=col)
+            cell.value = header[col - 1]
+            cell.font = self.fonts["default"]
+            cell.fill = self.fills["header"]
+            cell.alignment = cell.alignment.copy(wrap_text=True)
 
     def write_row(self, sheet_name: str, values: list, row_index: int = 2):
         """записывает строку в лист"""
@@ -84,50 +93,67 @@ class ExcelReport(ExcelBase):
         self.worksheet = self.workbook[sheet_name]
         for column_index in range(14, 18):
             cell = self.worksheet.cell(row=row_index, column=column_index)
-            cell.font = self.default_font
-            cell.number_format = numbers.FORMAT_NUMBER_00
+            cell.font = self.fonts["default"]
+            cell.number_format = self.number_format
 
-
-        self.worksheet.cell(row=row_index, column=1).font = self.bold_font
+        self.worksheet.cell(row=row_index, column=1).font = self.fonts["default_bold"]
 
         price_cells = [2, 10, 12]
         for column_index in price_cells:
             cell = self.worksheet.cell(row=row_index, column=column_index)
-            cell.font = self.green_font
-            cell.number_format = "# ##0.00"
+            cell.font = self.fonts["green_bold"]
+            cell.number_format = self.number_format
 
         for col in range(3, 9):
             cell = self.worksheet.cell(row=row_index, column=col)
-            cell.font = self.grey_font
+            cell.font = self.fonts["grey"]
 
         index_cells = (9, 11)
         for column_index in index_cells:
             cell = self.worksheet.cell(row=row_index, column=column_index)
-            cell.font = self.blue_font
+            cell.font = self.fonts["blue"]
 
     def write_material_format(self, sheet_name: str, row_index: int, len_row):
         """"""
-        self.worksheet.cell(row=row_index, column=1).font = self.grey_font
-        self.worksheet.cell(row=row_index, column=2).font = self.bold_font
-        self.worksheet.cell(row=row_index, column=3).font = self.default_font
+        self.worksheet.cell(row=row_index, column=1).font = self.fonts["grey"]
+        self.worksheet.cell(row=row_index, column=2).font = self.fonts["default_bold"]
+        self.worksheet.cell(row=row_index, column=3).font = self.fonts["default"]
 
         price_cells = [4, 11, 13]
         for column_index in price_cells:
             cell = self.worksheet.cell(row=row_index, column=column_index)
-            cell.font = self.green_font
-            cell.number_format = "# ##0.00"
+            cell.font = self.fonts["green_bold"]
+            cell.number_format = self.number_format
 
         for col in range(5, 10):
             cell = self.worksheet.cell(row=row_index, column=col)
-            cell.font = self.grey_font
-            cell.number_format = "# ##0.00"
+            cell.font = self.fonts["grey"]
+            cell.number_format = self.number_format
         #
         index_cells = (10, 12, 14)
         for column_index in index_cells:
             cell = self.worksheet.cell(row=row_index, column=column_index)
-            cell.font = self.blue_font
+            cell.font = self.fonts["blue"]
         #
-        for column_index in range(15, 26):
+        for column_index in range(15, 19):
             cell = self.worksheet.cell(row=row_index, column=column_index)
-            cell.font = self.default_font
-            cell.number_format = numbers.FORMAT_NUMBER_00
+            cell.font = self.fonts["default"]
+            cell.number_format = self.number_format
+        # формулы
+        for column_index in range(20, 26):
+            cell = self.worksheet.cell(row=row_index, column=column_index)
+            cell.font = self.fonts["default"]
+            cell.number_format = self.number_format
+            cell.fill = self.fills["calculate"]
+
+        cell_result = self.worksheet.cell(row=row_index, column=21)
+        cell_result.font = self.fonts["result_bold"]
+        cell_result.number_format = self.number_format
+
+        for column_index in range(26, 35):
+           cell = self.worksheet.cell(row=row_index, column=column_index)
+           cell.font = self.fonts["default"]
+           cell.number_format = self.number_format
+
+        self.worksheet.cell(row=row_index, column=29).number_format = "# ##0"
+        self.worksheet.cell(row=row_index, column=30).number_format = "0.00%"

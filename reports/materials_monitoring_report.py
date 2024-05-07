@@ -1,5 +1,6 @@
 import sqlite3
 from icecream import ic
+import numpy as np
 
 from config import dbTolls, LocalData
 from reports.sql_materials_report import sql_materials_reports
@@ -24,12 +25,29 @@ class Material:
     actual_price: float
     monitoring_index: int
     monitoring_price: float
-    history: list[PriceHistory] = field(default_factory=list)
     transport_flag: bool = False
     transport_code: str = ""
     transport_base_price: float = 0.0
     transport_factor: float = 0.0
     gross_weight: float = 0.0
+    history: list[PriceHistory] = field(default_factory=list)
+    len_history: int = 0
+
+    def __post_init__(self):
+        if self.history is None:
+            raise ValueError("history is None")
+        self.len_history = len(self.history)
+
+
+
+
+def abbe_criterion(signal):
+    """Критерий Аббе."""
+    if signal is None or len(signal) <= 2:
+        return 0
+    differences = np.diff(signal) ** 2
+    squares = np.sum(differences)
+    return np.sqrt(squares / (len(signal)-1))
 
 
 def _get_material_price_history(
@@ -61,13 +79,14 @@ def _materials_constructor(
         actual_price=row["actual_price"],
         monitoring_index=row["monitoring_index_num"],
         monitoring_price=row["monitoring_price"],
-        history=_get_material_price_history(db, row["ID_tblMaterial"], history_depth),
-        transport_flag=True if row["transport_flag"] else False,
+        transport_flag=bool(row["transport_flag"]),
         transport_code=row["transport_code"],
         transport_base_price=row["transport_base_price"],
         transport_factor=row["transport_factor"],
         gross_weight=row["gross_weight"],
+        history=_get_material_price_history(db, row["ID_tblMaterial"], history_depth),
     )
+
     return material
 
 
@@ -82,6 +101,87 @@ def get_materials_with_monitoring( db_file: str, history_depth: int) -> list[Mat
         table = [_materials_constructor(db, line, history_depth) for line in materials]
     return table if table else None
 
+def _header_create(table: list[Material]) -> str:
+    header = [
+            "No",
+            "шифр",
+            "название",
+            "базовая стоимость",
+            "actual index",
+            "actual price",
+            "monitoring index",
+            "monitoring price",
+            "transport flag",
+            "transport code",
+            "transport base price",
+            "transport factor",
+            "gross weight",
+        ]
+    header_calculated = [
+            "",
+            "стоимость перевозки",
+            "цена для загрузки",
+            "предыдущий индекс",
+            "текущий индекс",
+            "рост абс.",
+            "рост %",
+            "",
+            "abbe критерий",
+        ]
+
+    history_sizes = set([material.len_history for material in table])
+    ic(history_sizes)  #  {1, 4, 5}
+    max_history_len = max(history_sizes)
+    history_header = []
+    #  найти материал с длинной историей и записать заголовок
+    for material in table:
+        if material.len_history == max_history_len:
+            # ic(material)
+            history_header = [x.history_index for x in material.history]
+            break
+    final_header = [*header[:4], *history_header, *header[4:], *header_calculated]
+    return final_header, max_history_len
+
+
+def _material_row_create(material: Material, row_number: int, max_history_len: int):
+    base_value = [
+                0,
+                material.code,
+                material.name,
+                material.base_price,
+                material.index_num,
+                material.actual_price,
+                material.monitoring_index,
+                material.monitoring_price,
+                material.transport_flag,
+                material.transport_code,
+                material.transport_base_price,
+                material.transport_factor,
+                material.gross_weight,
+            ]
+    history_value = [x.history_price for x in material.history]
+    abbe = abbe_criterion(history_value)
+    if len(history_value) < max_history_len:
+        for _ in range(max_history_len - len(history_value)):
+            history_value.insert(0, None)
+
+    formulas = [
+        "",
+        f"=P{row_number}*Q{row_number}*R{row_number}/1000",
+        f"=ROUND(IF(N{row_number}, (M{row_number}-T{row_number}), M{row_number}),2)",
+        f"=K{row_number}/D{row_number}",
+        f"=M{row_number}/D{row_number}",
+        f"=W{row_number}-V{row_number}",
+        f"=(W{row_number}*100)/V{row_number}-100",
+        "",
+        round(abbe, 3),
+        f"=ROUND(ABS(U{row_number}-K{row_number}),3)",
+        f'=IF(AB{row_number}<=1.5*AA{row_number}, "", 1)',
+        f"=(U{row_number}/K{row_number})-1",
+    ]
+    mod_row = [*base_value[:4], *history_value, *base_value[4:], *formulas]
+    # mod_row.append(abbe)
+    return mod_row
 
 def materials_monitoring_report_output(table):
     """Напечатать отчет по мониторингу материалов"""
@@ -91,69 +191,50 @@ def materials_monitoring_report_output(table):
         sheet = file.get_sheet(sheet_name)
         ic(sheet)
         #
-        header = [
-            "No",
-            "шифр",
-            "название",
-            "базовая стоимость",
-            "actual index",
-            "actual price",
-            "monitoring index",
-            "monitoring price",
-            "transport_flag",
-            "transport_code",
-            "transport_base_price",
-            "transport_factor",
-            "gross_weight",
-        ]
-        header_index = ["", "стоимость перевозки", "предыдущий индекс", "текущий индекс", "рост/абс", "рост %"]
-
-        history_header = [x.history_index for x in table[0].history]
-        mod_header = [*header[:4], *history_header, *header[4:], *header_index]
-
-        file.write_header(sheet.title, mod_header)
-
+        header, max_history_len = _header_create(table)
+        file.write_header(sheet.title, header)
+        #
         row = 3
-        for i, line in enumerate(table):
-            row_value = [
-                i+1,
-                line.code,
-                line.name,
-                line.base_price,
-                line.index_num,
-                line.actual_price,
-                line.monitoring_index,
-                line.monitoring_price,
-                line.transport_flag,
-                line.transport_code,
-                line.transport_base_price,
-                line.transport_factor,
-                line.gross_weight,
-            ]
-            history_value = [x.history_price for x in line.history]
-            formulas = [
-                "",
-                f"=P{row}*Q{row}*R{row}/1000",
-                f"=K{row}/D{row}",
-                f"=M{row}/D{row}",
-                f"=V{row}-U{row}",
-                f"=(V{row}*100)/U{row}-100",
-            ]
-            mod_row = [*row_value[:4], *history_value, *row_value[4:], *formulas]
-            file.write_row(sheet_name, mod_row, row)
-            file.write_material_format(sheet_name, row, len(mod_row))
-
+        for i, material in enumerate(table):
+            value_row = _material_row_create(material, row, max_history_len)
+            value_row[0] = i + 1
+            file.write_row(sheet_name, value_row, row)
+            file.write_material_format(sheet_name, row, len(value_row))
             row += 1
         ic()
 
+check_list = (
+    "1.1-1-1",
+    "1.12-5-2296",
+    "1.12-5-2297",
+    "1.12-5-2298",
+    "1.12-7-199",
+    "1.12-11-759",
+    '1.7-14-599',
 
+)
 
 if __name__ == "__main__":
+    # import openpyxl
+
     location = "office"  # office  # home
 
     local = LocalData(location)
     ic()
     table = get_materials_with_monitoring(local.db_file, history_depth=5)
+
+    # for material in table:
+    #     if material.len_history == 4:
+    #         ic(material)
+
     ic(len(table), table[3])
+    # check_table = []
+    # for material in table:
+    #     if material.code in check_list:
+    #         ic(material)
+    #         check_table.append(material)
+
 
     materials_monitoring_report_output(table)
+
+

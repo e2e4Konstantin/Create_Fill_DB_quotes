@@ -89,6 +89,7 @@ sql_materials_reports = {
         JOIN vars ON vars.period_id = periods.ID_tblPeriod
         WHERE periods.index_num = vars.max_period_index AND materials.base_price > 0
         ORDER BY products.digit_code ASC
-        LIMIT 10;
+        --LIMIT 10
+        ;
     """,
 }
