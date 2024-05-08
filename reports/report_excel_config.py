@@ -1,6 +1,7 @@
 
 from openpyxl.styles import Font, PatternFill, numbers, DEFAULT_FONT, Color
 from config import ExcelBase
+from openpyxl.utils import get_column_letter
 
 
 class ExcelReport(ExcelBase):
@@ -113,47 +114,95 @@ class ExcelReport(ExcelBase):
             cell = self.worksheet.cell(row=row_index, column=column_index)
             cell.font = self.fonts["blue"]
 
-    def write_material_format(self, sheet_name: str, row_index: int, len_row):
+    def write_material_format(self, sheet_name: str, row_index: int, history_len: int):
         """"""
-        self.worksheet.cell(row=row_index, column=1).font = self.fonts["grey"]
-        self.worksheet.cell(row=row_index, column=2).font = self.fonts["default_bold"]
-        self.worksheet.cell(row=row_index, column=3).font = self.fonts["default"]
+        columns = {
+            "row_number": 1,
+            "code": 2,
+            "title": 3,
+            }
 
-        price_cells = [4, 11, 13]
+        row_number_cell = self.worksheet.cell(row=row_index, column=columns["row_number"])
+        row_number_cell.font = self.fonts["grey"]
+
+        code_cell = self.worksheet.cell(row=row_index, column=columns["code"])
+        code_cell.font = self.fonts["default_bold"]
+
+        title_cell = self.worksheet.cell(row=row_index, column=columns["title"])
+        title_cell.font = self.fonts["default"]
+
+        price_cells = [
+            columns["title"] + 1,
+            columns["title"] + 3 + history_len,
+            columns["title"] + 5 + history_len,
+        ]
         for column_index in price_cells:
             cell = self.worksheet.cell(row=row_index, column=column_index)
             cell.font = self.fonts["green_bold"]
             cell.number_format = self.number_format
-
-        for col in range(5, 10):
+        #  history
+        start_col = columns["title"] + 2
+        for col in range(start_col, start_col + history_len):
             cell = self.worksheet.cell(row=row_index, column=col)
             cell.font = self.fonts["grey"]
             cell.number_format = self.number_format
-        #
-        index_cells = (10, 12, 14)
-        for column_index in index_cells:
+        # text
+        text_cells = [
+            columns["title"] + history_len + 2,
+            columns["title"] + history_len + 4,
+            columns["title"] + history_len + 6,
+            columns["title"] + history_len + 7,
+        ]
+        for column_index in text_cells:
             cell = self.worksheet.cell(row=row_index, column=column_index)
             cell.font = self.fonts["blue"]
-        #
-        for column_index in range(15, 19):
+
+
+        # transport price
+        transport_cells = [
+            columns["title"] + history_len + 8,
+            columns["title"] + history_len + 9,
+            columns["title"] + history_len + 10,
+            columns["title"] + history_len + 11,
+        ]
+        for column_index in transport_cells:
             cell = self.worksheet.cell(row=row_index, column=column_index)
             cell.font = self.fonts["default"]
             cell.number_format = self.number_format
         # формулы
-        for column_index in range(20, 26):
+        start_col = columns["title"] + history_len + 12
+        for column_index in range(start_col, start_col + 11):
             cell = self.worksheet.cell(row=row_index, column=column_index)
             cell.font = self.fonts["default"]
             cell.number_format = self.number_format
             cell.fill = self.fills["calculate"]
-
-        cell_result = self.worksheet.cell(row=row_index, column=21)
+        # result
+        result_col = columns["title"] + history_len + 13
+        cell_result = self.worksheet.cell(row=row_index, column=result_col)
         cell_result.font = self.fonts["result_bold"]
         cell_result.number_format = self.number_format
+        # percentage of change
+        percentage_cols = [
+            columns["title"] + history_len + 17,
+            columns["title"] + history_len + 22,
+        ]
+        for column in percentage_cols:
+            self.worksheet.cell(row=row_index, column=column).number_format = "0.00%"
 
-        for column_index in range(26, 35):
-           cell = self.worksheet.cell(row=row_index, column=column_index)
-           cell.font = self.fonts["default"]
-           cell.number_format = self.number_format
+        # dangerous flag
+        flag_col = columns["title"] + history_len + 21
+        flag_cell = self.worksheet.cell(row=row_index, column=flag_col)
+        flag_cell.font = self.fonts["result_bold"]
+        flag_cell.number_format = "# ##0"
 
-        self.worksheet.cell(row=row_index, column=29).number_format = "# ##0"
-        self.worksheet.cell(row=row_index, column=30).number_format = "0.00%"
+        # width
+        slime_cells = [
+            1,
+            columns["title"] + history_len + 11,
+            columns["title"] + history_len + 18,
+            columns["title"] + history_len + 21,
+        ]
+        for column in slime_cells:
+            self.worksheet.column_dimensions[get_column_letter(column)].width = 3
+
+

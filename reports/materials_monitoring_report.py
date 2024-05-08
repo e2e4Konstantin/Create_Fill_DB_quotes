@@ -1,6 +1,7 @@
 import sqlite3
 from icecream import ic
 import numpy as np
+from openpyxl.utils import get_column_letter
 
 from config import dbTolls, LocalData
 from reports.sql_materials_report import sql_materials_reports
@@ -14,6 +15,14 @@ PriceHistory = namedtuple(
     typename="PriceHistory", field_names=["history_index", "history_price"]
 )
 PriceHistory.__annotations__ = {"history_index": int, "history_price": float}
+
+def abbe_criterion(signal):
+    """Критерий Аббе."""
+    if signal is None or len(signal) <= 2:
+        return 0
+    differences = np.diff(signal) ** 2
+    squares = np.sum(differences)
+    return np.sqrt(squares / (len(signal) - 1))
 
 
 @dataclass
@@ -32,22 +41,18 @@ class Material:
     gross_weight: float = 0.0
     history: list[PriceHistory] = field(default_factory=list)
     len_history: int = 0
+    abbe_criterion: float = 0.0
 
     def __post_init__(self):
         if self.history is None:
             raise ValueError("history is None")
         self.len_history = len(self.history)
+        self.abbe_criterion = abbe_criterion(tuple([x.history_price for x in self.history]))
 
 
 
 
-def abbe_criterion(signal):
-    """Критерий Аббе."""
-    if signal is None or len(signal) <= 2:
-        return 0
-    differences = np.diff(signal) ** 2
-    squares = np.sum(differences)
-    return np.sqrt(squares / (len(signal)-1))
+
 
 
 def _get_material_price_history(
@@ -118,15 +123,17 @@ def _header_create(table: list[Material]) -> str:
             "gross weight",
         ]
     header_calculated = [
-            "",
+            "_",
             "стоимость перевозки",
             "цена для загрузки",
             "предыдущий индекс",
             "текущий индекс",
             "рост абс.",
             "рост %",
-            "",
+            "_",
             "abbe критерий",
+            'абс.', 'флаг',
+            'процент',
         ]
 
     history_sizes = set([material.len_history for material in table])
@@ -145,39 +152,56 @@ def _header_create(table: list[Material]) -> str:
 
 def _material_row_create(material: Material, row_number: int, max_history_len: int):
     base_value = [
-                0,
-                material.code,
-                material.name,
-                material.base_price,
-                material.index_num,
-                material.actual_price,
-                material.monitoring_index,
-                material.monitoring_price,
-                material.transport_flag,
-                material.transport_code,
-                material.transport_base_price,
-                material.transport_factor,
-                material.gross_weight,
-            ]
+        0,
+        material.code,
+        material.name,
+        material.base_price,
+        material.index_num,
+        material.actual_price,
+        material.monitoring_index,
+        material.monitoring_price,
+        material.transport_flag,
+        material.transport_code,
+        material.transport_base_price,
+        material.transport_factor,
+        material.gross_weight,
+        "",
+    ]
     history_value = [x.history_price for x in material.history]
-    abbe = abbe_criterion(history_value)
     if len(history_value) < max_history_len:
         for _ in range(max_history_len - len(history_value)):
             history_value.insert(0, None)
+    #
+    start_formula_column = len(base_value) + max_history_len
 
+    cols = {
+        "base_price": get_column_letter(start_formula_column - max_history_len - 10),
+        "actual_price": get_column_letter(start_formula_column - 8),
+        "monitoring_price": get_column_letter(start_formula_column - 6),
+        "transport_flag": get_column_letter(start_formula_column - 5),
+        "transport_base_price": get_column_letter(start_formula_column - 3),
+        "transport_factor": get_column_letter(start_formula_column - 2),
+        "gross_weight": get_column_letter(start_formula_column - 1),
+        "transport_price": get_column_letter(start_formula_column + 1),
+        "result_price": get_column_letter(start_formula_column + 2),
+        "previous_index": get_column_letter(start_formula_column + 3),
+        "result_index": get_column_letter(start_formula_column + 4),
+        "abbe_criterion": get_column_letter(start_formula_column + 8),
+        "absolute_price_change": get_column_letter(start_formula_column + 9),
+    }
+    # ic(cols["transport_flag"])
     formulas = [
+        f"={cols['transport_base_price']}{row_number}*{cols['transport_factor']}{row_number}*{cols['gross_weight']}{row_number}/1000",
+        f"=ROUND(IF({cols['transport_flag']}{row_number}, ({cols['monitoring_price']}{row_number}-{cols['transport_price']}{row_number}), {cols['monitoring_price']}{row_number}),2)",
+        f"={cols['actual_price']}{row_number}/{cols['base_price']}{row_number}",
+        f"={cols['result_price']}{row_number}/{cols['base_price']}{row_number}",
+        f"={cols['result_index']}{row_number}-{cols['previous_index']}{row_number}",
+        f"=({cols['result_index']}{row_number}/{cols['previous_index']}{row_number})-1",
         "",
-        f"=P{row_number}*Q{row_number}*R{row_number}/1000",
-        f"=ROUND(IF(N{row_number}, (M{row_number}-T{row_number}), M{row_number}),2)",
-        f"=K{row_number}/D{row_number}",
-        f"=M{row_number}/D{row_number}",
-        f"=W{row_number}-V{row_number}",
-        f"=(W{row_number}*100)/V{row_number}-100",
-        "",
-        round(abbe, 3),
-        f"=ROUND(ABS(U{row_number}-K{row_number}),3)",
-        f'=IF(AB{row_number}<=1.5*AA{row_number}, "", 1)',
-        f"=(U{row_number}/K{row_number})-1",
+        round(material.abbe_criterion, 3),
+        f"=ROUND(ABS({cols['result_price']}{row_number}-{cols['actual_price']}{row_number}),3)",
+        f'=IF({cols["absolute_price_change"]}{row_number}<=1.5*{cols["abbe_criterion"]}{row_number}, "", 1)',
+        f"=({cols['result_price']}{row_number}/{cols['actual_price']}{row_number})-1",
     ]
     mod_row = [*base_value[:4], *history_value, *base_value[4:], *formulas]
     # mod_row.append(abbe)
@@ -194,34 +218,24 @@ def materials_monitoring_report_output(table):
         header, max_history_len = _header_create(table)
         file.write_header(sheet.title, header)
         #
-        row = 3
+        row = 2
         for i, material in enumerate(table):
             value_row = _material_row_create(material, row, max_history_len)
             value_row[0] = i + 1
             file.write_row(sheet_name, value_row, row)
-            file.write_material_format(sheet_name, row, len(value_row))
+            file.write_material_format(sheet_name, row, max_history_len)
             row += 1
         ic()
 
-check_list = (
-    "1.1-1-1",
-    "1.12-5-2296",
-    "1.12-5-2297",
-    "1.12-5-2298",
-    "1.12-7-199",
-    "1.12-11-759",
-    '1.7-14-599',
-
-)
 
 if __name__ == "__main__":
-    # import openpyxl
+
 
     location = "office"  # office  # home
 
     local = LocalData(location)
     ic()
-    table = get_materials_with_monitoring(local.db_file, history_depth=5)
+    table = get_materials_with_monitoring(local.db_file, history_depth=4)
 
     # for material in table:
     #     if material.len_history == 4:
