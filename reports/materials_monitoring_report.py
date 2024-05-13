@@ -17,13 +17,21 @@ PriceHistory = namedtuple(
 )
 PriceHistory.__annotations__ = {"history_index": int, "history_price": float}
 
+def sum_of_differences(values):
+    if values is None or len(values) <= 3:
+        return 1
+    mean = sum(values) / len(values)
+    return sum(abs(value - mean) for value in values)
+
+
 def abbe_criterion(signal):
     """Критерий Аббе."""
-    if signal is None or len(signal) <= 2:
+    if signal is None or len(signal) <= 3:
         return 0
     differences = np.diff(signal) ** 2
     squares = np.sum(differences)
     return np.sqrt(squares / (len(signal) - 1))
+
 
 
 @dataclass
@@ -43,16 +51,16 @@ class Material:
     history: list[PriceHistory] = field(default_factory=list)
     len_history: int = 0
     abbe_criterion: float = 0.0
+    mean_history: float = 0.0
+    std_history: float = 0.0
 
     def __post_init__(self):
         if self.history is None:
             raise ValueError("history is None")
         self.len_history = len(self.history)
-        self.abbe_criterion = abbe_criterion(tuple([x.history_price for x in self.history]))
-
-
-
-
+        self.abbe_criterion = abbe_criterion([x.history_price for x in self.history])
+        self.mean_history = np.mean([x.history_price for x in self.history])
+        self.std_history = np.std([x.history_price for x in self.history])
 
 
 
@@ -259,7 +267,27 @@ def modern_materials_monitoring_report_output(
 def _create_history_price_row(material: Material, max_history_len: int) -> list[Optional[float]]:
     """Создать строку с историей цен на материал"""
     first = [None] * (max_history_len - len(material.history))
-    res =  first + [float(data.history_price) for data in material.history]
+    res = (
+        first
+        + [float(data.history_price) for data in material.history]
+        + [
+            round(material.abbe_criterion, 3)
+            if material.abbe_criterion is not None
+            else None
+        ]
+        + [
+            round(material.mean_history, 3)
+            if material.mean_history is not None
+            else None
+        ]
+        + [
+            round(material.std_history, 3)
+            if material.std_history is not None
+            else None
+        ]
+    )
+
+
     return res
 
 def _material_price_history_report_output(table, sheet_name: str, file_name: str) -> list[str] | None:
@@ -269,7 +297,7 @@ def _material_price_history_report_output(table, sheet_name: str, file_name: str
         if material.len_history == max_history_len:
             history_header = [str(x.history_index) for x in material.history]
             break
-    history_header = ["No", "code", *history_header]
+    history_header = ["No", "code", *history_header, "abbe criterion", "mean", "std"]
 
     row = 2
     with ExcelReport(file_name) as file:
@@ -313,9 +341,11 @@ if __name__ == "__main__":
     #     if material.code in check_list:
     #         ic(material)
     #         check_table.append(material)
-    # sheet_name = "materials"
+    sheet_name = "materials"
     file_name = "report_monitoring.xlsx"
-    # modern_materials_monitoring_report_output(table, view_history_depth=2, sheet_name =sheet_name, file_name = file_name)
+    modern_materials_monitoring_report_output(
+        table, view_history_depth=2, sheet_name =sheet_name, file_name = file_name
+    )
     _material_price_history_report_output(
-        table, sheet_name="history", file_name=file_name
+        table, sheet_name="price materials history", file_name=file_name
     )

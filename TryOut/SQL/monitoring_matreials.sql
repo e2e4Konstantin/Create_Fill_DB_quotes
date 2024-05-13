@@ -13,11 +13,11 @@ CREATE TABLE tblMonitoringMaterials
                 FOREIGN KEY (FK_tblMonitoringMaterial_tblPeriods) REFERENCES tblPeriods (ID_tblPeriod),
                 UNIQUE (FK_tblMonitoringMaterial_tblProducts, FK_tblMonitoringMaterial_tblPeriods)
             );
-        
+
 CREATE UNIQUE INDEX idxMonitoringMaterials ON tblMonitoringMaterials (
     FK_tblMonitoringMaterial_tblProducts, FK_tblMonitoringMaterial_tblPeriods
             );
-            
+
 CREATE VIEW viewMonitoringMaterials AS
             SELECT
                 per.title AS period,
@@ -42,8 +42,8 @@ CREATE TABLE _tblHistoryMonitoringMaterials (
             _version      INTEGER NOT NULL,
             _updated      INTEGER NOT NULL,
             _mask         INTEGER NOT NULL
-        );            
-        
+        );
+
 CREATE INDEX idxHistoryMonitoringMaterials ON _tblHistoryMonitoringMaterials (_rowid);
 
 
@@ -67,7 +67,7 @@ CREATE TRIGGER tgrHistoryMonitoringMaterialsInsert
                 new.last_update, 1, unixepoch('now'), 0
             );
         END;
-        
+
 CREATE TRIGGER tgrHistoryMonitoringMaterialsDelete
         AFTER DELETE ON tblMonitoringMaterials
         BEGIN
@@ -98,7 +98,7 @@ CREATE TRIGGER tgrHistoryMonitoringMaterialsDelete
                 -1
             );
         END;
-        
+
 
 CREATE TRIGGER tgrHistoryMonitoringMaterialsUpdate
         AFTER UPDATE ON tblMonitoringMaterials
@@ -145,3 +145,37 @@ CREATE TRIGGER tgrHistoryMonitoringMaterialsUpdate
                 old.title != new.title OR
                 old.last_update != new.last_update;
         END;
+
+
+WITH vars(period_id) AS (
+    SELECT p.ID_tblPeriod
+    FROM tblPeriods p
+    WHERE
+        p.ID_tblPeriod IS NOT NULL
+        AND p.FK_Origin_tblOrigins_tblPeriods = 1
+        AND p.FK_Category_tblItems_tblPeriods = 29
+        AND p.index_num = 210
+)
+SELECT
+    COALESCE(periods.index_num, 0) AS index_num,
+    COALESCE(hm.rowid, 0) AS rowid,
+    COALESCE(hm.ID_tblMaterials, 0) AS ID_tblMaterials,
+    COALESCE(hm.FK_tblMaterials_tblPeriods, 0) AS FK_tblMaterials_tblPeriods,
+    COALESCE(hm.actual_price, 0) AS actual_price,
+    COALESCE(hm.last_update, 0) AS last_update,
+    COALESCE(sub_actual_price.last_index, 0) AS last_index,
+    COALESCE(sub_actual_price.last_actual_price, 0) AS last_actual_price
+FROM _tblHistoryMaterials hm
+LEFT JOIN tblPeriods periods ON periods.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
+LEFT JOIN (
+    SELECT hm2._rowid, MAX(p2.index_num) last_index, hm2.actual_price last_actual_price
+    FROM _tblHistoryMaterials hm2
+    LEFT JOIN tblPeriods p2 ON p2.ID_tblPeriod = hm2.FK_tblMaterials_tblPeriods
+    WHERE hm2.actual_price IS NOT NULL
+    GROUP BY hm2._rowid
+    ) AS sub_actual_price
+    ON sub_actual_price._rowid = hm.rowid
+JOIN vars ON vars.period_id = periods.ID_tblPeriod
+
+--WHERE hm.rowid = 3
+;
