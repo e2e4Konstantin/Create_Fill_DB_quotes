@@ -2,6 +2,7 @@ import sqlite3
 from icecream import ic
 import numpy as np
 from openpyxl.utils import get_column_letter
+from typing import Optional
 
 from config import dbTolls, LocalData
 from reports.sql_materials_report import sql_materials_reports
@@ -106,7 +107,7 @@ def get_materials_with_monitoring( db_file: str, history_depth: int) -> list[Mat
         table = [_materials_constructor(db, line, history_depth) for line in materials]
     return table if table else None
 
-def _header_create(table: list[Material]) -> str:
+def _header_create(table: list[Material], view_history_depth: int) -> str:
     header = [
             "No",
             "шифр",
@@ -145,6 +146,10 @@ def _header_create(table: list[Material]) -> str:
         if material.len_history == max_history_len:
             # ic(material)
             history_header = [x.history_index for x in material.history]
+            #
+            if max_history_len > view_history_depth:
+                history_header = history_header[-view_history_depth:]
+                max_history_len = len(history_header)
             break
     final_header = [*header[:4], *history_header, *header[4:], *header_calculated]
     return final_header, max_history_len
@@ -171,6 +176,8 @@ def _material_row_create(material: Material, row_number: int, max_history_len: i
     if len(history_value) < max_history_len:
         for _ in range(max_history_len - len(history_value)):
             history_value.insert(0, None)
+    else:
+        history_value = history_value[-max_history_len:]
     #
     start_formula_column = len(base_value) + max_history_len
 
@@ -228,6 +235,56 @@ def materials_monitoring_report_output(table):
         ic()
 
 
+def modern_materials_monitoring_report_output(
+    table: list[Material], view_history_depth: int, sheet_name: str, file_name: str
+) -> None:
+    """Напечатать отчет по мониторингу материалов"""
+    with ExcelReport(file_name) as file:
+        sheet = file.get_sheet(sheet_name)
+        ic(sheet)
+        #
+        header, max_history_len = _header_create(table, view_history_depth)
+        file.write_header(sheet.title, header)
+        #
+        row = 2
+        for i, material in enumerate(table):
+            value_row = _material_row_create(material, row, max_history_len)
+            value_row[0] = i + 1
+            file.write_row(sheet_name, value_row, row)
+            file.write_material_format(sheet_name, row, max_history_len)
+            row += 1
+        ic()
+
+
+def _create_history_price_row(material: Material, max_history_len: int) -> list[Optional[float]]:
+    """Создать строку с историей цен на материал"""
+    first = [None] * (max_history_len - len(material.history))
+    res =  first + [float(data.history_price) for data in material.history]
+    return res
+
+def _material_price_history_report_output(table, sheet_name: str, file_name: str) -> list[str] | None:
+    """Напечатать отчет по ценам материалов"""
+    max_history_len = max(material.len_history for material in table)
+    for material in table:
+        if material.len_history == max_history_len:
+            history_header = [str(x.history_index) for x in material.history]
+            break
+    history_header = ["No", "code", *history_header]
+
+    row = 2
+    with ExcelReport(file_name) as file:
+        sheet = file.get_sheet(sheet_name)
+        if history_header:
+            sheet.append(history_header)
+        for i, material in enumerate(table):
+            price_row = _create_history_price_row(material, max_history_len)
+            price_row = [i + 1, material.code, *price_row]
+            sheet.append(price_row)
+            row += 1
+
+
+
+
 if __name__ == "__main__":
 
 
@@ -235,20 +292,30 @@ if __name__ == "__main__":
 
     local = LocalData(location)
     ic()
-    table = get_materials_with_monitoring(local.db_file, history_depth=4)
+    table = get_materials_with_monitoring(local.db_file, history_depth=10)
 
     # for material in table:
-    #     if material.len_history == 4:
-    #         ic(material)
+    #     if material.len_history == 7:
+    #         ic(material.code)
 
-    ic(len(table), table[3])
+    ic(len(table))
+    ic( table[3])
+    # check_list = [
+    #     "1.1-1-8106",
+    #     "1.1-1-8107",
+    #     "1.1-1-1",
+    #     "1.1-1-8108",
+    #     "1.21-5-2107",
+    #     "1.21-5-2116",
+    # ]
     # check_table = []
     # for material in table:
     #     if material.code in check_list:
     #         ic(material)
     #         check_table.append(material)
-
-
-    materials_monitoring_report_output(table)
-
-
+    # sheet_name = "materials"
+    file_name = "report_monitoring.xlsx"
+    # modern_materials_monitoring_report_output(table, view_history_depth=2, sheet_name =sheet_name, file_name = file_name)
+    _material_price_history_report_output(
+        table, sheet_name="history", file_name=file_name
+    )
