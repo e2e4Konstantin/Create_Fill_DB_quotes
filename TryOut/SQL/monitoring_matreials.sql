@@ -147,35 +147,41 @@ CREATE TRIGGER tgrHistoryMonitoringMaterialsUpdate
         END;
 
 
-WITH vars(period_id) AS (
-    SELECT p.ID_tblPeriod
+WITH latest_actual_price AS (
+    SELECT _rowid, MAX(p.index_num) AS latest_period_index, actual_price
+    FROM _tblHistoryMaterials hm
+    JOIN tblPeriods p ON p.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
+    WHERE hm.actual_price IS NOT NULL and p.index_num <= 207
+    GROUP BY _rowid
+),
+--
+latest_base_price AS (
+    SELECT _rowid, MAX(p.index_num) AS latest_period_index, base_price
+    FROM _tblHistoryMaterials hm
+    JOIN tblPeriods p ON p.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
+    WHERE hm.base_price IS NOT NULL and p.index_num <= 207
+    GROUP BY _rowid
+),
+--
+latest_estimate_price AS (
+    SELECT _rowid, MAX(p.index_num) AS latest_period_index, estimate_price
+    FROM _tblHistoryMaterials hm
+    JOIN tblPeriods p ON p.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
+    WHERE hm.estimate_price IS NOT NULL and p.index_num <= 207
+    GROUP BY _rowid
+),
+--
+target_periods AS (
+    SELECT p.ID_tblPeriod, index_num
     FROM tblPeriods p
-    WHERE
-        p.ID_tblPeriod IS NOT NULL
-        AND p.FK_Origin_tblOrigins_tblPeriods = 1
-        AND p.FK_Category_tblItems_tblPeriods = 29
-        AND p.index_num = 210
+    WHERE FK_Origin_tblOrigins_tblPeriods = (SELECT ID_tblOrigin FROM tblOrigins WHERE name = 'ТСН')
+        AND FK_Category_tblItems_tblPeriods = (SELECT ID_tblItem FROM tblItems WHERE name = 'index')
+        AND p.index_num = 207
 )
-SELECT
-    COALESCE(periods.index_num, 0) AS index_num,
-    COALESCE(hm.rowid, 0) AS rowid,
-    COALESCE(hm.ID_tblMaterials, 0) AS ID_tblMaterials,
-    COALESCE(hm.FK_tblMaterials_tblPeriods, 0) AS FK_tblMaterials_tblPeriods,
-    COALESCE(hm.actual_price, 0) AS actual_price,
-    COALESCE(hm.last_update, 0) AS last_update,
-    COALESCE(sub_actual_price.last_index, 0) AS last_index,
-    COALESCE(sub_actual_price.last_actual_price, 0) AS last_actual_price
+SELECT hm._rowid, tp.index_num, lap.actual_price, lep.estimate_price, lbp.base_price
 FROM _tblHistoryMaterials hm
-LEFT JOIN tblPeriods periods ON periods.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
-LEFT JOIN (
-    SELECT hm2._rowid, MAX(p2.index_num) last_index, hm2.actual_price last_actual_price
-    FROM _tblHistoryMaterials hm2
-    LEFT JOIN tblPeriods p2 ON p2.ID_tblPeriod = hm2.FK_tblMaterials_tblPeriods
-    WHERE hm2.actual_price IS NOT NULL
-    GROUP BY hm2._rowid
-    ) AS sub_actual_price
-    ON sub_actual_price._rowid = hm.rowid
-JOIN vars ON vars.period_id = periods.ID_tblPeriod
-
---WHERE hm.rowid = 3
-;
+JOIN target_periods tp ON tp.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
+JOIN latest_actual_price lap ON lap._rowid = hm._rowid
+JOIN latest_estimate_price lep ON lep._rowid = hm._rowid
+JOIN latest_base_price lbp ON lbp._rowid = hm._rowid
+WHERE hm._rowid = 6;
