@@ -7,30 +7,38 @@ sql_monitoring_materials = {
     """,
     #
     "select_monitoring_materials_max_index_number": """--sql
-        SELECT MAX(per.index_num) AS max_index
+        SELECT MAX(period.index_num) AS max_index
         FROM tblMonitoringMaterials AS mm
-        JOIN tblPeriods AS per ON per.ID_tblPeriod = mm.FK_tblMonitoringMaterial_tblPeriods;
+        JOIN tblPeriods AS period ON period.ID_tblPeriod = mm.FK_tblMonitoringMaterial_tblPeriods;
     """,
     #
     "select_monitoring_materials_count_less_index_number": """--sql
         SELECT COUNT(*) AS number
         FROM tblMonitoringMaterials AS mm
-        JOIN tblPeriods AS per ON per.ID_tblPeriod = mm.FK_tblMonitoringMaterial_tblPeriods
-        WHERE per.index_num IS NOT NULL AND per.index_num > 0 AND per.index_num < ?;
+        JOIN tblPeriods AS period ON period.ID_tblPeriod = mm.FK_tblMonitoringMaterial_tblPeriods
+        WHERE
+            period.index_num IS NOT NULL
+            AND period.index_num > 0
+            AND period.index_num < ?;
     """,
     #
     "delete_monitoring_materials_less_max_idex": """--sql
+        -- Удаление строк из tblMonitoringMaterials,
+        -- имеющих соответствующую строку в tblPeriods с index_num
+        -- больше указанного index_number.
+        -- Если index_num равен null, сравнение всегда будет возвращать false,
+        -- поэтому строка не будет удалена.
         DELETE FROM tblMonitoringMaterials
         WHERE ID_tblMonitoringMaterial IN (
-            SELECT mm.ID_tblMonitoringMaterial
-            FROM tblMonitoringMaterials AS mm
-            JOIN tblPeriods AS per ON per.ID_tblPeriod = mm.FK_tblMonitoringMaterial_tblPeriods
+            SELECT ID_tblMonitoringMaterial
+            FROM tblMonitoringMaterials
+            JOIN tblPeriods AS p ON p.ID_tblPeriod = FK_tblMonitoringMaterial_tblPeriods
             WHERE
-                per.index_num IS NOT NULL
-                AND per.index_num > 0
-                AND per.index_num < ?
-                AND mm.ID_tblMonitoringMaterial IS NOT NULL
-                AND per.ID_tblPeriod IS NOT NULL
+                ID_tblMonitoringMaterial IS NOT NULL
+                AND p.ID_tblPeriod IS NOT NULL
+                AND p.index_num IS NOT NULL
+                AND p.index_num > 0
+                AND p.index_num < :index_number
         );
     """,
     # -----------------------------------------------------------------------------------

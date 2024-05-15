@@ -10,7 +10,7 @@ from collections import namedtuple
 from dataclasses import dataclass, field
 
 from reports.report_excel_config import ExcelReport
-from files_features import output_message_exit
+from files_features import output_message_exit, output_message
 
 
 PriceHistory = namedtuple(
@@ -113,7 +113,7 @@ def get_materials_with_monitoring( db_file: str, history_depth: int) -> list[Mat
         materials = db.go_select(
             sql_materials_reports["select_records_for_max_index_with_monitoring"]
         )
-        table = [_materials_constructor(db, line, history_depth) for line in materials]
+        table = [_materials_constructor(db, material, history_depth) for material in materials]
     return table if table else None
 
 
@@ -126,53 +126,79 @@ def fetch_materials_history(db: dbTolls, index_number: int) -> list[sqlite3.Row]
     return materials
 
 
-def _fetch_products_history(db: dbTolls, product_id: int, supplement_number: int) -> sqlite3.Row | None:
+def _fetch_products_history(db: dbTolls, product_id: int, supplement_number: int) -> sqlite3.Row:
     """Получение данных продукта из истории по id для заданного номера дополнения."""
     product = db.go_select(
                 sql_materials_reports["select_history_product_for_period"],
                 {"rowid": product_id, "supplement_number": supplement_number}
        )
-    return product[0] if product else None
+    if not product:
+        output_message_exit(
+            f"в истории не найден продукт : {product_id=}",
+            f"для дополнения : {supplement_number}",
+        )
+    return product[0]
 
-# select_history_transport_cost_for_perio
+
 def _fetch_transport_cost_history(
     db: dbTolls, transport_cost_id: int, index_number: int
-) -> sqlite3.Row | None:
+    ) -> sqlite3.Row:
     """Получение данных транспортных расходов из истории по id для заданного номера индекса."""
     transport_cost = db.go_select(
         sql_materials_reports["select_history_transport_cost_for_period"],
         {"rowid": transport_cost_id, "index_number": index_number},
     )
-    return transport_cost[0] if transport_cost else None
+    if not transport_cost:
+        output_message_exit(
+            f"не найдены транспортные расходы : {transport_cost_id=}",
+            f"для индекс: {index_number}",
+        )
+    return transport_cost[0]
+
+# _fetch_materials_monitoring_history
+def _fetch_monitoring_materials_history(
+    db: dbTolls,
+    product_id: int,
+    monitoring_index_number: int,
+) -> sqlite3.Row:
+    """Получение данных для id: истории мониторинга материала для заданного номера индекса мониторинга."""
+    monitoring = db.go_select(
+        sql_materials_reports["select_history_monitoring_materials_for_period"],
+        {"rowid": product_id, "index_number": monitoring_index_number},
+    )
+    if not monitoring:
+        output_message(
+        # output_message_exit(
+            f"не найдены данные  в истории SELECT COALESCE(column_name, default_value) FROM table_name;мониторинга для продукта: {product_id=}",
+            f"для индекса: {monitoring_index_number=}",
+        )
+        return None
+    return monitoring[0]
 
 
 def _get_materials_for_period_from_history(
-    db_file: str, index_number: int
+    db_file: str, materials_index_number: int, monitoring_index_number: int
 ) -> list[Material] | None:
-    """Стоимость материалов для периода."""
-    table = []
+    """материалы для периода."""
+    materials = []
     with dbTolls(db_file) as db:
-        materials = fetch_materials_history(db, index_number)
-        for line in materials:
-            product_id = line["FK_tblMaterials_tblProducts"]
-            supplement_number = line["index_supplement_number"]
+        history_materials = fetch_materials_history(db, materials_index_number)
+        for history_material in history_materials:
+            product_id = history_material["FK_tblMaterials_tblProducts"]
+            supplement_number = history_material["index_supplement_number"]
+            if product_id == 44584:
+                ic({**history_material})
             product = _fetch_products_history(db, product_id, supplement_number)
-            if not product:
-                output_message_exit(
-                    f"не найден продукт для материала: {line['material_rowid']=}",
-                    f"индекс: {index_number} дополнение: {supplement_number}",
-                )
-            transport_cost_id = line["FK_tblMaterials_tblTransportCosts"]
-            transport = _fetch_transport_cost_history(db, transport_cost_id, index_number)
-            if not product:
-                output_message_exit(
-                    f"не найдены транспортные расходы для материала: {line['material_rowid']=}",
-                    f"индекс: {index_number} дополнение: {supplement_number}",
-                )
-            result = dict(product) | dict(line) | dict(transport)
-            table.append(result)
-
-    return table if table else None
+            transport_cost_id = history_material["FK_tblMaterials_tblTransportCosts"]
+            transport_cost = _fetch_transport_cost_history(db, transport_cost_id, materials_index_number)
+            monitoring = _fetch_monitoring_materials_history(db, product_id, monitoring_index_number)
+            if not monitoring:
+                ic({**product, **history_material, **transport_cost})
+                return None
+            materials.append(
+                {**product, **history_material, **transport_cost, **monitoring}
+            )
+    return materials if materials else None
 
 
 def _header_create(table: list[Material], view_history_depth: int) -> str:
@@ -382,31 +408,33 @@ if __name__ == "__main__":
     ic()
 
     table = _get_materials_for_period_from_history(
-        local.db_file, index_number=211)
-    ic(len(table))
-    ic(table[5])
+        local.db_file, materials_index_number=210, monitoring_index_number=211)
+    if table:
+        ic(len(table))
+        ic(table[5])
 
     # table = get_materials_with_monitoring(local.db_file, history_depth=10)
 
-    # # for material in table:
-    # #     if material.len_history == 7:
-    # #         ic(material.code)
+    # # # for material in table:
+    # # #     if material.len_history == 7:
+    # # #         ic(material.code)
 
-    # ic(len(table))
-    # ic( table[3])
-    # # check_list = [
-    # #     "1.1-1-8106",
-    # #     "1.1-1-8107",
-    # #     "1.1-1-1",
-    # #     "1.1-1-8108",
-    # #     "1.21-5-2107",
-    # #     "1.21-5-2116",
-    # # ]
-    # # check_table = []
-    # # for material in table:
-    # #     if material.code in check_list:
-    # #         ic(material)
-    # #         check_table.append(material)
+    # # ic(len(table))
+    # # ic( table[3])
+    # # # check_list = [
+    # # #     "1.1-1-8106",
+    # # #     "1.1-1-8107",
+    # # #     "1.1-1-1",
+    # # #     "1.1-1-8108",
+    # # #     "1.21-5-2107",
+    # # #     "1.21-5-2116",
+    # # # ]
+    # # # check_table = []
+    # # # for material in table:
+    # # #     if material.code in check_list:
+    # # #         ic(material)
+    # # #         check_table.append(material)
+
     # sheet_name = "materials"
     # file_name = "report_monitoring.xlsx"
     # modern_materials_monitoring_report_output(

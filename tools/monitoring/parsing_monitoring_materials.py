@@ -17,6 +17,7 @@ from tools.shared.code_tolls import (
     get_float_value,
     get_integer_value,
     text_cleaning,
+    code_to_number,
 )
 from tools.shared.shared_features import (
     get_product_by_code,
@@ -95,9 +96,9 @@ def delete_last_period_monitoring_material(db_file: str):
             # ic(message)
             deleted_cursor = db.go_execute(
                 sql_monitoring_materials["delete_monitoring_materials_less_max_idex"],
-                (max_index,),
+                ({"index_number": max_index}),
             )
-            message = f"удалено {deleted_cursor.rowcount} записей с период дополнения < {max_index}"
+            message = f"удалено {deleted_cursor.rowcount} записей с индексом до {max_index=}"
             ic(message)
 
 def _update_monitoring_material(db: dbTolls, material: sqlite3.Row, data: tuple) -> int:
@@ -130,13 +131,27 @@ def _insert_monitoring_material(db: dbTolls, data: tuple):
     )
 
 
+def _get_monitoring_raw_data(db: dbTolls) -> list[sqlite3.Row] | None:
+    """Выбрать все записи из сырой таблицы отсортированные по digit_code."""
+    try:
+        rows = db.go_select(sql_raw_queries["select_monitoring_materials_rwd_all"])
+    except AttributeError as e:
+        output_message_exit("Ошибка при получении данных из RAW таблицы:", repr(e))
+        return None
+    if rows is None:
+        output_message_exit(
+            "в RAW таблице не найдено ни одной записи:", "tblRawData пустая."
+        )
+    return rows
+
+
 def _transfer_raw_monitoring_materials(db_file, period: Period):
     """
     Заполняет таблицу tblMonitoringMaterials данными из таблицы tblRawData
     только для периода period.
     """
     with dbTolls(db_file) as db:
-        raw_data_monitoring = get_raw_data(db)
+        raw_data_monitoring = _get_monitoring_raw_data(db)
         inserted_success, updated_success = [], []
         for line in raw_data_monitoring:
             raw_data = _make_data_from_raw_monitoring_materials(db, line, period)
@@ -156,13 +171,24 @@ def _transfer_raw_monitoring_materials(db_file, period: Period):
     #  удалить записи старых периодов
     delete_last_period_monitoring_material(db_file)
 
-def round_raw_supplier_price(db_file: str, rounding_digits):
+def _round_raw_supplier_price(db_file: str, rounding_digits):
     """Округлить до rounding_digits знаков цену продавца."""
     with dbTolls(db_file) as db:
         db.go_execute(
             sql_raw_queries["round_supplier_price_for_monitoring_materials"],
             (rounding_digits,),
         )
+
+def _add_raw_digit_code(db_file: str):
+    """Добавить поле digit_code в таблицу tblRawData и заполнить его. """
+    with dbTolls(db_file) as db:
+        db.go_execute(sql_raw_queries["add_digit_code_column"])
+        data = db.go_select(sql_raw_queries["select_rwd_all"])
+        for line in data:
+            db.go_execute(
+                sql_raw_queries["update_digit_code"],
+                ({'digit_code': code_to_number(line["code"]), 'id': line['rowid']})
+                )
 
 
 def _parsing_monitoring_materials(
@@ -176,7 +202,8 @@ def _parsing_monitoring_materials(
     ic(message)
     file = create_abspath_file(location.monitoring_path, monitoring_csv_file)
     load_csv_to_raw_table(file, location.db_file, delimiter=",")
-    round_raw_supplier_price(location.db_file, ROUNDING)
+    _round_raw_supplier_price(location.db_file, ROUNDING)
+    _add_raw_digit_code(location.db_file)
     #
     _transfer_raw_monitoring_materials(location.db_file, period)
     return 0
@@ -186,7 +213,7 @@ if __name__ == "__main__":
     local = LocalData("office")  # office  # home
 
     # monitoring_period = Period(71,210)
-    # data_file = "materials_monitoring_result_71_210.csv"
+    # data_file = "materials_monitoring_result_71_208.csv"
     # _parsing_monitoring_materials(local, data_file, monitoring_period)
 
     files = [
@@ -195,5 +222,5 @@ if __name__ == "__main__":
         ("materials_monitoring_result_71_210.csv", Period(71, 210)),
         ("materials_monitoring_result_72_211.csv", Period(72, 211)),
     ]
-    for file in files:
+    for file in files[3:4]:
         _parsing_monitoring_materials(local, file[0], file[1])

@@ -201,15 +201,15 @@ if __name__ == "__main__":
     # with dbTolls(local.db_file) as db:
     #     _create_monitoring_transport_costs_environment(db)
 
-    # monitoring_period = Period(71, 208)
-    # data_file = "transport_monitoring_result_71_208.csv"
-    # parsing_monitoring_transport_costs(local, data_file, monitoring_period)
+    monitoring_period = Period(71, 208)
+    data_file = "transport_monitoring_result_71_208.csv"
+    _parsing_monitoring_transport_costs(local, data_file, monitoring_period)
 
-    files = [
-        ("transport_monitoring_result_71_208.csv", Period(71, 208)),
-        ("transport_monitoring_result_71_209.csv", Period(71, 209)),
-        ("transport_monitoring_result_71_210.csv", Period(71, 210)),
-        ("transport_monitoring_result_72_211.csv", Period(72, 211)),
-    ]
-    for file in files:
-        _parsing_monitoring_transport_costs(local, file[0], file[1])
+    # files = [
+    #     ("transport_monitoring_result_71_208.csv", Period(71, 208)),
+    #     ("transport_monitoring_result_71_209.csv", Period(71, 209)),
+    #     ("transport_monitoring_result_71_210.csv", Period(71, 210)),
+    #     ("transport_monitoring_result_72_211.csv", Period(72, 211)),
+    # ]
+    # for file in files:
+    #     _parsing_monitoring_transport_costs(local, file[0], file[1])

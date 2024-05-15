@@ -95,7 +95,8 @@ sql_materials_reports = {
     "select_history_material_for_period": """--sql
     /*
         по номеру индекса периода выбирает материалы из таблицы истории
-        с последними изменениями до указанного периода
+        с последними изменениями до указанного периода.
+        Удаленные материалы не учитываются.
         {'index_number': 207} #'rowid': 6,
     */
     WITH
@@ -160,7 +161,7 @@ sql_materials_reports = {
             SELECT _rowid, MAX(p.index_num) AS latest_period_index, FK_tblMaterials_tblTransportCosts
             FROM _tblHistoryMaterials hm
             JOIN tblPeriods p ON p.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
-            WHERE hm.FK_tblMaterials_tblTransportCosts IS NOT NULL and :index_number
+            WHERE hm.FK_tblMaterials_tblTransportCosts IS NOT NULL and p.index_num <= :index_number
             GROUP BY _rowid
         ),
         -- period
@@ -188,6 +189,7 @@ sql_materials_reports = {
     JOIN latest_gross_weight lgw ON lgw._rowid = hm._rowid
     JOIN latest_FK_tblMaterials_tblProducts lmp ON lmp._rowid = hm._rowid
     JOIN latest_FK_tblMaterials_tblTransportCosts lmtc ON lmtc._rowid = hm._rowid
+    WHERE hm._mask > 0
     -- WHERE hm._rowid = :rowid
     ;
     """,
@@ -326,7 +328,15 @@ sql_materials_reports = {
         последние изменения в данных этого продукта для периода
         {'rowid': 5917, 'index_number': 208}
     */
-        WITH
+    WITH
+        -- FK_tblMonitoringMaterial_tblProducts
+        latest_FK_tblMonitoringMaterial_tblProducts AS (
+            SELECT _rowid, MAX(p.index_num) AS latest_period_product_id, FK_tblMonitoringMaterial_tblProducts
+            FROM  _tblHistoryMonitoringMaterials
+            JOIN tblPeriods p ON p.ID_tblPeriod = FK_tblMonitoringMaterial_tblPeriods
+            WHERE FK_tblMonitoringMaterial_tblProducts IS NOT NULL and p.index_num <= 211
+            GROUP BY _rowid
+        ),
         -- supplier_price
         latest_supplier_price AS (
             SELECT _rowid, MAX(p.index_num) AS latest_period_supplier_price, supplier_price
@@ -343,14 +353,16 @@ sql_materials_reports = {
             WHERE delivery IS NOT NULL and p.index_num <= :index_number
             GROUP BY _rowid
         ),
+        /*
         -- title
+        -- если везде null, то выбираем весь запрос работать не будет
         latest_title AS (
             SELECT mm1._rowid, MAX(p.index_num) AS latest_period_title, mm1.title
             FROM  _tblHistoryMonitoringMaterials mm1
             JOIN tblPeriods p ON p.ID_tblPeriod = FK_tblMonitoringMaterial_tblPeriods
             WHERE mm1.title IS NOT NULL AND p.index_num <= :index_number
             GROUP BY mm1._rowid
-        ),
+        ),*/
         -- period
         target_periods AS (
             SELECT p.ID_tblPeriod, index_num
@@ -365,14 +377,15 @@ sql_materials_reports = {
         hmm.ID_tblMonitoringMaterial,
         lsp.supplier_price AS monitoring_supplier_price,
         ld.delivery AS monitoring_delivery,
-        lt.title AS monitoring_title,
-        hmm.FK_tblMonitoringMaterial_tblProducts AS monitoring_product_id
+        --lt.title AS monitoring_title,
+        lmmp.FK_tblMonitoringMaterial_tblProducts AS monitoring_product_id
     FROM _tblHistoryMonitoringMaterials hmm
     JOIN target_periods tp ON tp.ID_tblPeriod = hmm.FK_tblMonitoringMaterial_tblPeriods
+    JOIN latest_FK_tblMonitoringMaterial_tblProducts lmmp ON lmmp._rowid = hmm._rowid
     JOIN latest_supplier_price lsp ON lsp._rowid = hmm._rowid
     JOIN latest_delivery ld ON ld._rowid = hmm._rowid
-    JOIN latest_title lt ON lt._rowid = hmm._rowid
-    WHERE hmm.FK_tblMonitoringMaterial_tblProducts = :rowid
+    --JOIN latest_title lt ON lt._rowid = hmm._rowid
+    WHERE lmmp.FK_tblMonitoringMaterial_tblProducts = :rowid
     ;
     """,
 }

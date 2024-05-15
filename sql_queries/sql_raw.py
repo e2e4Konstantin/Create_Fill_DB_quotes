@@ -12,6 +12,9 @@ sql_raw_queries = {
     "add_index_number_column": """--sql
         ALTER TABLE tblRawData ADD COLUMN index_number INTEGER;
     """,
+    "add_digit_code_column": """--sql
+        ALTER TABLE tblRawData ADD digit_code INTEGER;
+    """,
     # --- > Удаление ------------------------------------------------------------------------------
     "delete_table_raw_data": """DROP TABLE IF EXISTS tblRawData;""",
     "delete_index_raw_data": """DROP INDEX IF EXISTS idxTmpMaterial;""",
@@ -19,6 +22,9 @@ sql_raw_queries = {
     "delete_index_raw_catalog_resources": """DROP INDEX IF EXISTS idxRawGwpCodeResources;""",
     "delete_raw_data_old_periods": """DELETE FROM tblRawData WHERE DATE(date_start) <= '2020-01-01';""",
     # --- > Получение данных ----------------------------------------------------------------------
+    "update_digit_code": """--sql
+        UPDATE tblRawData SET digit_code = :digit_code where rowid = :id;
+    """,
     "round_supplier_price_for_monitoring_materials": """--sql
         UPDATE tblRawData SET supplier_price = ROUND(supplier_price, ?);
     """,
@@ -32,7 +38,10 @@ sql_raw_queries = {
         SET index_number = CAST(substr(title_period,1,INSTR(title_period, ' ')) AS INTEGER);
     """,
     "select_rwd_all": """--sql
-        SELECT * FROM tblRawData;
+        SELECT rowid, * FROM tblRawData;
+    """,
+    "select_monitoring_materials_rwd_all": """--sql
+        SELECT rowid, * FROM tblRawData order by digit_code;
     """,
     "select_rwd_all_sorted_by_index_number": """--sql
         SELECT * FROM tblRawData ORDER BY index_number ASC;

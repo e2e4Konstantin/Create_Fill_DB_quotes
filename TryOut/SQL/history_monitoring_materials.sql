@@ -37,12 +37,14 @@ SELECT
     hmm.ID_tblMonitoringMaterial,
     lsp.supplier_price AS monitoring_supplier_price,
     ld.delivery AS monitoring_delivery,
-    lt.title AS monitoring_title
+    lt.title AS monitoring_title,
+    hmm.FK_tblMonitoringMaterial_tblProducts AS monitoring_product_id
+    
 FROM _tblHistoryMonitoringMaterials hmm
 JOIN target_periods tp ON tp.ID_tblPeriod = hmm.FK_tblMonitoringMaterial_tblPeriods
 JOIN latest_supplier_price lsp ON lsp._rowid = hmm._rowid
 JOIN latest_delivery ld ON ld._rowid = hmm._rowid
 JOIN latest_title lt ON lt._rowid = hmm._rowid
---WHERE ld.delivery = 1
+--WHERE hmm.FK_tblMonitoringMaterial_tblProducts = 44547
 ;
 
