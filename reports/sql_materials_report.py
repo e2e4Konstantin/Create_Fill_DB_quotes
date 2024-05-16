@@ -189,7 +189,7 @@ sql_materials_reports = {
     JOIN latest_gross_weight lgw ON lgw._rowid = hm._rowid
     JOIN latest_FK_tblMaterials_tblProducts lmp ON lmp._rowid = hm._rowid
     JOIN latest_FK_tblMaterials_tblTransportCosts lmtc ON lmtc._rowid = hm._rowid
-    WHERE hm._mask > 0
+    WHERE hm._rowid NOT IN  (SELECT del_hm._rowid FROM _tblHistoryMaterials del_hm WHERE del_hm._mask < 0)
     -- WHERE hm._rowid = :rowid
     ;
     """,

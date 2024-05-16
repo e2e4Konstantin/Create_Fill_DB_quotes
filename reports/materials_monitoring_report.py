@@ -186,8 +186,8 @@ def _get_materials_for_period_from_history(
         for history_material in history_materials:
             product_id = history_material["FK_tblMaterials_tblProducts"]
             supplement_number = history_material["index_supplement_number"]
-            if product_id == 44584:
-                ic({**history_material})
+            # if product_id == 44584:
+            #     ic({**history_material})
             product = _fetch_products_history(db, product_id, supplement_number)
             transport_cost_id = history_material["FK_tblMaterials_tblTransportCosts"]
             transport_cost = _fetch_transport_cost_history(db, transport_cost_id, materials_index_number)

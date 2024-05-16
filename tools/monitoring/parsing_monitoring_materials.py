@@ -222,5 +222,5 @@ if __name__ == "__main__":
         ("materials_monitoring_result_71_210.csv", Period(71, 210)),
         ("materials_monitoring_result_72_211.csv", Period(72, 211)),
     ]
-    for file in files[3:4]:
+    for file in files[2:3]:
         _parsing_monitoring_materials(local, file[0], file[1])
