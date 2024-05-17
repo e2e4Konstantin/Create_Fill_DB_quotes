@@ -1,97 +1,137 @@
 sql_materials_reports = {
-    "select_period_id_for_max_index": """--sql
-        -- получить id периода Материалов у которого индекс периода максимальный
-        SELECT period.ID_tblPeriod AS period_id, MAX(period.index_num) AS max_index
-        FROM tblMaterials m
-        JOIN tblPeriods AS period ON period.ID_tblPeriod = m.FK_tblMaterials_tblPeriods
-        WHERE m.base_price > 0
-        GROUP BY period.ID_tblPeriod;
-    """,
-    "select_id_records_for_period_id": """--sql
-        -- получить id записей Материалов для периода у которых базовая цена != 0
-        -- ? id периода
-        SELECT m.FK_tblMaterials_tblProducts AS materials_id
-        FROM tblMaterials m
-        JOIN tblPeriods AS p ON p.ID_tblPeriod = m.FK_tblMaterials_tblPeriods
-        WHERE p.ID_tblPeriod = ? AND m.base_price > 0;
-    """,
-    #
-    "select_historical_prices_for_materials_id_not_empty_actual_price": """--sql
-        /*
-        получить историю изменения цен Материалов по id.
-        только тогда когда меняется период. Если нет актуальной цены то берем ближайшую цену из истории
-        ? id записи для которой строится история
-        ? кол-во истории
-        сортировка от большего к меньшему иначе получим раннюю историю а не последнюю в глубину
-        */
-        SELECT
-            hm._version AS "version",
-            period.index_num,
-            hm._rowid AS id,
-            hm.FK_tblMaterials_tblPeriods AS "period_id",
-            hm.base_price,
-            COALESCE(hm.actual_price, (
-                SELECT actual_price
-                FROM _tblHistoryMaterials
-                WHERE
-                    _rowid = hm._rowid
-                    AND _version < hm._version
-                    AND actual_price IS NOT NULL
-                ORDER BY _version DESC
-                LIMIT 1
-            )) AS actual_price
-        FROM _tblHistoryMaterials hm
-        JOIN tblPeriods AS period ON period.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
+    # 1
+    "select_ton_supplement_for_index": """--sql
+        -- получить номер дополнения для индекса в справочнике ТСН
+        SELECT p.supplement_num AS supplement_number
+        FROM tblPeriods p
+        JOIN tblOrigins o ON o.ID_tblOrigin = p.FK_Origin_tblOrigins_tblPeriods
+        JOIN tblItems i ON i.ID_tblItem = p.FK_Category_tblItems_tblPeriods
         WHERE
-            hm._rowid = ?
-            AND hm.FK_tblMaterials_tblPeriods IS NOT NULL
-        ORDER BY hm._version DESC
-        LIMIT ?;
-    """,
-    #
-    "select_records_for_max_index_with_monitoring": """--sql
-        -- получить Материалы у которых базовая цена != 0 и индекс периода максимальный
-        WITH vars(period_id, max_period_index) AS (
-            SELECT p.ID_tblPeriod, MAX(p.index_num)
-            FROM tblMaterials m
-            JOIN tblPeriods AS p ON p.ID_tblPeriod = m.FK_tblMaterials_tblPeriods
-            WHERE m.base_price > 0
-            GROUP BY p.ID_tblPeriod
-        )
-        SELECT
-            materials.ID_tblMaterial,
-            periods.index_num,
-            products.code,
-            products.description AS title,
-            --
-            materials.net_weight,
-            materials.gross_weight,
-            materials.base_price,
-            materials.actual_price,
-            monitoring.supplier_price AS monitoring_price,
-            monitoring.FK_tblMonitoringMaterial_tblPeriods AS monitoring_period_id,
-            (SELECT index_num FROM tblPeriods WHERE ID_tblPeriod = monitoring.FK_tblMonitoringMaterial_tblPeriods) AS monitoring_index_num,
-            monitoring.delivery AS transport_flag,
-            --
-            (
-               SELECT ptr.code
-               FROM tblProducts AS ptr
-               WHERE ptr.ID_tblProduct = tc.FK_tblTransportCosts_tblProducts
-            ) AS transport_code,
-            COALESCE(tc.base_price, 0) AS transport_base_price,
-            COALESCE(tc.inflation_ratio, 0) AS transport_factor
-
-        FROM tblMaterials materials
-        JOIN tblPeriods AS periods ON periods.ID_tblPeriod = materials.FK_tblMaterials_tblPeriods
-        JOIN tblProducts AS products ON products.ID_tblProduct = materials.FK_tblMaterials_tblProducts
-        LEFT JOIN tblMonitoringMaterials AS monitoring ON monitoring.FK_tblMonitoringMaterial_tblProducts = products.ID_tblProduct
-        LEFT JOIN tblTransportCosts AS tc ON tc.ID_tblTransportCost = materials.FK_tblMaterials_tblTransportCosts
-        JOIN vars ON vars.period_id = periods.ID_tblPeriod
-        WHERE periods.index_num = vars.max_period_index AND materials.base_price > 0
-        ORDER BY products.digit_code ASC
-        --LIMIT 10
+            o.name = 'ТСН'
+            AND i.team = 'periods_category'
+            AND i.name = 'index'
+            AND p.index_num = :ton_index_number
         ;
     """,
+    # 2
+    "select_products_from_history": """--sql
+        /*
+        Из истории продуктов Материалы для дополнения :supplement.
+        Только не удаленные записи. Вытягиваем последнее изменение полей.
+        Кроме 0-й главы.
+        */
+        WITH
+            -- FK_tblProducts_tblOrigins
+            latest_origins AS (
+                SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_origins, hp.FK_tblProducts_tblOrigins
+                FROM _tblHistoryProducts hp
+                JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+                WHERE hp.FK_tblProducts_tblOrigins IS NOT NULL and p.supplement_num <= :supplement
+                GROUP BY hp._rowid
+            ),
+            -- FK_tblProducts_tblItems
+            latest_item AS (
+                SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_item, hp.FK_tblProducts_tblItems
+                FROM _tblHistoryProducts hp
+                JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+                WHERE hp.FK_tblProducts_tblItems IS NOT NULL AND p.supplement_num <= :supplement
+                GROUP BY hp._rowid
+            ),
+            -- code
+            latest_code AS (
+                SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_code, hp.code
+                FROM _tblHistoryProducts hp
+                JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+                WHERE hp.code IS NOT NULL AND p.supplement_num <= :supplement
+                GROUP BY hp._rowid
+            ),
+            -- ID_tblProduct
+            latest_ID_tblProduct AS (
+                SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_ID_tblProduct, hp.ID_tblProduct
+                FROM _tblHistoryProducts hp
+                JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+                WHERE hp.ID_tblProduct IS NOT NULL AND p.supplement_num <= :supplement
+                GROUP BY hp._rowid
+            ),
+            -- description
+            latest_description AS (
+                SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_description, hp.description
+                FROM _tblHistoryProducts hp
+                JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+                WHERE hp.description IS NOT NULL AND p.supplement_num <= :supplement
+                GROUP BY hp._rowid
+            ),
+            -- measurer
+            latest_measurer AS (
+                SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_measurer, hp.measurer
+                FROM _tblHistoryProducts hp
+                JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+                WHERE hp.measurer IS NOT NULL and p.supplement_num <= :supplement
+                GROUP BY hp._rowid
+            ),
+            -- digit_code
+            latest_digit_code AS (
+                SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_digit_code, hp.digit_code
+                FROM _tblHistoryProducts hp
+                JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+                WHERE hp.digit_code IS NOT NULL and p.supplement_num <= :supplement
+                GROUP BY hp._rowid
+            ),
+            -- FK_tblProducts_tblCatalogs
+            latest_catalog AS (
+                SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_catalogs, hp.FK_tblProducts_tblCatalogs
+                FROM _tblHistoryProducts hp
+                JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+                WHERE hp.FK_tblProducts_tblCatalogs IS NOT NULL and p.supplement_num <= :supplement
+                GROUP BY hp._rowid
+            ),
+            -- period
+            target_periods AS (
+                SELECT p.ID_tblPeriod, p.supplement_num, p.title
+                FROM tblPeriods p
+                JOIN tblOrigins o ON o.ID_tblOrigin = p.FK_Origin_tblOrigins_tblPeriods
+                JOIN tblItems i ON i.ID_tblItem = p.FK_Category_tblItems_tblPeriods
+                WHERE
+                    p.supplement_num = :supplement
+                    AND o.name  = 'ТСН'
+                    AND i.team = 'periods_category'
+                    AND i.name = 'supplement'
+            )
+        SELECT
+            hp._mask,
+            hp._rowid,
+            lid.ID_tblProduct,
+            lcode.code,
+            ldesc.description,
+            lmeas.measurer,
+            ldc.digit_code,
+            lcatalog.FK_tblProducts_tblCatalogs,
+            cat.code AS catalog_code
+        FROM _tblHistoryProducts hp
+        JOIN target_periods tp ON tp.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+        JOIN latest_origins lorigin ON lorigin._rowid = hp._rowid
+        JOIN latest_item litem ON litem._rowid = hp._rowid
+        --
+        JOIN latest_ID_tblProduct lid ON lid._rowid = hp._rowid
+        JOIN latest_code lcode ON lcode._rowid = hp._rowid
+        JOIN latest_description ldesc ON ldesc._rowid = hp._rowid
+        JOIN latest_measurer lmeas ON lmeas._rowid = hp._rowid
+        JOIN latest_digit_code ldc ON ldc._rowid = hp._rowid
+        JOIN latest_catalog lcatalog ON lcatalog._rowid = hp._rowid
+        --
+        JOIN tblOrigins o ON o.ID_tblOrigin = lorigin.FK_tblProducts_tblOrigins
+        JOIN tblItems i ON i.ID_tblItem = litem.FK_tblProducts_tblItems
+        JOIN tblCatalogs cat ON cat.ID_tblCatalog = lcatalog.FK_tblProducts_tblCatalogs
+        WHERE
+            hp._mask != -1
+            AND o.name = 'ТСН'
+            AND i.team = 'units'
+            AND i.name = 'material'
+            AND cat.code != '1.0-0'
+        ORDER BY ldc.digit_code
+        ;
+        """,
+    # 3
     "select_history_material_for_period": """--sql
     /*
         по номеру индекса периода выбирает материалы из таблицы истории
@@ -189,9 +229,105 @@ sql_materials_reports = {
     JOIN latest_gross_weight lgw ON lgw._rowid = hm._rowid
     JOIN latest_FK_tblMaterials_tblProducts lmp ON lmp._rowid = hm._rowid
     JOIN latest_FK_tblMaterials_tblTransportCosts lmtc ON lmtc._rowid = hm._rowid
-    WHERE hm._rowid NOT IN  (SELECT del_hm._rowid FROM _tblHistoryMaterials del_hm WHERE del_hm._mask < 0)
-    -- WHERE hm._rowid = :rowid
+    WHERE
+        hm._mask != -1
+        AND lmp.FK_tblMaterials_tblProducts = :product_id
     ;
+    """,
+    #
+    # ----------------------------------------------------------------------------------------------------------------
+    "select_period_id_for_max_index": """--sql
+        -- получить id периода Материалов у которого индекс периода максимальный
+        SELECT period.ID_tblPeriod AS period_id, MAX(period.index_num) AS max_index
+        FROM tblMaterials m
+        JOIN tblPeriods AS period ON period.ID_tblPeriod = m.FK_tblMaterials_tblPeriods
+        WHERE m.base_price > 0
+        GROUP BY period.ID_tblPeriod;
+    """,
+    "select_id_records_for_period_id": """--sql
+        -- получить id записей Материалов для периода у которых базовая цена != 0
+        -- ? id периода
+        SELECT m.FK_tblMaterials_tblProducts AS materials_id
+        FROM tblMaterials m
+        JOIN tblPeriods AS p ON p.ID_tblPeriod = m.FK_tblMaterials_tblPeriods
+        WHERE p.ID_tblPeriod = ? AND m.base_price > 0;
+    """,
+    #
+    "select_historical_prices_for_materials_id_not_empty_actual_price": """--sql
+        /*
+        получить историю изменения цен Материалов по id.
+        только тогда когда меняется период. Если нет актуальной цены то берем ближайшую цену из истории
+        ? id записи для которой строится история
+        ? кол-во истории
+        сортировка от большего к меньшему иначе получим раннюю историю а не последнюю в глубину
+        */
+        SELECT
+            hm._version AS "version",
+            period.index_num,
+            hm._rowid AS id,
+            hm.FK_tblMaterials_tblPeriods AS "period_id",
+            hm.base_price,
+            COALESCE(hm.actual_price, (
+                SELECT actual_price
+                FROM _tblHistoryMaterials
+                WHERE
+                    _rowid = hm._rowid
+                    AND _version < hm._version
+                    AND actual_price IS NOT NULL
+                ORDER BY _version DESC
+                LIMIT 1
+            )) AS actual_price
+        FROM _tblHistoryMaterials hm
+        JOIN tblPeriods AS period ON period.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
+        WHERE
+            hm._rowid = ?
+            AND hm.FK_tblMaterials_tblPeriods IS NOT NULL
+        ORDER BY hm._version DESC
+        LIMIT ?;
+    """,
+    #
+    "select_records_for_max_index_with_monitoring": """--sql
+        -- получить Материалы у которых базовая цена != 0 и индекс периода максимальный
+        WITH vars(period_id, max_period_index) AS (
+            SELECT p.ID_tblPeriod, MAX(p.index_num)
+            FROM tblMaterials m
+            JOIN tblPeriods AS p ON p.ID_tblPeriod = m.FK_tblMaterials_tblPeriods
+            WHERE m.base_price > 0
+            GROUP BY p.ID_tblPeriod
+        )
+        SELECT
+            materials.ID_tblMaterial,
+            periods.index_num,
+            products.code,
+            products.description AS title,
+            --
+            materials.net_weight,
+            materials.gross_weight,
+            materials.base_price,
+            materials.actual_price,
+            monitoring.supplier_price AS monitoring_price,
+            monitoring.FK_tblMonitoringMaterial_tblPeriods AS monitoring_period_id,
+            (SELECT index_num FROM tblPeriods WHERE ID_tblPeriod = monitoring.FK_tblMonitoringMaterial_tblPeriods) AS monitoring_index_num,
+            monitoring.delivery AS transport_flag,
+            --
+            (
+               SELECT ptr.code
+               FROM tblProducts AS ptr
+               WHERE ptr.ID_tblProduct = tc.FK_tblTransportCosts_tblProducts
+            ) AS transport_code,
+            COALESCE(tc.base_price, 0) AS transport_base_price,
+            COALESCE(tc.inflation_ratio, 0) AS transport_factor
+
+        FROM tblMaterials materials
+        JOIN tblPeriods AS periods ON periods.ID_tblPeriod = materials.FK_tblMaterials_tblPeriods
+        JOIN tblProducts AS products ON products.ID_tblProduct = materials.FK_tblMaterials_tblProducts
+        LEFT JOIN tblMonitoringMaterials AS monitoring ON monitoring.FK_tblMonitoringMaterial_tblProducts = products.ID_tblProduct
+        LEFT JOIN tblTransportCosts AS tc ON tc.ID_tblTransportCost = materials.FK_tblMaterials_tblTransportCosts
+        JOIN vars ON vars.period_id = periods.ID_tblPeriod
+        WHERE periods.index_num = vars.max_period_index AND materials.base_price > 0
+        ORDER BY products.digit_code ASC
+        --LIMIT 10
+        ;
     """,
     #  Products history get
     "select_history_product_for_period": """--sql

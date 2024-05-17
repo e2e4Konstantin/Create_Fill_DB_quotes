@@ -396,7 +396,33 @@ def _material_price_history_report_output(table, sheet_name: str, file_name: str
             sheet.append(price_row)
             row += 1
 
-
+def _77_get_materials_for_period_from_history(
+    db_file: str, materials_index_number: int, monitoring_index_number: int
+) -> list[Material] | None:
+    """материалы для периода."""
+    materials = []
+    with dbTolls(db_file) as db:
+        history_materials = fetch_materials_history(db, materials_index_number)
+        for history_material in history_materials:
+            product_id = history_material["FK_tblMaterials_tblProducts"]
+            supplement_number = history_material["index_supplement_number"]
+            # if product_id == 44584:
+            #     ic({**history_material})
+            product = _fetch_products_history(db, product_id, supplement_number)
+            transport_cost_id = history_material["FK_tblMaterials_tblTransportCosts"]
+            transport_cost = _fetch_transport_cost_history(
+                db, transport_cost_id, materials_index_number
+            )
+            monitoring = _fetch_monitoring_materials_history(
+                db, product_id, monitoring_index_number
+            )
+            if not monitoring:
+                ic({**product, **history_material, **transport_cost})
+                return None
+            materials.append(
+                {**product, **history_material, **transport_cost, **monitoring}
+            )
+    return materials if materials else None
 
 
 if __name__ == "__main__":

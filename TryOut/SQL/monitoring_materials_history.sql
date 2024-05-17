@@ -145,3 +145,5 @@ WHERE
     AND lorigin.FK_tblProducts_tblOrigins = (SELECT ID_tblOrigin FROM tblOrigins WHERE name = 'ТСН')    --1
     AND litem.FK_tblProducts_tblItems = (SELECT ID_tblItem FROM tblItems WHERE team = 'units' and name = 'material')    --4
 ;
+
+
