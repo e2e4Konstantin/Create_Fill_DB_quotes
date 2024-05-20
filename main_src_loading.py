@@ -19,7 +19,7 @@ from tools import (
     update_product_default_value_record,
 )
 
-from config import LocalData
+from config import LocalData, TON_ORIGIN
 from postgres_export import (
     db_access,
     export_table_periods_to_csv,
@@ -84,14 +84,14 @@ if __name__ == '__main__':
     local = LocalData(location)
     ic()
     for supplement in local.periods_data:    #[:1]:
+        update_product_default_value_record(
+            local.db_file, catalog=TON_ORIGIN, period_id=supplement["id"]
+        )
         parsing_quotes_for_supplement(local, supplement)
         parsing_resources_for_supplement(local, supplement)
 
         ic(supplement["indexes"])
         for index_period in supplement["indexes"]:
-            update_product_default_value_record(
-                local.db_file, catalog="ТСН", period_id=index_period[3]
-            )
             parsing_storage_cost(local, index_period)
             parsing_transport_cost(local, index_period)
             parsing_material_properties(local, index_period)

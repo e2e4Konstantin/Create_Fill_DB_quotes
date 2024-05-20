@@ -2,12 +2,14 @@ import pandas as pd
 from icecream import ic
 import sqlite3
 
-from config import dbTolls, DirectoryItem, DEFAULT_RECORD_CODE, Period
+from config import dbTolls, DirectoryItem, DEFAULT_RECORD_CODE, MAIN_RECORD_CODE, Period
 
 from sql_queries import sql_items_queries, sql_catalog_queries, sql_products_queries, sql_raw_queries, sql_origins, sql_periods_queries
 from files_features import output_message, output_message_exit
-from tools.shared.code_tolls import clear_code
+from tools.shared.code_tolls import clear_code, code_to_number
 from files_features import output_message_exit
+
+
 
 
 def update_catalog(db: dbTolls, catalog_id: int, raw_catalog_data: tuple) -> int | None:
@@ -490,6 +492,43 @@ def get_indexes_for_supplement(db_file: str, supplement_number: int
         raise
     return None
 
+def _insert_default_value_record_to_product(
+    db: dbTolls, origin_id: int, period: int, default_code: str
+) -> int | None:
+    """
+    Вставляет в tblProduct запись с шифром '0.0-0-0', для значений по умолчанию.
+    Родителем корневая запись справочника.
+    """
+    target_item = ("default", "default")
+    item_id = db.get_row_id(sql_items_queries["select_items_id_team_name"], target_item)
+    if item_id is None:
+        log = f"в справочнике tblItems: не найдена запись {target_item!r}"
+        ic(log)
+        return None
+    # получаем ссылку на корневую запись каталога
+    catalog_id = get_catalog_id_by_origin_code(db, origin_id, code=MAIN_RECORD_CODE)
+    description = "Значение по умолчанию"
+    data = (
+        catalog_id,
+        item_id,
+        origin_id,
+        period,
+        default_code,
+        description,
+        None,
+        code_to_number(default_code),
+    )
+    message = f"Вставка записи {default_code} {description!r} в Продукты"
+    inserted_id = db.go_insert(sql_products_queries["insert_product"], data, message)
+    if inserted_id:
+        log = f"в продукты добавлен {default_code!r} {origin_id=}: {description!r} id: {inserted_id}"
+        ic(log)
+        return inserted_id
+    output_message_exit(
+        "В Продукты", f"Не добавлена запись {description} {default_code}"
+    )
+
+
 def update_product_default_value_record(
     db_file: str, catalog: str, period_id: int
 ) -> int | None:
@@ -497,18 +536,19 @@ def update_product_default_value_record(
     Обновляет период у запись tblProducts 'Значение по умолчанию'.
     """
     with dbTolls(db_file) as db:
-        code = clear_code(DEFAULT_RECORD_CODE)
+        default_code = clear_code(DEFAULT_RECORD_CODE)
         origin_id = get_origin_id(db, origin_name=catalog)
-        default_record = get_product_by_code(db, origin_id, code)
+        default_record = get_product_by_code(db, origin_id, default_code)
 
-        if code and origin_id and default_record:
+        if default_code and origin_id and default_record:
             db.go_execute(
                 sql_products_queries["update_product_period_by_id"],
                 (period_id, default_record["ID_tblProduct"]),
             )
             count = db.go_execute(sql_products_queries["select_changes"])
             return count.fetchone()["changes"] if count else None
-        output_message_exit(
-            "Непредвиденная ошибка", "Обновления периода у default запись tblProducts"
-        )
-
+        else:
+            inserted_id = _insert_default_value_record_to_product(
+                db, origin_id=origin_id, period=period_id, default_code=default_code
+            )
+            return inserted_id

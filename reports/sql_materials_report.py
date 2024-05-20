@@ -98,15 +98,15 @@ sql_materials_reports = {
                     AND i.name = 'supplement'
             )
         SELECT
-            hp._mask,
-            hp._rowid,
-            lid.ID_tblProduct,
-            lcode.code,
-            ldesc.description,
-            lmeas.measurer,
-            ldc.digit_code,
-            lcatalog.FK_tblProducts_tblCatalogs,
-            cat.code AS catalog_code
+            hp._mask AS material_mask,
+            hp._rowid AS material_rowid,
+            lid.ID_tblProduct AS material_product_id,
+            lcode.code AS material_code,
+            ldesc.description AS material_description,
+            lmeas.measurer AS material_measurer,
+            ldc.digit_code AS material_digit_code,
+            lcatalog.FK_tblProducts_tblCatalogs AS material_catalog_id,
+            cat.code AS material_catalog_code
         FROM _tblHistoryProducts hp
         JOIN target_periods tp ON tp.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
         JOIN latest_origins lorigin ON lorigin._rowid = hp._rowid
@@ -131,93 +131,104 @@ sql_materials_reports = {
         ORDER BY ldc.digit_code
         ;
         """,
-    # 3
+    # --- 3 ---
     "select_history_material_for_period": """--sql
     /*
         по номеру индекса периода выбирает материалы из таблицы истории
         с последними изменениями до указанного периода.
         Удаленные материалы не учитываются.
-        {'index_number': 207} #'rowid': 6,
+        {'index_number': 207, 'product_id': 6}
     */
-    WITH
+        WITH
         -- ID_tblMaterial
         latest_ID_tblMaterial AS (
-            SELECT _rowid, MAX(p.index_num) AS latest_period_index, ID_tblMaterial
+            SELECT hm._rowid, MAX(p.index_num) AS latest_period_index, hm.ID_tblMaterial
             FROM _tblHistoryMaterials hm
             JOIN tblPeriods p ON p.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
             WHERE hm.ID_tblMaterial IS NOT NULL and p.index_num <= :index_number
-            GROUP BY _rowid
+            GROUP BY hm._rowid
         ),
         -- actual_price
         latest_actual_price AS (
-            SELECT _rowid, MAX(p.index_num) AS latest_period_index, actual_price
+            SELECT hm._rowid, MAX(p.index_num) AS latest_period_index, hm.actual_price
             FROM _tblHistoryMaterials hm
             JOIN tblPeriods p ON p.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
             WHERE hm.actual_price IS NOT NULL and p.index_num <= :index_number
-            GROUP BY _rowid
+            GROUP BY hm._rowid
         ),
         -- base_price
         latest_base_price AS (
-            SELECT _rowid, MAX(p.index_num) AS latest_period_index, base_price
+            SELECT hm._rowid, MAX(p.index_num) AS latest_period_index, hm.base_price
             FROM _tblHistoryMaterials hm
             JOIN tblPeriods p ON p.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
             WHERE hm.base_price IS NOT NULL and p.index_num <= :index_number
-            GROUP BY _rowid
+            GROUP BY hm._rowid
         ),
         -- estimate_price
         latest_estimate_price AS (
-            SELECT _rowid, MAX(p.index_num) AS latest_period_index, estimate_price
+            SELECT hm._rowid, MAX(p.index_num) AS latest_period_index, hm.estimate_price
             FROM _tblHistoryMaterials hm
             JOIN tblPeriods p ON p.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
             WHERE hm.estimate_price IS NOT NULL and p.index_num <= :index_number
-            GROUP BY _rowid
+            GROUP BY hm._rowid
         ),
         -- net_weight
         latest_net_weight AS (
-            SELECT _rowid, MAX(p.index_num) AS latest_period_index, net_weight
+            SELECT hm._rowid, MAX(p.index_num) AS latest_period_index, hm.net_weight
             FROM _tblHistoryMaterials hm
             JOIN tblPeriods p ON p.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
             WHERE hm.net_weight IS NOT NULL and p.index_num <= :index_number
-            GROUP BY _rowid
+            GROUP BY hm._rowid
         ),
         -- gross_weight
         latest_gross_weight AS (
-            SELECT _rowid, MAX(p.index_num) AS latest_period_index, gross_weight
+            SELECT hm._rowid, MAX(p.index_num) AS latest_period_index, hm.gross_weight
             FROM _tblHistoryMaterials hm
             JOIN tblPeriods p ON p.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
             WHERE hm.gross_weight IS NOT NULL and p.index_num <= :index_number
-            GROUP BY _rowid
+            GROUP BY hm._rowid
         ),
          -- FK_tblMaterials_tblProducts
         latest_FK_tblMaterials_tblProducts AS (
-            SELECT _rowid, MAX(p.index_num) AS latest_period_index, FK_tblMaterials_tblProducts
+            SELECT hm._rowid, MAX(p.index_num) AS latest_period_index, hm.FK_tblMaterials_tblProducts
             FROM _tblHistoryMaterials hm
             JOIN tblPeriods p ON p.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
             WHERE hm.FK_tblMaterials_tblProducts IS NOT NULL and p.index_num <= :index_number
-            GROUP BY _rowid
+            GROUP BY hm._rowid
         ),
         -- FK_tblMaterials_tblTransportCosts
         latest_FK_tblMaterials_tblTransportCosts AS (
-            SELECT _rowid, MAX(p.index_num) AS latest_period_index, FK_tblMaterials_tblTransportCosts
+            SELECT hm._rowid, MAX(p.index_num) AS latest_period_index, hm.FK_tblMaterials_tblTransportCosts
             FROM _tblHistoryMaterials hm
             JOIN tblPeriods p ON p.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
             WHERE hm.FK_tblMaterials_tblTransportCosts IS NOT NULL and p.index_num <= :index_number
-            GROUP BY _rowid
+            GROUP BY hm._rowid
         ),
         -- period
         target_periods AS (
-            SELECT p.ID_tblPeriod, index_num, supplement_num
-            FROM tblPeriods p
-            WHERE FK_Origin_tblOrigins_tblPeriods = (SELECT ID_tblOrigin FROM tblOrigins WHERE name = 'ТСН')
-                AND FK_Category_tblItems_tblPeriods = (SELECT ID_tblItem FROM tblItems WHERE name = 'index')
-                AND p.index_num = :index_number
+                SELECT p.ID_tblPeriod, p.index_num, p.supplement_num, p.title
+                FROM tblPeriods p
+                JOIN tblOrigins o ON o.ID_tblOrigin = p.FK_Origin_tblOrigins_tblPeriods
+                JOIN tblItems i ON i.ID_tblItem = p.FK_Category_tblItems_tblPeriods
+                WHERE
+                    p.index_num = :index_number
+                    AND o.name  = 'ТСН'
+                    AND i.team = 'periods_category'
+                    AND i.name = 'index'
         )
     SELECT
-        hm._rowid AS material_rowid, lidm.ID_tblMaterial,
-        tp.index_num AS index_number, tp.supplement_num AS index_supplement_number,
-        lap.actual_price, lep.estimate_price, lbp.base_price,
-        lnw.net_weight, lgw.gross_weight,
-        lmp.FK_tblMaterials_tblProducts, lmtc.FK_tblMaterials_tblTransportCosts
+        hm._rowid AS properties_rowid,
+        lidm.ID_tblMaterial AS properties_id,
+        tp.index_num AS properties_index_number,
+        tp.supplement_num AS properties_supplement_number,
+        lbp.base_price AS properties_base_price,
+        lep.estimate_price AS properties_estimate_price,
+        lap.actual_price AS properties_actual_price,
+        lnw.net_weight AS properties_net_weight,
+        lgw.gross_weight AS properties_gross_weight,
+        lmp.FK_tblMaterials_tblProducts AS properties_product_id,
+        lmtc.FK_tblMaterials_tblTransportCosts AS properties_transport_cost_id,
+        hm._mask AS properties_mask
     FROM _tblHistoryMaterials hm
     --
     JOIN target_periods tp ON tp.ID_tblPeriod = hm.FK_tblMaterials_tblPeriods
@@ -231,10 +242,95 @@ sql_materials_reports = {
     JOIN latest_FK_tblMaterials_tblTransportCosts lmtc ON lmtc._rowid = hm._rowid
     WHERE
         hm._mask != -1
-        AND lmp.FK_tblMaterials_tblProducts = :product_id
+        AND
+        lmp.FK_tblMaterials_tblProducts = :product_id
     ;
     """,
-    #
+    # --- 4 ---
+    "select_history_transport_cost_for_period": """--sql
+    /*
+        Для transport_cost_rowid транспортной затраты и номеру индекса периода выбирает из таблицы истории
+        последние изменения этой транспортной затраты. Код транспортной затраты получает из таблицы _tblHistoryProducts
+        периода дополнения supplement_number.
+        {'transport_cost_rowid': 13, 'index_number': 210, :'supplement_number': 71}
+    */
+    WITH
+        -- ID_TransportCost
+        latest_ID_tblTransportCost AS (
+            SELECT htc._rowid, MAX(p.index_num) AS latest_period_index, htc.ID_tblTransportCost
+            FROM _tblHistoryTransportCosts htc
+            JOIN tblPeriods p ON p.ID_tblPeriod = htc.FK_tblTransportCosts_tblPeriods
+            WHERE htc.ID_tblTransportCost IS NOT NULL and p.index_num <= :index_number
+            GROUP BY htc._rowid
+        ),
+        -- base_price
+        latest_base_price AS (
+            SELECT htc._rowid, MAX(p.index_num) AS latest_period_index, htc.base_price
+            FROM _tblHistoryTransportCosts htc
+            JOIN tblPeriods p ON p.ID_tblPeriod = htc.FK_tblTransportCosts_tblPeriods
+            WHERE htc.base_price IS NOT NULL and p.index_num <= :index_number
+            GROUP BY htc._rowid
+        ),
+        -- actual_price
+        latest_actual_price AS (
+            SELECT htc._rowid, MAX(p.index_num) AS latest_period_index, htc.actual_price
+            FROM _tblHistoryTransportCosts htc
+            JOIN tblPeriods p ON p.ID_tblPeriod = htc.FK_tblTransportCosts_tblPeriods
+            WHERE htc.actual_price IS NOT NULL and p.index_num <= :index_number
+            GROUP BY htc._rowid
+        ),
+
+        -- FK_tblTransportCosts_tblProducts
+        latest_FK_tblTransportCosts_tblProducts AS (
+            SELECT htc._rowid, MAX(p.index_num) AS latest_period_index, htc.FK_tblTransportCosts_tblProducts
+            FROM _tblHistoryTransportCosts htc
+            JOIN tblPeriods p ON p.ID_tblPeriod = htc.FK_tblTransportCosts_tblPeriods
+            WHERE htc.FK_tblTransportCosts_tblProducts IS NOT NULL and p.index_num <= :index_number
+            GROUP BY htc._rowid
+        ),
+        -- product_code
+            latest_product_code AS (
+                SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_supplement, hp.code
+                FROM _tblHistoryProducts hp
+                JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+                WHERE hp.code IS NOT NULL AND p.supplement_num <= :supplement_number
+                GROUP BY hp._rowid
+            ),
+        -- period
+        target_periods AS (
+                SELECT p.ID_tblPeriod, p.index_num, p.supplement_num, p.title
+                FROM tblPeriods p
+                JOIN tblOrigins o ON o.ID_tblOrigin = p.FK_Origin_tblOrigins_tblPeriods
+                JOIN tblItems i ON i.ID_tblItem = p.FK_Category_tblItems_tblPeriods
+                WHERE
+                    p.index_num = :index_number
+                    AND o.name  = 'ТСН'
+                    AND i.team = 'periods_category'
+                    AND i.name = 'index'
+        )
+    SELECT
+        htc._rowid AS transport_cost_rowid,
+        tp.index_num AS transport_cost_index_number,
+        lidtc.ID_tblTransportCost AS transport_cost_id,
+        lbp.base_price AS transport_cost_base_price,
+        lap.actual_price AS transport_cost_actual_price,
+        ltcp.FK_tblTransportCosts_tblProducts AS transport_cost_product_id,
+        lpc.code AS transport_cost_product_code,
+        htc._mask AS transport_cost_mask
+    FROM _tblHistoryTransportCosts htc
+    JOIN target_periods tp ON tp.ID_tblPeriod = htc.FK_tblTransportCosts_tblPeriods
+    JOIN latest_ID_tblTransportCost lidtc ON lidtc._rowid = htc._rowid
+    JOIN latest_base_price lbp ON lbp._rowid = htc._rowid
+    JOIN latest_actual_price lap ON lap._rowid = htc._rowid
+    JOIN latest_FK_tblTransportCosts_tblProducts ltcp ON ltcp._rowid = htc._rowid
+    JOIN latest_product_code lpc ON lpc._rowid = ltcp.FK_tblTransportCosts_tblProducts
+    WHERE
+        htc._mask != -1
+        AND
+        htc._rowid = :transport_cost_rowid
+;
+    """,
+    # ----------------------------------------------------------------------------------------------------------------
     # ----------------------------------------------------------------------------------------------------------------
     "select_period_id_for_max_index": """--sql
         -- получить id периода Материалов у которого индекс периода максимальный
@@ -404,59 +500,6 @@ sql_materials_reports = {
     ;
     """,
     #
-    "select_history_transport_cost_for_period": """--sql
-    /*
-        для id транспортной затраты и номеру индекса периода выбирает из таблицы истории
-        последние изменения в данных этой транспортной затраты для периода
-        {'rowid': 40, 'index_number': 205}
-    */
-    WITH
-        -- ID_TransportCost
-        latest_ID_tblTransportCost AS (
-            SELECT _rowid, MAX(p.index_num) AS latest_period_index_id, ID_tblTransportCost
-            FROM _tblHistoryTransportCosts
-            JOIN tblPeriods p ON p.ID_tblPeriod = FK_tblTransportCosts_tblPeriods
-            WHERE ID_tblTransportCost IS NOT NULL and p.index_num <= :index_number
-            GROUP BY _rowid
-        ),
-        -- base_price
-        latest_base_price AS (
-            SELECT _rowid, MAX(p.index_num) AS latest_period_index_bp, base_price
-            FROM _tblHistoryTransportCosts
-            JOIN tblPeriods p ON p.ID_tblPeriod = FK_tblTransportCosts_tblPeriods
-            WHERE base_price IS NOT NULL and p.index_num <= :index_number
-            GROUP BY _rowid
-        ),
-        -- actual_price
-        latest_actual_price AS (
-            SELECT _rowid, MAX(p.index_num) AS latest_period_index_bp, actual_price
-            FROM _tblHistoryTransportCosts
-            JOIN tblPeriods p ON p.ID_tblPeriod = FK_tblTransportCosts_tblPeriods
-            WHERE actual_price IS NOT NULL and p.index_num <= :index_number
-            GROUP BY _rowid
-        ),
-        -- period
-        target_periods AS (
-            SELECT p.ID_tblPeriod, index_num
-            FROM tblPeriods p
-            WHERE FK_Origin_tblOrigins_tblPeriods = (SELECT ID_tblOrigin FROM tblOrigins WHERE name = 'ТСН')
-                AND FK_Category_tblItems_tblPeriods = (SELECT ID_tblItem FROM tblItems WHERE name = 'index')
-                AND p.index_num = :index_number
-        )
-    SELECT
-        htc._rowid AS transport_cost_rowid,
-        tp.index_num AS transport_cost_index_number,
-        lidtc.ID_tblTransportCost,
-        lbp.base_price AS transport_cost_base_price,
-        lap.actual_price AS transport_cost_actual_price
-    FROM _tblHistoryTransportCosts htc
-    JOIN target_periods tp ON tp.ID_tblPeriod = htc.FK_tblTransportCosts_tblPeriods
-    JOIN latest_ID_tblTransportCost lidtc ON lidtc._rowid = htc._rowid
-    JOIN latest_base_price lbp ON lbp._rowid = htc._rowid
-    JOIN latest_actual_price lap ON lap._rowid = htc._rowid
-    WHERE htc._rowid = :rowid
-    ;
-    """,
     #
     "select_history_monitoring_materials_for_period": """--sql
     /*

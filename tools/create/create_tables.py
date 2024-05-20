@@ -19,7 +19,7 @@ from tools.create.fill_directory import (
     fill_directory_catalog_items,
 )
 from tools.create.insert_root_row_catalog import insert_root_record_to_catalog
-from tools.create.insert_default_value import insert_default_value_record_to_product
+from TryOut.insert_default_value import insert_default_value_record_to_product
 
 
 
@@ -249,9 +249,6 @@ def db_create_tables_and_fill_directory(db_file: str) -> int:
         period=0,
         description="Справочник ресурсов НЦКР",
     )
-    #
-    insert_default_value_record_to_product(db_file, catalog=TON_ORIGIN, period=0)
-    insert_default_value_record_to_product(db_file, catalog=PNWC_ORIGIN, period=0)
     return 0
 
 
