@@ -169,7 +169,7 @@ def _fetch_monitoring_materials_history(
     if not monitoring:
         output_message(
         # output_message_exit(
-            f"не найдены данные  в истории SELECT COALESCE(column_name, default_value) FROM table_name;мониторинга для продукта: {product_id=}",
+            f"не найдены данные  в истории мониторинга для продукта: {product_id=}",
             f"для индекса: {monitoring_index_number=}",
         )
         return None

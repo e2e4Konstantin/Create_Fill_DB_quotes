@@ -64,7 +64,7 @@ def _make_data_from_raw_monitoring_materials(db: dbTolls, raw_line: sqlite3.Row,
     #
     supplier_price = raw_line["supplier_price"]
     delivery = 1 if raw_line["delivery"] == "True" else 0
-    title = raw_line["title"]
+    title = raw_line["title"] if raw_line["title"] else ""
 
     data = (product_id, period_id, supplier_price, delivery, title, period)
     return data
@@ -222,5 +222,5 @@ if __name__ == "__main__":
         ("materials_monitoring_result_71_210.csv", Period(71, 210)),
         ("materials_monitoring_result_72_211.csv", Period(72, 211)),
     ]
-    for file in files[2:3]:
+    for file in files:  # [2:3]
         _parsing_monitoring_materials(local, file[0], file[1])

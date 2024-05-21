@@ -137,6 +137,18 @@ class dbTolls(dbControl):
             # print(traceback.format_exception(exc_type, exc_value, exc_tb))
             # print(error)
 
+    def go_execute_many(self, query, *args) -> sqlite3.Cursor | None:
+        """Execute SQL"""
+        try:
+            result = self.connection.executemany(query, *args)
+            return result
+        except sqlite3.Error as error:
+            output_message(
+                f"ошибка запроса БД Sqlite3: {' '.join(error.args)}",
+                f"{args}\n{query} ",
+            )
+
+
     def inform(self, all_details: bool = False):
         """  Выводи в консоль информацию о таблицах БД
         :param all_details: выводить все записи
