@@ -71,52 +71,52 @@ def get_transport_cost_with_monitoring(
     return table if table else None
 
 
-def report_output(table):
+def _report_output(table: list[TransportCost], sheet_name: str, file_name: str):
     """Напечатать отчет"""
-    sheet_name = "transport"
-    file_name = "report_monitoring.xlsx"
+    with ExcelReport(file_name) as file:
+        sheet = file.get_sheet(sheet_name)
+        ic(sheet)
 
-    file = ExcelReport(file_name)
-    file.open_file()
-    file.create_sheets()
-    sheet = file.sheet_names[0]
+    # file = ExcelReport(file_name)
+    # file.open_file()
+    # file.create_sheets()
+    # sheet = file.sheet_names[0]
     #
-    header = ["шифр", "базовая стоимость", "actual index", "actual price", "monitoring index", "monitoring price"]
-    header_index = ['', 'предыдущий индекс','текущий индекс', 'рост/абс','рост %']
+        header = ["шифр", "базовая стоимость", "actual index", "actual price", "monitoring index", "monitoring price"]
+        header_index = ['', 'предыдущий индекс','текущий индекс', 'рост/абс','рост %']
 
-    history_header = [x.history_index for x in table[0].history]
-    mod_header = [*header[:2], *history_header, *header[2:], *header_index]
+        history_header = [x.history_index for x in table[0].history]
+        mod_header = [*header[:2], *history_header, *header[2:], *header_index]
 
-    file.write_header(sheet, mod_header)
+        file.write_header(sheet_name, mod_header)
 
-    row = 3
-    for line in table:
+        row = 3
+        for line in table:
 
-        row_value = [
-            line.code,
-            line.base_price,
-            line.index_num,
-            line.actual_price,
-            line.monitoring_index,
-            line.monitoring_price,
-        ]
-        history_value = [x.history_price for x in line.history]
-        formulas = [
-            "",
-            f"=J{row}/B{row}",
-            f"=L{row}/B{row}",
-            f"=O{row}-N{row}",
-            f"=(O{row}*100)/N{row}-100",
-        ]
-        mod_row = [*row_value[:2], *history_value, *row_value[2:], *formulas]
-        file.write_row(sheet, mod_row, row)
-        file.write_format(sheet, row, len(mod_row))
+            row_value = [
+                line.code,
+                line.base_price,
+                line.index_num,
+                line.actual_price,
+                line.monitoring_index,
+                line.monitoring_price,
+            ]
+            history_value = [x.history_price for x in line.history]
+            formulas = [
+                "",
+                f"=J{row}/B{row}",
+                f"=L{row}/B{row}",
+                f"=O{row}-N{row}",
+                f"=(O{row}*100)/N{row}-100",
+            ]
+            mod_row = [*row_value[:2], *history_value, *row_value[2:], *formulas]
+            file.write_row(sheet_name, mod_row, row)
+            file.write_format(sheet_name, row, len(mod_row))
+            row += 1
 
-        row += 1
 
-
-    file.save_file()
-    file.close_file()
+    # file.save_file()
+    # file.close_file()
 
 
 
@@ -128,6 +128,10 @@ if __name__ == "__main__":
     ic()
     table = get_transport_cost_with_monitoring(local.db_file, history_depth=6)
     ic(table)
-    report_output(table)
+
+
+    sheet_name = "transport"
+    file_name = "report_monitoring.xlsx"
+    _report_output(table, sheet_name=sheet_name, file_name=file_name)
 
 

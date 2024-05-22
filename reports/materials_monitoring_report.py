@@ -424,17 +424,15 @@ def _77_get_materials_for_period_from_history(
             )
     return materials if materials else None
 
-
-if __name__ == "__main__":
-
-
+def test_main():
     location = "office"  # office  # home
 
     local = LocalData(location)
     ic()
 
     table = _get_materials_for_period_from_history(
-        local.db_file, materials_index_number=210, monitoring_index_number=211)
+        local.db_file, materials_index_number=210, monitoring_index_number=211
+    )
     if table:
         ic(len(table))
         ic(table[5])
@@ -469,3 +467,22 @@ if __name__ == "__main__":
     # _material_price_history_report_output(
     #     table, sheet_name="price materials history", file_name=file_name
     # )
+
+
+def last_period_main():
+    location = "office"  # office  # home
+    local = LocalData(location)
+    ic()
+
+    sheet_name = "materials"
+    file_name = "report_monitoring.xlsx"
+    modern_materials_monitoring_report_output(
+        table, view_history_depth=2, sheet_name =sheet_name, file_name = file_name
+    )
+    _material_price_history_report_output(
+        table, sheet_name="price materials history", file_name=file_name
+    )
+
+if __name__ == "__main__":
+
+

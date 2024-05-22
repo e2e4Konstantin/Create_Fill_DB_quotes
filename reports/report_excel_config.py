@@ -170,27 +170,27 @@ class ExcelReport(ExcelBase):
             cell.font = self.fonts["default"]
             cell.number_format = self.number_format
         # формулы
-        start_col = columns["title"] + history_len + 12
+        start_col = columns["title"] + history_len + 13
         for column_index in range(start_col, start_col + 11):
             cell = self.worksheet.cell(row=row_index, column=column_index)
             cell.font = self.fonts["default"]
             cell.number_format = self.number_format
             cell.fill = self.fills["calculate"]
         # result
-        result_col = columns["title"] + history_len + 13
+        result_col = columns["title"] + history_len + 14
         cell_result = self.worksheet.cell(row=row_index, column=result_col)
         cell_result.font = self.fonts["result_bold"]
         cell_result.number_format = self.number_format
         # percentage of change
         percentage_cols = [
-            columns["title"] + history_len + 17,
-            columns["title"] + history_len + 22,
+            columns["title"] + history_len + 18,
+            columns["title"] + history_len + 23,
         ]
         for column in percentage_cols:
             self.worksheet.cell(row=row_index, column=column).number_format = "0.00%"
 
         # dangerous flag
-        flag_col = columns["title"] + history_len + 21
+        flag_col = columns["title"] + history_len + 22
         flag_cell = self.worksheet.cell(row=row_index, column=flag_col)
         flag_cell.font = self.fonts["result_bold"]
         flag_cell.number_format = "# ##0"
@@ -198,9 +198,9 @@ class ExcelReport(ExcelBase):
         # width
         slime_cells = [
             1,
-            columns["title"] + history_len + 11,
-            columns["title"] + history_len + 18,
-            columns["title"] + history_len + 21,
+            columns["title"] + history_len + 12,
+            columns["title"] + history_len + 19,
+            columns["title"] + history_len + 22,
         ]
         for column in slime_cells:
             self.worksheet.column_dimensions[get_column_letter(column)].width = 3

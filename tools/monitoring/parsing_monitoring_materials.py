@@ -202,7 +202,7 @@ def _parsing_monitoring_materials(
     ic(message)
     file = create_abspath_file(location.monitoring_path, monitoring_csv_file)
     load_csv_to_raw_table(file, location.db_file, delimiter=",")
-    _round_raw_supplier_price(location.db_file, ROUNDING)
+    # _round_raw_supplier_price(location.db_file, ROUNDING)
     _add_raw_digit_code(location.db_file)
     #
     _transfer_raw_monitoring_materials(location.db_file, period)
@@ -210,6 +210,7 @@ def _parsing_monitoring_materials(
 
 
 if __name__ == "__main__":
+    """ !!! CSV файлы создаются в другом проекте Monitoring_Parser"""
     local = LocalData("office")  # office  # home
 
     # monitoring_period = Period(71,210)
@@ -221,6 +222,7 @@ if __name__ == "__main__":
         ("materials_monitoring_result_71_209.csv", Period(71, 209)),
         ("materials_monitoring_result_71_210.csv", Period(71, 210)),
         ("materials_monitoring_result_72_211.csv", Period(72, 211)),
+        ("materials_monitoring_result_72_212.csv", Period(72, 212)),
     ]
-    for file in files:  # [2:3]
+    for file in files[-1:]:  # [2:3]
         _parsing_monitoring_materials(local, file[0], file[1])

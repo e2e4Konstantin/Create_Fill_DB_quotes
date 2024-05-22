@@ -57,6 +57,13 @@ sql_periods_queries = {
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     """,
+    "insert_period_data": """--sql
+        INSERT INTO tblPeriods (
+            title, supplement_num, index_num, date_start, comment, ID_parent,
+            FK_Origin_tblOrigins_tblPeriods, FK_Category_tblItems_tblPeriods, basic_database_id
+        )
+        VALUES ('Индекс 212', 72, 212, '2024-05-22', NULL, 70, 1, 29, 167597127);
+    """,
     "update_periods_supplement_parent": """--sql
         -- Для дополнений ТСН устанавливает ID родительской записи где номер дополнения меньше на 1
         -- named style parameter: {"id_origin": 1, "id_item": 27}, 27 - supplement

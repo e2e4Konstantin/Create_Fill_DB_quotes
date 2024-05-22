@@ -210,6 +210,7 @@ if __name__ == "__main__":
         ("transport_monitoring_result_71_209.csv", Period(71, 209)),
         ("transport_monitoring_result_71_210.csv", Period(71, 210)),
         ("transport_monitoring_result_72_211.csv", Period(72, 211)),
+        ("transport_monitoring_result_72_212.csv", Period(72, 212)),
     ]
-    for file in files:
+    for file in files[-1:]:
         _parsing_monitoring_transport_costs(local, file[0], file[1])

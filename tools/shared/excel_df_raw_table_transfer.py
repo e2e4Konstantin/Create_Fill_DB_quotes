@@ -3,6 +3,7 @@ import pandas as pd
 # from icecream import ic
 # from files_features import create_abspath_file
 
+
 from config import dbTolls
 
 
@@ -60,10 +61,17 @@ def _load_df_to_db_table(df: pd.DataFrame, db_file: str, table_name: str) -> int
         # ic(message)
     return 0
 
+def load_csv_to_df(csv_path: str, db_path: str, delimiter: str = ";") -> pd.DataFrame | None:
+    """Импорт данных из файла CSV в pd.DataFrame"""
+    df = pd.read_csv(csv_path, delimiter=delimiter, index_col=False, dtype=str)
+    # df.to_clipboard()
+    return df if not df.empty else None
+
 
 def load_csv_to_raw_table(csv_path: str, db_path: str, delimiter: str = ";") -> int:
     """Импорт данных из файла CSV в таблицу tblRawData"""
     df = pd.read_csv(csv_path, delimiter=delimiter, index_col=False, dtype=str)
+
     # df.to_clipboard()
     return _load_df_to_db_table(df, db_path, "tblRawData")
 
