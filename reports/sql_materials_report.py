@@ -680,6 +680,16 @@ sql_materials_reports = {
     "select_records_for_max_index_with_monitoring": """--sql
         -- получить Материалы у которых базовая цена != 0 и индекс периода максимальный
         WITH
+            -- delivery checking
+            delivery_history AS (
+                SELECT
+                    hmmd._rowid,
+                    COUNT(1) FILTER (WHERE hmmd.delivery = 0) AS history_freight_not_included,
+                    COUNT(1) FILTER (WHERE hmmd.delivery = 1) AS history_freight_included
+                FROM _tblHistoryMonitoringMaterials hmmd
+                WHERE hmmd.delivery IN (0, 1)
+                GROUP BY hmmd._rowid
+            ),
             -- period
             target_periods AS (
                 SELECT  MAX(p.index_num) AS max_index, p.ID_tblPeriod, p.index_num, p.supplement_num, p.title
@@ -709,18 +719,33 @@ sql_materials_reports = {
             (SELECT index_num FROM tblPeriods WHERE ID_tblPeriod = COALESCE(monitoring.FK_tblMonitoringMaterial_tblPeriods, -1)) AS monitoring_index_num,
             COALESCE(monitoring.supplier_price, 0) AS monitoring_price,
             --monitoring.FK_tblMonitoringMaterial_tblPeriods AS monitoring_period_id,
-            COALESCE(monitoring.delivery, 0) AS transport_flag
+            COALESCE(monitoring.delivery, 0) AS transport_flag,
+            --
+            dh.history_freight_included,
+            dh.history_freight_not_included,
+            --
+            CASE
+                WHEN (
+                    (monitoring.delivery AND dh.history_freight_included AND NOT dh.history_freight_not_included)
+                OR
+                    (NOT monitoring.delivery AND NOT dh.history_freight_included AND dh.history_freight_not_included)
+                )
+                THEN 0
+                ELSE 1 --'нужна проверка'
+            END AS history_check
+            --
         FROM tblMaterials materials
         JOIN target_periods tp ON tp.ID_tblPeriod = materials.FK_tblMaterials_tblPeriods
         JOIN tblProducts AS products ON products.ID_tblProduct = materials.FK_tblMaterials_tblProducts
         LEFT JOIN tblTransportCosts AS tc ON tc.ID_tblTransportCost = materials.FK_tblMaterials_tblTransportCosts
         LEFT JOIN tblMonitoringTransportCosts mtc ON mtc.FK_tblMonitoringTransportCosts_tblProducts = tc.FK_tblTransportCosts_tblProducts
         LEFT JOIN tblMonitoringMaterials AS monitoring ON monitoring.FK_tblMonitoringMaterial_tblProducts = products.ID_tblProduct
+        JOIN delivery_history dh ON dh._rowid = monitoring.ID_tblMonitoringMaterial
         WHERE
             materials.base_price > 0
             AND COALESCE(tc.FK_tblTransportCosts_tblPeriods, -1) = tp.ID_tblPeriod
         ORDER BY products.digit_code ASC
-    --LIMIT 5
+    LIMIT 5
             ;
     """,
     #  Products history get
