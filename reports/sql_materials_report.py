@@ -745,7 +745,7 @@ sql_materials_reports = {
             materials.base_price > 0
             AND COALESCE(tc.FK_tblTransportCosts_tblPeriods, -1) = tp.ID_tblPeriod
         ORDER BY products.digit_code ASC
-    LIMIT 5
+        --LIMIT 5
             ;
     """,
     #  Products history get
