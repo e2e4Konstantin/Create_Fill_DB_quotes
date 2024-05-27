@@ -1,5 +1,5 @@
 
-from openpyxl.styles import Font, PatternFill, numbers, DEFAULT_FONT, Color
+from openpyxl.styles import Font, PatternFill, numbers, DEFAULT_FONT, Color, Alignment
 from config import ExcelBase
 from openpyxl.utils import get_column_letter
 
@@ -227,3 +227,21 @@ class ExcelReport(ExcelBase):
             self.worksheet.column_dimensions[
                 get_column_letter(column_index)
             ].width = 6.5
+
+
+    def header_monitoring_price_format(
+        self, sheet_name: str, row: int = 1, header: list = None
+    ):
+        sheet = self.workbook[sheet_name]
+        len_text = 3
+        for col, value in enumerate(header[:len_text], start=1):
+            cell = sheet.cell(row=row, column=col)
+            cell.font = self.fonts["default"]
+            cell.fill = self.fills["header"]
+            cell.alignment = Alignment(wrap_text=True)
+        #
+        for col, value in enumerate(header[len_text:], start=len_text+1):
+            cell = sheet.cell(row=row, column=col)
+            cell.font = self.fonts["default_bold"]
+            cell.fill = self.fills["header"]
+            cell.alignment = Alignment(wrap_text=True, horizontal="center")

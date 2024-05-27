@@ -334,7 +334,7 @@ def _create_history_price_row(material: Material, max_history_len: int) -> list[
 
 def _material_price_history_report_output(
     table, sheet_name: str, file_name: str
-) -> list[str] | None:
+):
     """Напечатать отчет по ценам материалов"""
     max_history_len = max(material.len_history for material in table)
     for material in table:
