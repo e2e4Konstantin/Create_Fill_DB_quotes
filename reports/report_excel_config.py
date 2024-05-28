@@ -31,6 +31,7 @@ class ExcelReport(ExcelBase):
             "header": PatternFill("solid", fgColor=self.colors["header"]),
         }
         self.number_format = "#,##0.00"
+        self.counter_format = "#,##0"
 
     #
     def __enter__(self):
@@ -229,19 +230,70 @@ class ExcelReport(ExcelBase):
             ].width = 6.5
 
 
-    def header_monitoring_price_format(
+    def set_monitoring_price_header_format(
         self, sheet_name: str, row: int = 1, header: list = None
     ):
+        """Устанавливает формат строки заголовка отчета о ценах мониторинга."""
+        text_length = 4
         sheet = self.workbook[sheet_name]
-        len_text = 3
-        for col, value in enumerate(header[:len_text], start=1):
+        # Установите формат для первых 3 столбцов
+        for col in range(1, text_length + 1):
             cell = sheet.cell(row=row, column=col)
             cell.font = self.fonts["default"]
             cell.fill = self.fills["header"]
             cell.alignment = Alignment(wrap_text=True)
-        #
-        for col, value in enumerate(header[len_text:], start=len_text+1):
+        # Установите формат для остальных столбцов
+        for col in range(text_length+1, len(header) + 1):
             cell = sheet.cell(row=row, column=col)
             cell.font = self.fonts["default_bold"]
             cell.fill = self.fills["header"]
             cell.alignment = Alignment(wrap_text=True, horizontal="center")
+
+    def set_regular_row_monitoring_price_format(
+        self,
+        sheet_name: str,
+        row: int,
+        price_delivery_flags: tuple[bool,...] = None,
+    ):
+        """Устанавливает формат для строки мониторинга цен."""
+        counter_col = 1
+        code_col = 2
+        delivery_col = 3
+        title_col = 4
+        price_start_col = 5
+        sheet = self.workbook[sheet_name]
+        counter_cell = sheet.cell(row=row, column=counter_col)
+        code_cell = sheet.cell(row=row, column=code_col)
+        delivery_cell = sheet.cell(row=row, column=delivery_col)
+        title_cell = sheet.cell(row=row, column=title_col)
+        # counter format
+        counter_cell.font = self.fonts["grey"]
+        counter_cell.number_format = self.counter_format
+        counter_cell.alignment = Alignment(horizontal="center")
+        # code format
+        if True in price_delivery_flags:
+            code_cell.font = self.fonts["result_bold"]
+            code_cell.alignment = Alignment(horizontal="left")
+            # delivery format
+            delivery_cell.font = self.fonts["result_bold"]
+            delivery_cell.number_format = self.counter_format
+            delivery_cell.alignment = Alignment(horizontal="center")
+        else:
+            code_cell.font = self.fonts["default_bold"]
+            delivery_cell.font = self.fonts["grey"]
+        # title format
+        title_cell.font = self.fonts["default"]
+        # price format
+        for col, flag in enumerate(price_delivery_flags, start=price_start_col):
+            price_cell = sheet.cell(row=row, column=col)
+            if flag:
+                price_cell.font = self.fonts["result_bold"]
+            else:
+                price_cell.font = self.fonts["default"]
+            price_cell.number_format = self.number_format
+
+    def set_column_widths(self, sheet_name: str, width: int, columns: tuple[int, ...] = None) -> None:
+        """Устанавливает ширину столбцов в заданном листе."""
+        sheet = self.workbook[sheet_name]
+        for column_index in columns:
+            sheet.column_dimensions[get_column_letter(column_index)].width = width

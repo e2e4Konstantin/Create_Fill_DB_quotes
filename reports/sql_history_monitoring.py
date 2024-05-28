@@ -48,7 +48,7 @@ sql_monitoring_history = {
         JOIN latest_digit_code ldc ON ldc._rowid = hmm._rowid
         WHERE hmm.FK_tblMonitoringMaterial_tblProducts IS NOT NULL
         ORDER BY ldc.digit_code
-        LIMIT 10
+        --LIMIT 10
         ;
     """,
     "select_monitoring_history_by_rowid": """--sql

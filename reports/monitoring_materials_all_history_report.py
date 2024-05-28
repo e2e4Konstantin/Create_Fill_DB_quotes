@@ -145,20 +145,36 @@ def _monitoring_price_history_report(
         periods: list[Period], materials: list[Material], sheet_name: str, file_name: str):
     """Напечатать отчет"""
     index_numbers = [period.index_number for period in periods]
-    header = ["No", "Code", "Title", *index_numbers]
+    header = ["No", "Code", "delivery",  "Title", *index_numbers]
     with ExcelReport(file_name) as file:
         sheet = file.get_sheet(sheet_name)
         sheet.append(header)
-        file.header_monitoring_price_format(sheet_name, row=1, header=header)
+        file.set_monitoring_price_header_format(sheet_name, row=1, header=header)
 
         for i, material in enumerate(materials, start=1):
             price_line = [
                     material.prices[x].supplier_price if material.prices.get(x, None) is not None else " "
                     for x in index_numbers
                 ]
-            price_row = [i, material.code, material.title, *price_line]
+            price_delivery_flags = tuple(
+                [
+                    material.prices[x].delivery
+                    if material.prices.get(x, None) is not None
+                    else " "
+                    for x in index_numbers
+                ]
+            )
+            delivery_count = price_delivery_flags.count(True) if True in price_delivery_flags else " "
+            price_row = [i, material.code, delivery_count, material.title, *price_line]
             sheet.append(price_row)
 
+            file.set_regular_row_monitoring_price_format(
+                sheet_name, row=i + 1, price_delivery_flags=price_delivery_flags
+            )
+
+        counter_col, delivery_col = (1, 3)
+        thin_cols = ( counter_col, delivery_col )
+        file.set_column_widths(sheet_name, width=5, columns=thin_cols)
 
 
 def _main_monitoring_materials_all_history_report():
