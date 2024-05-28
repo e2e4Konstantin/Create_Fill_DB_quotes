@@ -177,33 +177,36 @@ def _monitoring_price_history_report(
         file.set_column_widths(sheet_name, width=5, columns=thin_cols)
 
 
-def _main_monitoring_materials_all_history_report():
-    location = "office"  # office  # home
-    local = LocalData(location)
+def main_monitoring_materials_all_history_report(
+        db_name: str,
+        sheet_name: str = "monitoring_history_prices",
+        file_name: str = "1_report_monitoring.xlsx",
+):
+    # location = "office"  # office  # home
+    # local = LocalData(location)
     ic()
-
-    periods = _get_unique_periods(local.db_file)
+    periods = _get_unique_periods(db_name)
     ic(len(periods))
     ic(periods)
-    materials = _get_unique_materials(local.db_file)
+    materials = _get_unique_materials(db_name)
     ic(len(materials))
     # ic(materials[2:5])
-    with dbTolls(local.db_file) as db:
+    with dbTolls(db_name) as db:
         for material in materials:
             # ic(material)
             prices = _get_history_prices_for_material(db, material.monitoring_id)
             # ic(prices)
             material.prices = prices
             # ic(material)
-    ic(materials[5])
-    sheet_name = "monitoring_history_prices"
-    file_name = "1_report_monitoring.xlsx"
+    # ic(materials[5])
+    # sheet_name = "monitoring_history_prices"
+    # file_name = "1_report_monitoring.xlsx"
     _monitoring_price_history_report(
         periods, materials, sheet_name=sheet_name, file_name=file_name
     )
 
 
 if __name__ == "__main__":
-    _main_monitoring_materials_all_history_report()
+    main_monitoring_materials_all_history_report()
 
 

@@ -10,7 +10,10 @@ from collections import namedtuple
 from dataclasses import dataclass, field
 
 from reports.report_excel_config import ExcelReport
-from files_features import output_message_exit, output_message
+# from files_features import output_message_exit, output_message
+from reports.monitoring_materials_all_history_report import (
+    main_monitoring_materials_all_history_report,
+)
 
 
 PriceHistory = namedtuple(
@@ -355,19 +358,19 @@ def _material_price_history_report_output(
             row += 1
 
 
-def last_period_main():
-    location = "office"  # office  # home
-    local = LocalData(location)
+def last_period_main(
+    db_name: str,
+    sheet_name: str = "materials",
+    file_name: str = "report_monitoring.xlsx",
+):
     ic()
-
-    table = _get_materials_with_monitoring(local.db_file, history_depth=10)
+    table = _get_materials_with_monitoring(db_name, history_depth=10)
     ic(len(table))
     ic(table[0])
     # for material in table[:2]:
     #     ic(material)
-
-    sheet_name = "materials"
-    file_name = "report_monitoring.xlsx"
+    # sheet_name = "materials"
+    # file_name = "report_monitoring.xlsx"
     _modern_materials_monitoring_report_output(
         table, view_history_depth=3, sheet_name =sheet_name, file_name = file_name
     )
@@ -376,6 +379,17 @@ def last_period_main():
     )
 
 if __name__ == "__main__":
-    last_period_main()
-
-
+    location = "office"  # office  # home
+    local = LocalData(location)
+    ic()
+    file_name = "report_monitoring.xlsx"
+    last_period_main(
+        local.db_file,
+        file_name=file_name,
+        sheet_name="materials"
+    )
+    main_monitoring_materials_all_history_report(
+        local.db_file,
+        file_name=file_name,
+        sheet_name="monitoring_history_prices"
+    )

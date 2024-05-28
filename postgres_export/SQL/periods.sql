@@ -25,3 +25,8 @@ SELECT per.*  FROM larix."period" per WHERE per.deleted_on IS NULL AND per.title
 ORDER BY per.created_on DESC 
 ;
 --
+
+
+SELECT * FROM larix."period" WHERE title ~'^\s*211 индекс/дополнение 72';
+SELECT * FROM larix."period" WHERE title ~'Индекс май/дополнение 72';
+

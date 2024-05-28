@@ -53,3 +53,31 @@ WHERE history._rowid = 2 --11239
 ORDER BY history._rowid, history._version
 ;
 
+SELECT
+    resource.pressmark AS "шифр",
+    resource.title AS "нименование",
+    unit_of_measure.title AS "ед.изм",
+    resource.price AS "базовая",
+    resource.current_price AS "текущая",
+    resource.current_sale_price AS "Текущая отпускная",
+    resource.inflation_rate AS "индекс",
+    ROUND(resource.price * resource.inflation_rate, 2) AS calc
+FROM larix.resources resource
+JOIN larix.period period ON period.id = resource.period_id
+JOIN larix.unit_of_measure unit_of_measure ON unit_of_measure.id = resource.unit_of_measure_id
+WHERE resource.deleted = 0
+  AND period.id = 167403321
+  AND resource.pressmark IN (
+    '1.1-1-2613',
+    '1.1-1-2558',
+    '1.1-1-1762',
+    '1.1-1-3508',
+    '1.1-1-2947',
+    '1.26-2-17',
+    '1.1-1-2566',
+    '1.1-1-1051',
+    '1.1-1-3002'
+  )
+ORDER BY resource.pressmark_sort;
+
+
