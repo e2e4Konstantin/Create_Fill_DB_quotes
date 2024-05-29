@@ -893,4 +893,83 @@ sql_materials_reports = {
     WHERE lmmp.FK_tblMonitoringMaterial_tblProducts = :rowid
     ;
     """,
+    #
+    "select_product_from_history_for_supplement_by_code": """--sql
+        WITH
+        latest_origins AS (
+            SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_origins, hp.FK_tblProducts_tblOrigins
+            FROM _tblHistoryProducts hp
+            JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+            WHERE hp.FK_tblProducts_tblOrigins IS NOT NULL and p.supplement_num <= :supplement
+            GROUP BY hp._rowid
+        ),
+        -- FK_tblProducts_tblItems
+        latest_item AS (
+            SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_item, hp.FK_tblProducts_tblItems
+            FROM _tblHistoryProducts hp
+            JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+            WHERE hp.FK_tblProducts_tblItems IS NOT NULL AND p.supplement_num <= :supplement
+            GROUP BY hp._rowid
+        ),
+        -- code
+        latest_code AS (
+            SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_code, hp.code
+            FROM _tblHistoryProducts hp
+            JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+            WHERE hp.code IS NOT NULL AND p.supplement_num <= :supplement
+            GROUP BY hp._rowid
+        ),
+        -- description
+        latest_description AS (
+            SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_description, hp.description
+            FROM _tblHistoryProducts hp
+            JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+            WHERE hp.description IS NOT NULL AND p.supplement_num <= :supplement
+            GROUP BY hp._rowid
+        ),
+        -- measurer
+        latest_measurer AS (
+            SELECT hp._rowid, MAX(p.supplement_num) AS latest_period_measurer, hp.measurer
+            FROM _tblHistoryProducts hp
+            JOIN tblPeriods p ON p.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+            WHERE hp.measurer IS NOT NULL and p.supplement_num <= :supplement
+            GROUP BY hp._rowid
+        ),
+        target_periods AS (
+            SELECT p.ID_tblPeriod, p.supplement_num, p.title
+            FROM tblPeriods p
+            JOIN tblOrigins o ON o.ID_tblOrigin = p.FK_Origin_tblOrigins_tblPeriods
+            JOIN tblItems i ON i.ID_tblItem = p.FK_Category_tblItems_tblPeriods
+            WHERE
+                p.supplement_num = :supplement
+                AND o.name  = 'ТСН'
+                AND i.team = 'periods_category'
+                AND i.name = 'supplement'
+            )
+    SELECT
+        hp._rowid,
+        tp.title AS period_title,
+        lcode.code,
+        ldesc.description,
+        lmeas.measurer
+
+    FROM _tblHistoryProducts hp
+    JOIN target_periods tp ON tp.ID_tblPeriod = hp.FK_tblProducts_tblPeriods
+    JOIN latest_origins lorigin ON lorigin._rowid = hp._rowid
+    JOIN latest_item litem ON litem._rowid = hp._rowid
+    JOIN latest_code lcode ON lcode._rowid = hp._rowid
+    JOIN latest_description ldesc ON ldesc._rowid = hp._rowid
+    JOIN latest_measurer lmeas ON lmeas._rowid = hp._rowid
+    --
+    JOIN tblOrigins o ON o.ID_tblOrigin = lorigin.FK_tblProducts_tblOrigins
+    JOIN tblItems i ON i.ID_tblItem = litem.FK_tblProducts_tblItems
+    --
+    WHERE
+        hp._mask != -1
+        AND o.name = 'ТСН'
+        AND i.team = 'units'
+        AND i.name = 'material'
+        AND lcode.code = :code
+    ;
+    """,
 }

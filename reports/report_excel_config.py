@@ -297,3 +297,38 @@ class ExcelReport(ExcelBase):
         sheet = self.workbook[sheet_name]
         for column_index in columns:
             sheet.column_dimensions[get_column_letter(column_index)].width = width
+
+
+    def set_tariffs_header_format(
+        self, sheet_name: str, row: int = 1, header_len: int = 1):
+        """Устанавливает формат строки заголовка отчета о ценах на тарифы."""
+        sheet = self.workbook[sheet_name]
+        for col in range(1, header_len + 1):
+            cell = sheet.cell(row=row, column=col)
+            cell.font = self.fonts["default"]
+            cell.fill = self.fills["header"]
+            cell.alignment = Alignment(wrap_text=True, horizontal="center")
+
+    def set_regular_row_tariff_format(self, sheet_name: str, row: int = 1):
+        """Устанавливает формат для строки цен на тарифы."""
+        sheet = self.workbook[sheet_name]
+        # text format
+        text_columns = [1, 4, 5]
+        for col in text_columns:
+            cell = sheet.cell(row=row, column=col)
+            cell.font = self.fonts["default"]
+            cell.alignment = Alignment(wrap_text=False, horizontal="left")
+        #
+        num_cell = sheet.cell(row=row, column=2)
+        num_cell.font = self.fonts["default"]
+        num_cell.alignment = Alignment(wrap_text=True, horizontal="center")
+        num_cell.number_format = self.counter_format
+        #
+        code_cell = sheet.cell(row=row, column=3)
+        code_cell.font = self.fonts["default_bold"]
+        code_cell.alignment = Alignment(wrap_text=True, horizontal="right")
+        #
+        price_cell = sheet.cell(row=row, column=6)
+        price_cell.font = self.fonts["result_bold"]
+        price_cell.alignment = Alignment(wrap_text=True, horizontal="right")
+        price_cell.number_format = self.number_format

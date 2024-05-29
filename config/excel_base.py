@@ -9,6 +9,8 @@ class ExcelBase:
         self.filepath = filepath
         self.workbook = None
         self.worksheet = None
+        self.max_row = 0
+        self.max_column = 0
 
     def __enter__(self):
         self.open_file()
