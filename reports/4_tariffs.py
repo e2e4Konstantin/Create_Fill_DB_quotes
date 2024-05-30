@@ -104,22 +104,51 @@ def _update_tariffs_from_db(tariffs: tuple[tuple[str, float], ...], db_file: str
                 new_tariffs.append((period_title, code, description, measurer, price))
         return tuple(new_tariffs) if new_tariffs else None
 
+
+def _get_code_row(materials_sheet: Worksheet, code: str, code_column: int)-> int|None:
+
+    for row in range(1, materials_sheet.max_row + 1):
+
+
+        if materials_sheet.cell(row=row, column=code_column).value == code:
+            return row
+    return None
+
+
+def _update_materials_from_tariffs(tariffs, report_file_name, materials_sheet_name) -> None:
+    with ExcelReport(report_file_name) as report_file:
+        sheet = report_file.activate_sheet(materials_sheet_name)
+        for tariff in tariffs:
+            _, code, _, _, price = tariff
+            code_column = 2
+            price_column = 23
+            code_row = _get_code_row(sheet, code, code_column)
+            if code_row:
+                tariff_cell = sheet.cell(row=code_row, column=price_column)
+                tariff_cell.value = price
+                report_file.format_material_prices_per_tariffs(tariff_cell)
+
+
 if __name__ == "__main__":
     location = "office"  # office  # home
     local = LocalData(location)
     ic()
     report_file_name = "report_monitoring.xlsx"
     tariffs_file_name = r"C:\Users\kazak.ke\Documents\Задачи\5_Надя\исходные_данные\тарифы\Тарифы на 20.05.2024.xlsx"
-
+    sheet_name="tariff_prices"
+    #
     tariffs = _tariff_file_parsing(tariffs_file_name=tariffs_file_name, sheet_name="Тарифы")
     ic(len(tariffs))
-    ic(tariffs)
+    # ic(tariffs)
     tariffs = _update_tariffs_from_db(tariffs, local.db_file, 72)
-    ic(tariffs)
+    # ic(tariffs)
 
     tariffs_monitoring_report(
         db_name=local.db_file,
         tariffs_data=tariffs,
-        sheet_name="tariff_prices",
+        sheet_name=sheet_name,
         file_name=report_file_name,
     )
+    #
+    materials_sheet_name = "materials"
+    _update_materials_from_tariffs(tariffs, report_file_name, materials_sheet_name)

@@ -127,11 +127,12 @@ if __name__ == "__main__":
     local = LocalData(location)
     ic()
     table = get_transport_cost_with_monitoring(local.db_file, history_depth=6)
-    ic(table)
-
+    # ic(table)
 
     sheet_name = "transport"
     file_name = "report_monitoring.xlsx"
     _report_output(table, sheet_name=sheet_name, file_name=file_name)
+
+
 
 

@@ -12,6 +12,7 @@ class ExcelBase:
         self.max_row = 0
         self.max_column = 0
 
+
     def __enter__(self):
         self.open_file()
         return self

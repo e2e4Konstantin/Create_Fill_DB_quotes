@@ -2,6 +2,7 @@
 from openpyxl.styles import Font, PatternFill, numbers, DEFAULT_FONT, Color, Alignment
 from config import ExcelBase
 from openpyxl.utils import get_column_letter
+from openpyxl.cell.cell import Cell
 
 
 class ExcelReport(ExcelBase):
@@ -17,6 +18,7 @@ class ExcelReport(ExcelBase):
             "header": "00E4DFEC",
             "default": "0099CCFF",
             "calculate": "00F7F7F7",
+            "tariff_fill": "00D8E4BC",
         }
         self.fonts = {
             "default": Font(name="Arial", size=8, bold=False, italic=False),
@@ -29,6 +31,7 @@ class ExcelReport(ExcelBase):
         self.fills = {
             "calculate": PatternFill("solid", fgColor=self.colors["calculate"]),
             "header": PatternFill("solid", fgColor=self.colors["header"]),
+            "tariff": PatternFill("solid", fgColor=self.colors["tariff_fill"]),
         }
         self.number_format = "#,##0.00"
         self.counter_format = "#,##0"
@@ -44,17 +47,30 @@ class ExcelReport(ExcelBase):
         super().__exit__(exc_type, exc_val, exc_tb)
 
 
-    def get_sheet(self, sheet_name: str):
+    def get_sheet(self, sheet_name: str, index: int = None):
         """удаляет лист в книге и создает новый"""
         if sheet_name in (x.title for x in self.workbook.worksheets):
             self.workbook.remove(self.workbook[sheet_name])
-        self.sheet = self.workbook.create_sheet(sheet_name)
-        self.sheet.font = self.fonts["default"]
-        if sheet_name in self.colors.keys():
-            self.sheet.sheet_properties.tabColor = self.colors[sheet_name]
+        if index is None:
+            self.worksheet = self.workbook.create_sheet(
+                sheet_name, index=len(self.workbook.worksheets)
+            )
         else:
-            self.sheet.sheet_properties.tabColor = self.colors["default"]
-        return self.sheet
+            self.worksheet = self.workbook.create_sheet(sheet_name, index=index)
+        self.worksheet.font = self.fonts["default"]
+        if sheet_name in self.colors.keys():
+            self.worksheet.sheet_properties.tabColor = self.colors[sheet_name]
+        else:
+            self.worksheet.sheet_properties.tabColor = self.colors["default"]
+        return self.worksheet
+
+    def activate_sheet(self, sheet_name: str, index: int = None):
+        """Активирует лист в рабочей книге по его имени."""
+        if sheet_name in (ws.title for ws in self.workbook.worksheets):
+            self.worksheet = self.workbook[sheet_name]
+            self.workbook.active = self.worksheet
+        return self.worksheet
+
 
 
     def create_sheets(self):
@@ -68,6 +84,18 @@ class ExcelReport(ExcelBase):
                 self.sheet.font = self.fonts["default"]
                 self.sheet.sheet_properties.tabColor = self.colors[name]
 
+    def delete_sheets(self, sheets_to_delete: list[str]):
+        """Удаляет листы из рабочей книги"""
+        for sheet_name in sheets_to_delete:
+            if sheet_name in (x.title for x in self.workbook.worksheets):
+                self.workbook.remove(self.workbook[sheet_name])
+
+    def set_sheet_number(self, sheet_name: str, number: int):
+        """Устанавливает номер листа"""
+        if sheet_name in (x.title for x in self.workbook.worksheets):
+            sheet_index = self.workbook.worksheets.index(sheet_name)
+            self.workbook.worksheets[sheet_index] = self.workbook.worksheets.pop(sheet_index)
+            self.workbook.worksheets.insert(number - 1, self.worksheet)
 
     def write_header(self, sheet_name: str, header: list, row: int = 1):
         """записывает заголовок в лист"""
@@ -332,3 +360,8 @@ class ExcelReport(ExcelBase):
         price_cell.font = self.fonts["result_bold"]
         price_cell.alignment = Alignment(wrap_text=True, horizontal="right")
         price_cell.number_format = self.number_format
+
+    def format_material_prices_per_tariffs(self, format_cell: Cell):
+        """Форматирует ячейку с ценой материала измененной по тарифу."""
+        format_cell.fill = self.fills["tariff"]
+        format_cell.alignment = Alignment(horizontal="right")

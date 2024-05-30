@@ -294,12 +294,14 @@ def _modern_materials_monitoring_report_output(
 ) -> None:
     """Напечатать отчет по мониторингу материалов"""
     with ExcelReport(file_name) as file:
-        sheet = file.get_sheet(sheet_name)
-        # ic(sheet)
+        sheet = file.get_sheet(sheet_name, 0)
+        file.delete_sheets(["Sheet", "Таблица 1"])
+        #
+        file.workbook.active = sheet
         #
         header, max_history_len = _header_create(table, view_history_depth)
         file.write_header(sheet.title, header)
-        #
+
         row = 2
         for i, material in enumerate(table):
             value_row = _material_row_create(material, row, max_history_len)
@@ -358,22 +360,17 @@ def _material_price_history_report_output(
             row += 1
 
 
-def last_period_main(
-    db_name: str,
-    sheet_name: str = "materials",
-    file_name: str = "report_monitoring.xlsx",
-):
+def last_period_main(db_name: str, file_name: str, sheet_name: str ):
+    """создает основной отчет и историю цен материалов"""
     ic()
     table = _get_materials_with_monitoring(db_name, history_depth=10)
     ic(len(table))
     ic(table[0])
-    # for material in table[:2]:
-    #     ic(material)
-    # sheet_name = "materials"
-    # file_name = "report_monitoring.xlsx"
+    # основной отчет
     _modern_materials_monitoring_report_output(
         table, view_history_depth=3, sheet_name =sheet_name, file_name = file_name
     )
+    # история цен
     _material_price_history_report_output(
         table, sheet_name="price materials history", file_name=file_name
     )
@@ -383,13 +380,6 @@ if __name__ == "__main__":
     local = LocalData(location)
     ic()
     file_name = "report_monitoring.xlsx"
-    last_period_main(
-        local.db_file,
-        file_name=file_name,
-        sheet_name="materials"
-    )
-    # main_monitoring_materials_all_history_report(
-    #     local.db_file,
-    #     file_name=file_name,
-    #     sheet_name="monitoring_history_prices"
-    # )
+    sheet_name = "materials"
+    # создаем основной отчет и историю цен материалов
+    last_period_main(local.db_file, file_name, sheet_name )
